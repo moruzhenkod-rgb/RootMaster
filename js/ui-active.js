@@ -1,8 +1,9 @@
 const UIActive = (() => {
-  let root, map, markers = {}, meMarker, currentView = 'map', activePointId = null;
+  let root, map, markers = {}, meMarker, currentView = 'list', activePointId = null;
 
   function mount(container) {
     root = container;
+    currentView = 'list';
     root.addEventListener('click', onHeaderClick);
     initMap();
     renderMarkers();
@@ -36,7 +37,7 @@ const UIActive = (() => {
     const first = pts[0] || App.tour.points[0];
     const center = first ? [first.lat, first.lng] : [55.751244, 37.618423];
     map = L.map('active-map', { zoomControl: true, attributionControl: false }).setView(center, 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
   }
 
   function locateMe() {
@@ -153,7 +154,7 @@ const UIActive = (() => {
       </div>
     `;
     content.querySelector('[data-action="navigate"]').addEventListener('click', () => {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=driving`, '_blank');
+      navigateTo(p);
     });
     content.querySelector('[data-action="toggle-done"]').addEventListener('click', () => {
       toggleDone(id);
@@ -164,6 +165,19 @@ const UIActive = (() => {
       openContextMenu(id);
     });
     document.getElementById('bottom-sheet-overlay').classList.remove('hidden');
+  }
+
+  function navigateTo(p) {
+    const url =
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.editedText)}` +
+      `&travelmode=driving`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   function closeSheet() {

@@ -5,10 +5,10 @@ const UIScan = (() => {
     root = container;
     cancelled = false;
     root.addEventListener('click', onClick);
-    run(params.file).catch((e) => {
+    run(params).catch((e) => {
       console.error(e);
       if (!cancelled) {
-        Utils.toast('Ошибка сканирования', 'error');
+        Utils.toast('Ошибка проверки адресов', 'error');
         Router.show('home');
       }
     });
@@ -34,17 +34,14 @@ const UIScan = (() => {
     if (f && fraction != null) f.style.width = Math.round(fraction * 100) + '%';
   }
 
-  async function run(file) {
-    setProgress('Распознавание текста…', 0.05);
-    const rawText = await OCR.recognize(file, (progress) => {
-      if (cancelled) return;
-      setProgress('Распознавание текста… ' + Math.round(progress * 100) + '%', progress * 0.4);
-    });
-    if (cancelled) return;
+  async function run(params) {
+    const lines = (params.rawText || '')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
 
-    const lines = OCR.extractAddressLines(rawText);
     if (!lines.length) {
-      Utils.toast('Не удалось найти адреса на фото', 'error');
+      Utils.toast('Список адресов пуст', 'error');
       Router.show('home');
       return;
     }
@@ -52,7 +49,7 @@ const UIScan = (() => {
     const points = [];
     for (let i = 0; i < lines.length; i++) {
       if (cancelled) return;
-      setProgress(`Проверено ${i} из ${lines.length} адресов`, 0.4 + 0.6 * (i / lines.length));
+      setProgress(`Проверено ${i} из ${lines.length} адресов`, i / lines.length);
       const line = lines[i];
       const geo = await Geocode.lookup(line);
       points.push(buildPoint(line, geo));

@@ -19,7 +19,7 @@ const UIBuild = (() => {
     const first = App.tour.points[0];
     const center = first ? [first.lat, first.lng] : [55.751244, 37.618423];
     map = L.map('build-map', { zoomControl: true, attributionControl: false }).setView(center, 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     polyline = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.85 }).addTo(map);
   }
 

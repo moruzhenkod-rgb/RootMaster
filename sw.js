@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v1';
+const CACHE_NAME = 'routemaster-v5';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,9 +7,9 @@ const APP_SHELL = [
   './js/utils.js',
   './js/storage.js',
   './js/geocode.js',
-  './js/ocr.js',
   './js/testdata.js',
   './js/ui-home.js',
+  './js/ui-paste.js',
   './js/ui-scan.js',
   './js/ui-validate.js',
   './js/ui-build.js',
@@ -46,13 +46,19 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
           return res;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() =>
+          caches.match(event.request).then((cached) => cached || new Response('', { status: 504, statusText: 'offline' }))
+        )
     );
     return;
   }
 
   // Cache-first for same-origin app shell
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request).then(
+      (cached) =>
+        cached ||
+        fetch(event.request).catch(() => new Response('', { status: 504, statusText: 'offline' }))
+    )
   );
 });

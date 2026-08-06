@@ -25,10 +25,10 @@
       <div class="app-logo">🚚 <span>RouteMaster</span></div>
     </header>
     <main class="home-main">
-      <button class="btn btn-primary btn-large" data-action="new-tour">
-        <span class="btn-icon">📷</span>
-        <span>Новый тур</span>
-        <span class="btn-sub">Сфотографировать накладную</span>
+      <button class="btn btn-primary btn-large" data-action="paste-text">
+        <span class="btn-icon">📋</span>
+        <span>Вставить список</span>
+        <span class="btn-sub">Ввести адреса текстом вручную</span>
       </button>
       <button class="btn btn-secondary btn-large" data-action="load-yesterday">
         <span class="btn-icon">🕓</span>
@@ -38,11 +38,28 @@
       <button class="btn btn-secondary btn-large" data-action="test-run">
         <span class="btn-icon">🧪</span>
         <span>Тестовый запуск</span>
-        <span class="btn-sub">30 тестовых точек без фото</span>
+        <span class="btn-sub">30 тестовых точек для проверки интерфейса</span>
       </button>
     </main>
-    <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none">
     <footer class="home-footer">RouteMaster PWA · v1.0</footer>
+  </div>
+</template>
+
+<template id="tpl-paste">
+  <div class="screen screen-paste">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Вставить список адресов</h2>
+    </header>
+    <div class="paste-body">
+      <p class="paste-hint">Каждый адрес — с новой строки. Можно вставить весь список сразу.</p>
+      <textarea id="paste-textarea" class="paste-textarea" placeholder="Москва, ул. Ленина, д. 12&#10;Москва, пр. Мира, д. 45, кв. 3&#10;..."></textarea>
+    </div>
+    <footer class="sticky-footer">
+      <button class="btn btn-primary btn-large" id="btn-paste-submit" data-action="paste-submit" disabled>
+        Проверить адреса
+      </button>
+    </footer>
   </div>
 </template>
 
@@ -50,8 +67,8 @@
   <div class="screen screen-scan">
     <div class="scan-loader">
       <div class="scan-spinner"></div>
-      <h2 id="scan-title">Сканирование накладной…</h2>
-      <p id="scan-progress" class="scan-progress-text">Распознавание текста…</p>
+      <h2 id="scan-title">Проверка адресов…</h2>
+      <p id="scan-progress" class="scan-progress-text">Разбор списка адресов…</p>
       <div class="progress-bar"><div class="progress-bar-fill" id="scan-progress-fill"></div></div>
       <button class="btn btn-ghost" data-action="cancel-scan">Отмена</button>
     </div>
@@ -96,13 +113,13 @@
     <header class="app-header with-back">
       <button class="icon-btn" data-action="back-build">←</button>
       <div class="view-switch">
-        <button class="switch-btn active" data-view="map" data-action="switch-view">🗺 Карта</button>
-        <button class="switch-btn" data-view="list" data-action="switch-view">📋 Список</button>
+        <button class="switch-btn" data-view="map" data-action="switch-view">🗺 Карта</button>
+        <button class="switch-btn active" data-view="list" data-action="switch-view">📋 Список</button>
       </div>
       <span class="header-counter" id="active-counter"></span>
     </header>
-    <div id="active-map" class="map-full"></div>
-    <div id="active-list" class="active-list hidden"></div>
+    <div id="active-map" class="map-full hidden"></div>
+    <div id="active-list" class="active-list"></div>
   </div>
 </template>
 
@@ -125,13 +142,12 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/geocode.js"></script>
-<script src="js/ocr.js"></script>
 <script src="js/testdata.js"></script>
 <script src="js/ui-home.js"></script>
+<script src="js/ui-paste.js"></script>
 <script src="js/ui-scan.js"></script>
 <script src="js/ui-validate.js"></script>
 <script src="js/ui-build.js"></script>
