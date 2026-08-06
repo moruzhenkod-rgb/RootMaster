@@ -35,10 +35,18 @@ const UIScan = (() => {
   }
 
   async function run(params) {
+    // дубли одного адреса считаем за одну точку (нормализуем регистр и пробелы)
+    const seen = new Set();
     const lines = (params.rawText || '')
       .split(/\r?\n/)
       .map((l) => l.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter((l) => {
+        const key = l.toLowerCase().replace(/\s+/g, ' ');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
     if (!lines.length) {
       Utils.toast('Список адресов пуст', 'error');

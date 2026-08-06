@@ -376,3 +376,22 @@ button {
 /* Leaflet popup theming */
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--bg-card); color: var(--text); }
 .leaflet-container { background: var(--bg-elevated); }
+
+/* Секция точек, не размещённых на карте */
+.off-route-banner {
+  background: #7c2d12;
+  color: #fed7aa;
+  border: 1px solid #ea580c;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.stop-card.off-route {
+  border-left: 4px solid #ea580c;
+}
+.stop-card.off-route .stop-num {
+  background: #ea580c;
+  color: #fff;
+}

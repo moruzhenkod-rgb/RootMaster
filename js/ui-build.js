@@ -75,8 +75,14 @@ const UIBuild = (() => {
 
   function updateButton() {
     const btn = document.getElementById('btn-load-route');
-    const allNumbered = App.tour.points.length > 0 && App.tour.points.every((p) => p.order != null);
-    btn.disabled = !allNumbered;
+    // пускаем дальше даже если пронумерованы не все точки —
+    // ненумерованные попадут в раздел «не на маршруте» на активном экране
+    const numbered = App.tour.points.filter((p) => p.order != null).length;
+    const total = App.tour.points.length;
+    btn.disabled = total === 0;
+    btn.textContent = numbered < total
+      ? `Загрузить маршрут (${numbered}/${total} на карте)`
+      : 'Загрузить маршрут';
   }
 
   function currentMaxOrder() {

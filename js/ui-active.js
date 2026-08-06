@@ -92,22 +92,31 @@ const UIActive = (() => {
     return 'В пути';
   }
 
-  function renderList() {
-    const list = document.getElementById('active-list');
-    const pts = sortedPoints().filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
-    list.innerHTML = pts
-      .map(
-        (p) => `
-      <div class="stop-card ${p.tourStatus === 'done' ? 'done' : ''}" data-id="${p.id}">
-        <div class="stop-num">${p.order != null ? p.order : '?'}</div>
+  function stopCardHtml(p) {
+    return `
+      <div class="stop-card ${p.tourStatus === 'done' ? 'done' : ''} ${p.order == null ? 'off-route' : ''}" data-id="${p.id}">
+        <div class="stop-num">${p.order != null ? p.order : '⚠'}</div>
         <div class="stop-body">
           <div class="stop-addr">${Utils.escapeHtml(p.editedText)}</div>
           <div class="stop-status">${statusText(p)}</div>
         </div>
         <div class="stop-check" data-action="quick-done">${p.tourStatus === 'done' ? '✓' : ''}</div>
-      </div>`
-      )
-      .join('');
+      </div>`;
+  }
+
+  function renderList() {
+    const list = document.getElementById('active-list');
+    const pts = sortedPoints().filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
+    const offRoute = pts.filter((p) => p.order == null);
+    const onRoute = pts.filter((p) => p.order != null);
+
+    let html = '';
+    if (offRoute.length) {
+      html += `<div class="off-route-banner">⚠️ Не на карте (${offRoute.length}) — адрес не удалось разместить на карте (дом не найден или совпал с другим). Обработайте вручную: навигация, отметка, пропуск.</div>`;
+      html += offRoute.map(stopCardHtml).join('');
+    }
+    html += onRoute.map(stopCardHtml).join('');
+    list.innerHTML = html;
 
     list.querySelectorAll('.stop-card').forEach((card) => {
       const id = card.dataset.id;
