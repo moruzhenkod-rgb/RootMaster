@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="description" content="RouteMaster — приложение курьера для сканирования накладных, валидации адресов и построения маршрута">
+<title>RouteMaster</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Templates -->
+<template id="tpl-home">
+  <div class="screen screen-home">
+    <header class="app-header">
+      <div class="app-logo">🚚 <span>RouteMaster</span></div>
+    </header>
+    <main class="home-main">
+      <button class="btn btn-primary btn-large" data-action="new-tour">
+        <span class="btn-icon">📷</span>
+        <span>Новый тур</span>
+        <span class="btn-sub">Сфотографировать накладную</span>
+      </button>
+      <button class="btn btn-secondary btn-large" data-action="load-yesterday">
+        <span class="btn-icon">🕓</span>
+        <span>Вчерашний тур</span>
+        <span class="btn-sub">Продолжить сохранённый маршрут</span>
+      </button>
+      <button class="btn btn-secondary btn-large" data-action="test-run">
+        <span class="btn-icon">🧪</span>
+        <span>Тестовый запуск</span>
+        <span class="btn-sub">30 тестовых точек без фото</span>
+      </button>
+    </main>
+    <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none">
+    <footer class="home-footer">RouteMaster PWA · v1.0</footer>
+  </div>
+</template>
+
+<template id="tpl-scan">
+  <div class="screen screen-scan">
+    <div class="scan-loader">
+      <div class="scan-spinner"></div>
+      <h2 id="scan-title">Сканирование накладной…</h2>
+      <p id="scan-progress" class="scan-progress-text">Распознавание текста…</p>
+      <div class="progress-bar"><div class="progress-bar-fill" id="scan-progress-fill"></div></div>
+      <button class="btn btn-ghost" data-action="cancel-scan">Отмена</button>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-validate">
+  <div class="screen screen-validate">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Проверка адресов</h2>
+      <span class="header-counter" id="validate-counter"></span>
+    </header>
+    <div class="validate-list" id="validate-list"></div>
+    <footer class="sticky-footer">
+      <button class="btn btn-primary btn-large" id="btn-confirm-validate" data-action="confirm-validate" disabled>
+        Подтвердить и перейти к карте
+      </button>
+    </footer>
+  </div>
+</template>
+
+<template id="tpl-build">
+  <div class="screen screen-build">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-validate">←</button>
+      <h2>Сборка тура</h2>
+      <button class="icon-btn" data-action="reset-numbering" title="Сбросить нумерацию">↺</button>
+    </header>
+    <div id="build-map" class="map-full"></div>
+    <div class="build-hint">Коснитесь точек по порядку следования</div>
+    <footer class="sticky-footer">
+      <button class="btn btn-primary btn-large" id="btn-load-route" data-action="load-route" disabled>
+        Загрузить RouteMaster
+      </button>
+    </footer>
+  </div>
+</template>
+
+<template id="tpl-active">
+  <div class="screen screen-active">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-build">←</button>
+      <div class="view-switch">
+        <button class="switch-btn active" data-view="map" data-action="switch-view">🗺 Карта</button>
+        <button class="switch-btn" data-view="list" data-action="switch-view">📋 Список</button>
+      </div>
+      <span class="header-counter" id="active-counter"></span>
+    </header>
+    <div id="active-map" class="map-full"></div>
+    <div id="active-list" class="active-list hidden"></div>
+  </div>
+</template>
+
+<!-- Bottom sheet -->
+<div id="bottom-sheet-overlay" class="sheet-overlay hidden" data-action="close-sheet">
+  <div class="bottom-sheet" id="bottom-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div id="sheet-content"></div>
+  </div>
+</div>
+
+<!-- Context menu -->
+<div id="context-menu-overlay" class="sheet-overlay hidden" data-action="close-context">
+  <div class="context-menu" onclick="event.stopPropagation()">
+    <div class="context-menu-title" id="context-menu-title">Статус точки</div>
+    <button class="context-menu-item" data-status="skip">🚫 Не еду</button>
+    <button class="context-menu-item" data-status="transferred">↪️ Передано другому</button>
+    <button class="context-menu-item" data-status="cancel">Отмена</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/geocode.js"></script>
+<script src="js/ocr.js"></script>
+<script src="js/testdata.js"></script>
+<script src="js/ui-home.js"></script>
+<script src="js/ui-scan.js"></script>
+<script src="js/ui-validate.js"></script>
+<script src="js/ui-build.js"></script>
+<script src="js/ui-active.js"></script>
+<script src="js/router.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
