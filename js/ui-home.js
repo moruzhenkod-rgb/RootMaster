@@ -5,10 +5,10 @@ const UIHome = (() => {
     root = container;
     root.addEventListener('click', onClick);
 
-    const yestBtn = root.querySelector('[data-action="load-yesterday"]');
-    if (!Storage.hasYesterday()) {
-      yestBtn.disabled = true;
-      yestBtn.style.opacity = '0.4';
+    const historyBtn = root.querySelector('[data-action="open-history"]');
+    if (!Storage.hasHistory()) {
+      historyBtn.disabled = true;
+      historyBtn.style.opacity = '0.4';
     }
   }
 
@@ -23,14 +23,12 @@ const UIHome = (() => {
 
     if (action === 'paste-text') {
       Router.show('paste');
-    } else if (action === 'load-yesterday') {
-      const tour = Storage.loadYesterday();
-      if (!tour || !tour.points || !tour.points.length) {
-        Utils.toast('Нет сохранённого тура', 'error');
+    } else if (action === 'open-history') {
+      if (!Storage.hasHistory()) {
+        Utils.toast('Нет сохранённых туров', 'error');
         return;
       }
-      App.setTour(tour, tour.stage || 'active');
-      Router.show(tour.stage || 'active');
+      Router.show('history');
     } else if (action === 'test-run') {
       const points = TestData.generate();
       App.setTour({ points, stage: 'build' }, 'build');

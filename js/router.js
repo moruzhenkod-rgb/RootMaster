@@ -7,6 +7,8 @@ const Router = (() => {
     validate: UIValidate,
     build: UIBuild,
     active: UIActive,
+    history: UIHistory,
+    'history-detail': UIHistoryDetail,
   };
 
   let current = null;

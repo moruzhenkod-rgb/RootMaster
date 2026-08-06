@@ -30,10 +30,10 @@
         <span>Вставить список</span>
         <span class="btn-sub">Ввести адреса текстом вручную</span>
       </button>
-      <button class="btn btn-secondary btn-large" data-action="load-yesterday">
+      <button class="btn btn-secondary btn-large" data-action="open-history">
         <span class="btn-icon">🕓</span>
-        <span>Вчерашний тур</span>
-        <span class="btn-sub">Продолжить сохранённый маршрут</span>
+        <span>Предыдущие туры</span>
+        <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
       <button class="btn btn-secondary btn-large" data-action="test-run">
         <span class="btn-icon">🧪</span>
@@ -120,6 +120,34 @@
     </header>
     <div id="active-map" class="map-full hidden"></div>
     <div id="active-list" class="active-list"></div>
+    <footer class="sticky-footer">
+      <button class="btn btn-primary btn-large" id="btn-end-tour" data-action="end-tour">Завершить тур</button>
+    </footer>
+  </div>
+</template>
+
+<template id="tpl-history">
+  <div class="screen screen-history">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Предыдущие туры</h2>
+    </header>
+    <div class="history-list" id="history-list"></div>
+  </div>
+</template>
+
+<template id="tpl-history-detail">
+  <div class="screen screen-active">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-history">←</button>
+      <div class="view-switch">
+        <button class="switch-btn" data-view="map" data-action="switch-view">🗺 Карта</button>
+        <button class="switch-btn active" data-view="list" data-action="switch-view">📋 Список</button>
+      </div>
+      <span class="header-counter" id="history-detail-counter"></span>
+    </header>
+    <div id="history-detail-map" class="map-full hidden"></div>
+    <div id="history-detail-list" class="active-list"></div>
   </div>
 </template>
 
@@ -133,7 +161,7 @@
 
 <!-- Context menu -->
 <div id="context-menu-overlay" class="sheet-overlay hidden" data-action="close-context">
-  <div class="context-menu" onclick="event.stopPropagation()">
+  <div class="context-menu">
     <div class="context-menu-title" id="context-menu-title">Статус точки</div>
     <button class="context-menu-item" data-status="skip">🚫 Не еду</button>
     <button class="context-menu-item" data-status="transferred">↪️ Передано другому</button>
@@ -152,6 +180,8 @@
 <script src="js/ui-validate.js"></script>
 <script src="js/ui-build.js"></script>
 <script src="js/ui-active.js"></script>
+<script src="js/ui-history.js"></script>
+<script src="js/ui-history-detail.js"></script>
 <script src="js/router.js"></script>
 <script src="js/app.js"></script>
 </body>

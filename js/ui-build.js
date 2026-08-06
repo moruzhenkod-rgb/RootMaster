@@ -118,7 +118,6 @@ const UIBuild = (() => {
     if (loadBtn) {
       App.tour.stage = 'active';
       App.saveTour();
-      Storage.archiveAsYesterday(App.tour);
       Router.show('active');
     }
   }

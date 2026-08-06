@@ -8,6 +8,7 @@ const UIActive = (() => {
     initMap();
     renderMarkers();
     renderList();
+    updateEndButton();
     locateMe();
 
     document.getElementById('bottom-sheet-overlay').addEventListener('click', onSheetOverlayClick);
@@ -120,12 +121,45 @@ const UIActive = (() => {
     });
 
     updateCounter();
+    updateEndButton();
   }
 
   function updateCounter() {
     const total = App.tour.points.filter((p) => p.tourStatus !== 'transferred').length;
     const done = App.tour.points.filter((p) => p.tourStatus === 'done').length;
     document.getElementById('active-counter').textContent = `${done}/${total}`;
+  }
+
+  function allChecked() {
+    const pts = activePoints();
+    return pts.length > 0 && pts.every((p) => p.tourStatus === 'done');
+  }
+
+  function updateEndButton() {
+    const btn = document.getElementById('btn-end-tour');
+    if (!btn) return;
+    if (allChecked()) {
+      btn.textContent = 'Завершить тур';
+      btn.classList.remove('btn-danger');
+      btn.classList.add('btn-primary');
+    } else {
+      btn.textContent = 'Отменить тур';
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-danger');
+    }
+  }
+
+  function endTour() {
+    const finishing = allChecked();
+    const msg = finishing
+      ? 'Завершить тур? Список маршрута будет очищен.'
+      : 'Отменить тур? Не все точки отмечены выполненными. Список маршрута будет очищен.';
+    if (!window.confirm(msg)) return;
+    Storage.archiveTour(App.tour);
+    Storage.clearCurrent();
+    App.tour = null;
+    Router.show('home');
+    Utils.toast(finishing ? 'Тур завершён' : 'Тур отменён');
   }
 
   function toggleDone(id) {
@@ -216,6 +250,9 @@ const UIActive = (() => {
   function onHeaderClick(e) {
     const backBtn = e.target.closest('[data-action="back-build"]');
     if (backBtn) { Router.show('build'); return; }
+
+    const endBtn = e.target.closest('[data-action="end-tour"]');
+    if (endBtn) { endTour(); return; }
 
     const switchBtn = e.target.closest('[data-action="switch-view"]');
     if (switchBtn) {
