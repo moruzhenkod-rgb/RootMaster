@@ -37,24 +37,14 @@ const UIBuild = (() => {
   }
 
   function markerIcon(point) {
-    const numbered = point.order != null;
-    if (!numbered) {
-      // ещё не в маршруте — компактный кружок
-      const warn = point.geoStatus === 'warn' ? ' warn' : '';
-      return L.divIcon({
-        className: '',
-        html: `<div class="route-dot${warn}">?</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-      });
-    }
-    // в маршруте — пилюля [номер] адрес
-    const addr = Utils.escapeHtml(point.editedText.split(',')[0]);
+    const cls = ['marker-dot'];
+    if (point.order != null) cls.push('numbered');
+    if (point.geoStatus === 'warn') cls.push('warn');
+    const label = point.order != null ? point.order : '?';
     return L.divIcon({
       className: '',
-      html: `<div class="route-pin"><span class="route-pin-num">${point.order}</span><span class="route-pin-addr">${addr}</span></div>`,
-      iconSize: null,
-      iconAnchor: [15, 15],
+      html: `<div class="${cls.join(' ')}">${label}</div>`,
+      iconSize: [34, 34],
     });
   }
 
@@ -73,6 +63,7 @@ const UIBuild = (() => {
           App.saveTour();
           updatePolyline();
         });
+        m.bindTooltip(p.editedText.split(',')[0], { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
