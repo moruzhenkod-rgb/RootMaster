@@ -545,3 +545,21 @@ button {
 /* Фирма и адрес в подписи над точкой */
 .tip-firm { display: block; color: #fff; font-weight: 700; font-size: 11px; }
 .tip-addr { display: block; color: #cbd5e1; font-size: 10px; }
+
+/* Подпись фирма+адрес, встроенная в маркер (над кружком) */
+.mk-icon { overflow: visible; }
+.mk-label {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15,23,42,0.92);
+  border-radius: 6px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.mk-firm { display: block; color: #fff; font-weight: 700; font-size: 11px; }
+.mk-addr { display: block; color: #cbd5e1; font-size: 10px; }

@@ -41,10 +41,14 @@ const UIBuild = (() => {
     if (point.order != null) cls.push('numbered');
     if (point.geoStatus === 'warn') cls.push('warn');
     const label = point.order != null ? point.order : '?';
+    const firm = point.company ? `<span class="mk-firm">${Utils.escapeHtml(point.company)}</span>` : '';
+    const addr = Utils.escapeHtml(point.editedText.split(',')[0]);
+    const labelBox = `<div class="mk-label">${firm}<span class="mk-addr">${addr}</span></div>`;
     return L.divIcon({
-      className: '',
-      html: `<div class="${cls.join(' ')}">${label}</div>`,
+      className: 'mk-icon',
+      html: `${labelBox}<div class="${cls.join(' ')}">${label}</div>`,
       iconSize: [34, 34],
+      iconAnchor: [17, 17],
     });
   }
 
@@ -63,9 +67,6 @@ const UIBuild = (() => {
           App.saveTour();
           updatePolyline();
         });
-        const tipAddr = Utils.escapeHtml(p.editedText.split(',')[0]);
-        const tipHtml = p.company ? `<span class="tip-firm">${Utils.escapeHtml(p.company)}</span><span class="tip-addr">${tipAddr}</span>` : tipAddr;
-        m.bindTooltip(tipHtml, { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
