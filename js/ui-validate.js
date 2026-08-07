@@ -43,6 +43,7 @@ const UIValidate = (() => {
           <div class="addr-text">${Utils.escapeHtml(p.editedText)}</div>
           <div class="addr-status-badge">${statusLabel(p)}</div>
         </div>
+        ${p.key ? `<div class="addr-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
         ${p.foundAddress && p.geoStatus !== 'ok' ? `<div class="addr-found">📍 На карте нашлось: ${Utils.escapeHtml(p.foundAddress)}</div>` : ''}
         ${
           p.geoStatus !== 'ok'

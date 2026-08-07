@@ -98,6 +98,7 @@ const UIActive = (() => {
         <div class="stop-num">${p.order != null ? p.order : '⚠'}</div>
         <div class="stop-body">
           <div class="stop-addr">${Utils.escapeHtml(p.editedText)}</div>
+          ${p.key ? `<div class="stop-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
           <div class="stop-status">${statusText(p)}</div>
         </div>
         <div class="stop-check" data-action="quick-done">${p.tourStatus === 'done' ? '✓' : ''}</div>
@@ -208,6 +209,7 @@ const UIActive = (() => {
     const content = document.getElementById('sheet-content');
     content.innerHTML = `
       <div class="sheet-address">${Utils.escapeHtml(p.editedText)}</div>
+      ${p.key ? `<div class="sheet-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
       <div class="sheet-status">${statusText(p)}</div>
       <div class="sheet-actions">
         <button class="btn btn-primary" data-action="navigate">🧭 Поехали в Google Maps</button>

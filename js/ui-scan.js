@@ -58,9 +58,9 @@ const UIScan = (() => {
     for (let i = 0; i < lines.length; i++) {
       if (cancelled) return;
       setProgress(`Проверено ${i} из ${lines.length} адресов`, i / lines.length);
-      const line = lines[i];
-      const geo = await Geocode.lookup(line);
-      points.push(buildPoint(line, geo));
+      const { address, key } = parseLine(lines[i]);
+      const geo = await Geocode.lookup(address);
+      points.push(buildPoint(address, key, geo));
     }
     if (cancelled) return;
 
@@ -73,15 +73,26 @@ const UIScan = (() => {
     Router.show(needsValidation ? 'validate' : 'build');
   }
 
-  function buildPoint(rawLine, geo) {
+  // Формат строки: "Адрес — Ключ" (разделитель — длинное тире).
+  // Ключ указывается с кодом города, напр. "19061 0028".
+  function parseLine(line) {
+    const parts = line.split('—');
+    if (parts.length >= 2) {
+      return { address: parts[0].trim(), key: parts.slice(1).join('—').trim() };
+    }
+    return { address: line.trim(), key: '' };
+  }
+
+  function buildPoint(address, key, geo) {
     let geoStatus = 'error';
     if (geo) {
       geoStatus = geo.confidence === 'low' ? 'warn' : 'ok';
     }
     return {
       id: Utils.uid(),
-      rawText: rawLine,
-      editedText: rawLine,
+      rawText: address,
+      editedText: address,
+      key: key || '',
       lat: geo ? geo.lat : null,
       lng: geo ? geo.lng : null,
       foundAddress: geo ? geo.displayName : null,
