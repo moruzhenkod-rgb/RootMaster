@@ -1,5 +1,5 @@
 const UIBuild = (() => {
-  let root, map, markers = {}, polyline, meMarker, legLabels = [];
+  let root, map, markers = {}, polyline, meMarker, legLabels = [], arrows = null;
 
   function mount(container) {
     root = container;
@@ -39,9 +39,8 @@ const UIBuild = (() => {
   function markerIcon(point) {
     const cls = ['marker-dot'];
     if (point.order != null) cls.push('numbered');
-    else cls.push('pending');
     if (point.geoStatus === 'warn') cls.push('warn');
-    const label = point.order != null ? point.order : '';
+    const label = point.order != null ? point.order : '?';
     return L.divIcon({
       className: '',
       html: `<div class="${cls.join(' ')}">${label}</div>`,
@@ -64,7 +63,7 @@ const UIBuild = (() => {
           App.saveTour();
           updatePolyline();
         });
-        m.bindTooltip(p.editedText, { direction: 'top' });
+        m.bindTooltip(p.editedText.split(',')[0], { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
@@ -77,6 +76,24 @@ const UIBuild = (() => {
   function clearLegLabels() {
     legLabels.forEach((l) => map.removeLayer(l));
     legLabels = [];
+  }
+
+  function updateArrows() {
+    if (arrows) { map.removeLayer(arrows); arrows = null; }
+    if (!L.polylineDecorator || !L.Symbol) return;
+    const pts = polyline.getLatLngs();
+    if (!pts || pts.length < 2) return;
+    arrows = L.polylineDecorator(polyline, {
+      patterns: [{
+        offset: 25,
+        repeat: 60,
+        symbol: L.Symbol.arrowHead({
+          pixelSize: 11,
+          polygon: false,
+          pathOptions: { stroke: true, color: '#1e3a8a', weight: 3, opacity: 0.95 },
+        }),
+      }],
+    }).addTo(map);
   }
 
   function fmtDuration(sec) {
@@ -97,6 +114,7 @@ const UIBuild = (() => {
     }
     // прямые линии сразу (мгновенный отклик), маршрут по дорогам подгрузим следом
     polyline.setLatLngs(numbered.map((p) => [p.lat, p.lng]));
+    updateArrows();
 
     const coords = numbered.map((p) => `${p.lng},${p.lat}`).join(';');
     const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
@@ -107,6 +125,7 @@ const UIBuild = (() => {
       const route = data.routes[0];
       // линия по дорогам
       polyline.setLatLngs(route.geometry.coordinates.map(([lng, lat]) => [lat, lng]));
+      updateArrows();
       // подписи времени в пути на каждом участке
       (route.legs || []).forEach((leg, i) => {
         const a = numbered[i];
