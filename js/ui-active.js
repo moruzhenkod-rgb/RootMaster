@@ -104,21 +104,9 @@ const UIActive = (() => {
       </div>`;
   }
 
-  function renderList() {
-    const list = document.getElementById('active-list');
-    const pts = sortedPoints().filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
-    const offRoute = pts.filter((p) => p.order == null);
-    const onRoute = pts.filter((p) => p.order != null);
-
-    let html = '';
-    if (offRoute.length) {
-      html += `<div class="off-route-banner">⚠️ Не на карте (${offRoute.length}) — адрес не удалось разместить на карте (дом не найден или совпал с другим). Обработайте вручную: навигация, отметка, пропуск.</div>`;
-      html += offRoute.map(stopCardHtml).join('');
-    }
-    html += onRoute.map(stopCardHtml).join('');
-    list.innerHTML = html;
-
-    list.querySelectorAll('.stop-card').forEach((card) => {
+  function bindCards(container) {
+    if (!container) return;
+    container.querySelectorAll('.stop-card').forEach((card) => {
       const id = card.dataset.id;
       Utils.bindLongPress(card, () => openContextMenu(id), (e) => {
         if (e.target.closest('[data-action="quick-done"]')) {
@@ -128,6 +116,39 @@ const UIActive = (() => {
         }
       });
     });
+  }
+
+  function renderList() {
+    const list = document.getElementById('active-list');
+    const doneList = document.getElementById('active-done');
+    const pts = sortedPoints().filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
+    const pending = pts.filter((p) => p.tourStatus !== 'done');
+    const done = pts.filter((p) => p.tourStatus === 'done');
+    const offRoute = pending.filter((p) => p.order == null);
+    const onRoute = pending.filter((p) => p.order != null);
+
+    // активные (невыполненные) точки
+    let html = '';
+    if (offRoute.length) {
+      html += `<div class="off-route-banner">⚠️ Не на карте (${offRoute.length}) — адрес не удалось разместить на карте (дом не найден или совпал с другим). Обработайте вручную: навигация, отметка, пропуск.</div>`;
+      html += offRoute.map(stopCardHtml).join('');
+    }
+    html += onRoute.map(stopCardHtml).join('');
+    if (!pending.length) html = '<div class="empty-hint">Все точки выполнены 🎉</div>';
+    list.innerHTML = html;
+    bindCards(list);
+
+    // завершённые — отдельная вкладка
+    if (doneList) {
+      doneList.innerHTML = done.length
+        ? done.map(stopCardHtml).join('')
+        : '<div class="empty-hint">Пока нет завершённых точек</div>';
+      bindCards(doneList);
+    }
+
+    // счётчик на вкладке «Завершённые»
+    const doneTab = document.querySelector('.screen-active .switch-btn[data-view="done"]');
+    if (doneTab) doneTab.textContent = done.length ? `✓ Готово (${done.length})` : '✓ Готово';
 
     updateCounter();
     updateEndButton();
@@ -269,6 +290,8 @@ const UIActive = (() => {
       root.querySelectorAll('.switch-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === currentView));
       document.getElementById('active-map').classList.toggle('hidden', currentView !== 'map');
       document.getElementById('active-list').classList.toggle('hidden', currentView !== 'list');
+      const doneEl = document.getElementById('active-done');
+      if (doneEl) doneEl.classList.toggle('hidden', currentView !== 'done');
       if (currentView === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
     }
   }

@@ -23,7 +23,7 @@ const UIValidate = (() => {
 
   function statusLabel(p) {
     if (p.geoStatus === 'ok') return 'Найден на карте';
-    if (p.geoStatus === 'warn') return 'Проверьте адрес';
+    if (p.geoStatus === 'warn') return 'Сверьте — неточно';
     if (p.skippedByUser) return 'Пропущено';
     return 'Не найден';
   }
@@ -43,6 +43,7 @@ const UIValidate = (() => {
           <div class="addr-text">${Utils.escapeHtml(p.editedText)}</div>
           <div class="addr-status-badge">${statusLabel(p)}</div>
         </div>
+        ${p.foundAddress && p.geoStatus !== 'ok' ? `<div class="addr-found">📍 На карте нашлось: ${Utils.escapeHtml(p.foundAddress)}</div>` : ''}
         ${
           p.geoStatus !== 'ok'
             ? `<div class="addr-actions">
@@ -105,10 +106,12 @@ const UIValidate = (() => {
       if (geo) {
         point.lat = geo.lat;
         point.lng = geo.lng;
+        point.foundAddress = geo.displayName;
+        point.matchedHouse = !!geo.matchedHouse;
         point.geoStatus = geo.confidence === 'low' ? 'warn' : 'ok';
         point.skippedByUser = false;
         point.tourStatus = 'pending';
-        Utils.toast('Адрес найден', 'success');
+        Utils.toast(geo.matchedHouse ? 'Адрес найден точно' : 'Найдено примерно — сверьте', geo.matchedHouse ? 'success' : 'warning');
       } else {
         point.geoStatus = 'error';
         Utils.toast('Адрес не найден', 'error');

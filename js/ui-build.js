@@ -92,18 +92,19 @@ const UIBuild = (() => {
   function onMarkerTap(id) {
     const point = App.tour.points.find((p) => p.id === id);
     if (!point) return;
-    const maxOrder = currentMaxOrder();
 
     if (point.order != null) {
-      // Tapping the last numbered point again undoes it
-      if (point.order === maxOrder) {
-        point.order = null;
-        App.saveTour();
-        renderMarkers();
-      }
+      // снять номер с ЛЮБОЙ точки и перенумеровать остальные без дыр
+      const removed = point.order;
+      point.order = null;
+      App.tour.points.forEach((p) => {
+        if (p.order != null && p.order > removed) p.order -= 1;
+      });
+      App.saveTour();
+      renderMarkers();
       return;
     }
-    point.order = maxOrder + 1;
+    point.order = currentMaxOrder() + 1;
     App.saveTour();
     renderMarkers();
   }

@@ -84,6 +84,8 @@ const UIScan = (() => {
       editedText: rawLine,
       lat: geo ? geo.lat : null,
       lng: geo ? geo.lng : null,
+      foundAddress: geo ? geo.displayName : null,
+      matchedHouse: geo ? !!geo.matchedHouse : false,
       geoStatus,
       order: null,
       tourStatus: 'pending',

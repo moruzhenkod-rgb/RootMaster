@@ -14,7 +14,7 @@ const Geocode = (() => {
   async function lookup(address) {
     if (!address || !address.trim()) return null;
     await throttle();
-    const url = `${ENDPOINT}?format=json&limit=1&addressdetails=0&q=${encodeURIComponent(address)}`;
+    const url = `${ENDPOINT}?format=json&limit=1&addressdetails=1&q=${encodeURIComponent(address)}`;
     try {
       const res = await fetch(url, {
         headers: { 'Accept-Language': 'ru' },
@@ -23,11 +23,15 @@ const Geocode = (() => {
       const data = await res.json();
       if (!data || !data.length) return null;
       const best = data[0];
+      const addr = best.address || {};
+      // точным считаем только совпадение до номера дома
+      const hasHouse = !!addr.house_number;
       return {
         lat: parseFloat(best.lat),
         lng: parseFloat(best.lon),
         displayName: best.display_name,
-        confidence: importanceToConfidence(best.importance),
+        matchedHouse: hasHouse,
+        confidence: hasHouse ? importanceToConfidence(best.importance) : 'low',
       };
     } catch (e) {
       console.error('Geocode error', e);
