@@ -43,7 +43,8 @@ const UIBuild = (() => {
     const label = point.order != null ? point.order : '?';
     const firm = point.company ? `<span class="mk-firm">${Utils.escapeHtml(point.company)}</span>` : '';
     const addr = Utils.escapeHtml(point.editedText.split(',')[0]);
-    const labelBox = `<div class="mk-label">${firm}<span class="mk-addr">${addr}</span></div>`;
+    const key = point.key ? `<span class="mk-key">🔑 ${Utils.escapeHtml(point.key)}</span>` : '';
+    const labelBox = `<div class="mk-label">${firm}<span class="mk-addr">${addr}</span>${key}</div>`;
     return L.divIcon({
       className: 'mk-icon',
       html: `${labelBox}<div class="${cls.join(' ')}">${label}</div>`,
