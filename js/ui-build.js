@@ -74,11 +74,11 @@ const UIBuild = (() => {
           updatePolyline();
           if (m.dragging) m.dragging.disable(); // защита обратно
         });
-        m.on('add', () => bindMarker(m, pid));
+        m.on('click', () => handleTap(pid, m));
+        m.on('contextmenu', () => enableDrag(m)); // долгое нажатие / правый клик → включить перетаскивание
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
-        bindMarker(m, p.id);
       }
     });
     updatePolyline();
@@ -181,12 +181,6 @@ const UIBuild = (() => {
   }
 
   let clickCount = 0, clickTimer = null;
-
-  function bindMarker(m, pid) {
-    const el = m.getElement();
-    if (!el) return;
-    Utils.bindLongPress(el, () => enableDrag(m), () => handleTap(pid, m));
-  }
 
   // короткий тап нумерует; три быстрых тапа возвращают точку на место
   function handleTap(pid, m) {
