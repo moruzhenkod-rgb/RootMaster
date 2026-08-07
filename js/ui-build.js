@@ -39,8 +39,9 @@ const UIBuild = (() => {
   function markerIcon(point) {
     const cls = ['marker-dot'];
     if (point.order != null) cls.push('numbered');
+    else cls.push('pending');
     if (point.geoStatus === 'warn') cls.push('warn');
-    const label = point.order != null ? point.order : '?';
+    const label = point.order != null ? point.order : '';
     return L.divIcon({
       className: '',
       html: `<div class="${cls.join(' ')}">${label}</div>`,

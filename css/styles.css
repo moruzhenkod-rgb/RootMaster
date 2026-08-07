@@ -254,13 +254,23 @@ button {
 }
 
 .marker-dot {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--bg-card); border: 2px solid var(--text-faint);
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--bg-card); border: 3px solid #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 700; color: var(--text-dim);
-  box-shadow: var(--shadow);
+  font-size: 17px; font-weight: 800; color: var(--text-dim);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
-.marker-dot.numbered { background: var(--accent); border-color: #60a5fa; color: white; }
+.marker-dot.numbered { background: #2563eb; border-color: #fff; color: #fff; }
+/* непронумерованные — оранжевые, пульсируют (ещё не в маршруте) */
+.marker-dot.pending {
+  background: #f97316; border-color: #fff; color: #fff;
+  animation: marker-pulse 1.5s ease-out infinite;
+}
+@keyframes marker-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(249,115,22,0.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(249,115,22,0); }
+  100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
 .marker-dot.done { background: var(--success); border-color: #34d399; color: white; opacity: 0.55; }
 .marker-dot.skip { background: var(--bg-elevated); border: 2px dashed var(--text-faint); color: var(--text-faint); }
 .marker-dot.warn { border-color: var(--warning); }
