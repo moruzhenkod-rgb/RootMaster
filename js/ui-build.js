@@ -243,7 +243,10 @@ const UIBuild = (() => {
 
   function onClick(e) {
     const backBtn = e.target.closest('[data-action="back-validate"]');
-    if (backBtn) { Router.show('home'); return; }
+    if (backBtn) { Router.show('validate'); return; }
+
+    const saveBtn = e.target.closest('[data-action="save-tour"]');
+    if (saveBtn) { App.saveTour(); Utils.toast('Адреса сохранены', 'success'); return; }
 
     const resetBtn = e.target.closest('[data-action="reset-numbering"]');
     if (resetBtn) {
