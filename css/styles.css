@@ -482,3 +482,30 @@ button {
   box-shadow: 0 1px 4px rgba(0,0,0,0.4);
   text-align: center;
 }
+
+/* Маршрутный вид точек (сборка тура) */
+.route-dot {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--bg-card); border: 2px solid var(--text-faint);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text-dim);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.route-dot.warn { border-color: var(--warning); }
+.route-pin {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(15,23,42,0.94);
+  border: 1px solid rgba(96,165,250,0.4);
+  border-radius: 18px;
+  padding: 3px 10px 3px 3px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.55);
+  white-space: nowrap;
+}
+.route-pin-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.route-pin-addr { font-size: 12px; font-weight: 600; color: #e2e8f0; }

@@ -6,7 +6,6 @@ const UIBuild = (() => {
     root.addEventListener('click', onClick);
     initMap();
     renderMarkers();
-    updateLabelZoom();
     locateMe();
   }
 
@@ -22,7 +21,6 @@ const UIBuild = (() => {
     map = L.map('build-map', { zoomControl: true, attributionControl: false }).setView(center, 13);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     polyline = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.85 }).addTo(map);
-    map.on('zoomend', updateLabelZoom);
   }
 
   function locateMe() {
@@ -39,14 +37,24 @@ const UIBuild = (() => {
   }
 
   function markerIcon(point) {
-    const cls = ['marker-dot'];
-    if (point.order != null) cls.push('numbered');
-    if (point.geoStatus === 'warn') cls.push('warn');
-    const label = point.order != null ? point.order : '?';
+    const numbered = point.order != null;
+    if (!numbered) {
+      // ещё не в маршруте — компактный кружок
+      const warn = point.geoStatus === 'warn' ? ' warn' : '';
+      return L.divIcon({
+        className: '',
+        html: `<div class="route-dot${warn}">?</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+    }
+    // в маршруте — пилюля [номер] адрес
+    const addr = Utils.escapeHtml(point.editedText.split(',')[0]);
     return L.divIcon({
       className: '',
-      html: `<div class="${cls.join(' ')}">${label}</div>`,
-      iconSize: [34, 34],
+      html: `<div class="route-pin"><span class="route-pin-num">${point.order}</span><span class="route-pin-addr">${addr}</span></div>`,
+      iconSize: null,
+      iconAnchor: [15, 15],
     });
   }
 
@@ -65,7 +73,6 @@ const UIBuild = (() => {
           App.saveTour();
           updatePolyline();
         });
-        m.bindTooltip(p.editedText.split(',')[0], { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
@@ -78,11 +85,6 @@ const UIBuild = (() => {
   function clearLegLabels() {
     legLabels.forEach((l) => map.removeLayer(l));
     legLabels = [];
-  }
-
-  function updateLabelZoom() {
-    if (!map) return;
-    map.getContainer().classList.toggle('hide-tips', map.getZoom() < 15);
   }
 
   function updateArrows() {
