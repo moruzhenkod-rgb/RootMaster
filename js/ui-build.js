@@ -58,19 +58,27 @@ const UIBuild = (() => {
       if (p.lat == null || p.lng == null) return;
       let m = markers[p.id];
       if (!m) {
-        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: true }).addTo(map);
-        m.on('click', () => onMarkerTap(p.id));
+        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: false }).addTo(map);
+        const pid = p.id;
+        m.on('dragstart', () => {
+          const pt = App.tour.points.find((x) => x.id === pid);
+          if (pt && pt.origLat == null) { pt.origLat = pt.lat; pt.origLng = pt.lng; }
+        });
         m.on('dragend', () => {
+          const pt = App.tour.points.find((x) => x.id === pid);
           const ll = m.getLatLng();
-          p.lat = ll.lat;
-          p.lng = ll.lng;
-          p.manualCoords = true;
+          pt.lat = ll.lat;
+          pt.lng = ll.lng;
+          pt.manualCoords = true;
           App.saveTour();
           updatePolyline();
+          if (m.dragging) m.dragging.disable(); // защита обратно
         });
+        m.on('add', () => bindMarker(m, pid));
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
+        bindMarker(m, p.id);
       }
     });
     updatePolyline();
@@ -170,6 +178,47 @@ const UIBuild = (() => {
 
   function currentMaxOrder() {
     return App.tour.points.reduce((max, p) => (p.order != null && p.order > max ? p.order : max), 0);
+  }
+
+  let clickCount = 0, clickTimer = null;
+
+  function bindMarker(m, pid) {
+    const el = m.getElement();
+    if (!el) return;
+    Utils.bindLongPress(el, () => enableDrag(m), () => handleTap(pid, m));
+  }
+
+  // короткий тап нумерует; три быстрых тапа возвращают точку на место
+  function handleTap(pid, m) {
+    clickCount++;
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+      const n = clickCount;
+      clickCount = 0;
+      if (n >= 3) resetMarker(pid, m);
+      else if (n === 1) onMarkerTap(pid);
+    }, 350);
+  }
+
+  // зажатие включает перетаскивание (защита от случайного сдвига)
+  function enableDrag(m) {
+    if (m.dragging) m.dragging.enable();
+    if (navigator.vibrate) navigator.vibrate(40);
+    Utils.toast('Точку можно двигать — потяните', 'success');
+  }
+
+  function resetMarker(pid, m) {
+    const p = App.tour.points.find((x) => x.id === pid);
+    if (!p) return;
+    if (p.origLat == null) { Utils.toast('Точка не перемещалась', ''); return; }
+    p.lat = p.origLat;
+    p.lng = p.origLng;
+    p.manualCoords = false;
+    m.setLatLng([p.lat, p.lng]);
+    if (m.dragging) m.dragging.disable();
+    App.saveTour();
+    updatePolyline();
+    Utils.toast('Точка возвращена на место', 'success');
   }
 
   function onMarkerTap(id) {
