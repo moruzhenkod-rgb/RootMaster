@@ -91,8 +91,9 @@ const UIScan = (() => {
         rest.push(part);
       }
     });
-    // адрес — часть с почтовым индексом (5 цифр) и буквами
-    const addrIdx = rest.findIndex((p) => /\d{5}/.test(p) && /[a-zA-Zа-яё]{3,}/i.test(p));
+    // адрес — часть с немецким индексом (РОВНО 5 цифр как отдельное слово) и буквами.
+    // \b\d{5}\b важно: у фирмы вроде «WM SE KST 511300» число из 6 цифр не считается индексом
+    const addrIdx = rest.findIndex((p) => /\b\d{5}\b/.test(p) && /[a-zA-Zа-яё]{3,}/i.test(p));
     if (addrIdx >= 0) res.address = rest.splice(addrIdx, 1)[0];
     // ключ без метки (короткий формат): часть только из цифр/пробелов/дефисов
     if (!res.key) {
@@ -103,6 +104,11 @@ const UIScan = (() => {
     if (!res.address && rest.length) res.address = rest.shift();
     // остаток — название фирмы
     if (rest.length) res.company = rest.join(', ');
+    // ключ ВСЕГДА с кодом города: если в ключе нет индекса — подставляем PLZ из адреса
+    const plz = (res.address.match(/\b(\d{5})\b/) || [])[1];
+    if (plz && res.key && !/^\d{5}/.test(res.key)) {
+      res.key = plz + ' ' + res.key;
+    }
     return res;
   }
 

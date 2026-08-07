@@ -123,8 +123,6 @@ const UIActive = (() => {
   }
 
   function bindDragReorder(container) {
-    let dragEl = null;
-
     function cardAfter(y) {
       const cards = [...container.querySelectorAll('.stop-card:not(.dragging)')];
       return cards.find((card) => {
@@ -133,22 +131,7 @@ const UIActive = (() => {
       }) || null;
     }
 
-    function onMove(e) {
-      if (!dragEl) return;
-      e.preventDefault();
-      const y = e.touches[0].clientY;
-      const after = cardAfter(y);
-      if (after == null) container.appendChild(dragEl);
-      else container.insertBefore(dragEl, after);
-    }
-
-    function onEnd() {
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-      if (!dragEl) return;
-      dragEl.classList.remove('dragging');
-      dragEl = null;
-      // новый порядок по позиции карточек → пересчитать order
+    function applyOrder() {
       const ids = [...container.querySelectorAll('.stop-card')].map((c) => c.dataset.id);
       ids.forEach((id, i) => {
         const pt = App.tour.points.find((p) => p.id === id);
@@ -160,15 +143,37 @@ const UIActive = (() => {
     }
 
     container.querySelectorAll('.drag-handle').forEach((handle) => {
-      handle.addEventListener('touchstart', (e) => {
+      let dragEl = null;
+
+      const onMove = (e) => {
+        if (!dragEl) return;
+        e.preventDefault();
+        const after = cardAfter(e.clientY);
+        if (after == null) container.appendChild(dragEl);
+        else container.insertBefore(dragEl, after);
+      };
+
+      const onUp = () => {
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        handle.removeEventListener('pointercancel', onUp);
+        if (!dragEl) return;
+        dragEl.classList.remove('dragging');
+        dragEl = null;
+        applyOrder();
+      };
+
+      handle.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
         dragEl = handle.closest('.stop-card');
         if (!dragEl) return;
         dragEl.classList.add('dragging');
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend', onEnd);
-      }, { passive: false });
+        try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+        handle.addEventListener('pointermove', onMove);
+        handle.addEventListener('pointerup', onUp);
+        handle.addEventListener('pointercancel', onUp);
+      });
     });
   }
 
