@@ -1,0 +1,51 @@
+// Клиент серверного API: авторизация и синхронизация туров
+const Api = (() => {
+  const TOKEN_KEY = 'rm_token';
+  const NAME_KEY = 'rm_display_name';
+  const USER_KEY = 'rm_username';
+
+  const token = () => localStorage.getItem(TOKEN_KEY);
+  const displayName = () => localStorage.getItem(NAME_KEY) || '';
+  const username = () => localStorage.getItem(USER_KEY) || '';
+  const isAuthed = () => !!token();
+
+  function setSession(data) {
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(NAME_KEY, data.displayName || '');
+    localStorage.setItem(USER_KEY, data.username || '');
+  }
+  function clearSession() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(NAME_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+
+  async function req(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    const t = token();
+    if (t) headers['Authorization'] = 'Bearer ' + t;
+    const res = await fetch('/api' + path, { ...opts, headers });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Ошибка сервера');
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  async function register(u, dn, pw) {
+    const data = await req('/register', { method: 'POST', body: JSON.stringify({ username: u, displayName: dn, password: pw }) });
+    setSession(data);
+    return data;
+  }
+  async function login(u, pw) {
+    const data = await req('/login', { method: 'POST', body: JSON.stringify({ username: u, password: pw }) });
+    setSession(data);
+    return data;
+  }
+  const getTours = () => req('/tours');
+  const putTours = (current, history) => req('/tours', { method: 'PUT', body: JSON.stringify({ current, history }) });
+
+  return { token, displayName, username, isAuthed, setSession, clearSession, register, login, getTours, putTours };
+})();

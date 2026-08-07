@@ -1,6 +1,7 @@
 // Minimal screen router — swaps template content into #app
 const Router = (() => {
   const screens = {
+    auth: UIAuth,
     home: UIHome,
     paste: UIPaste,
     scan: UIScan,

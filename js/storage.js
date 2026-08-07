@@ -4,9 +4,19 @@ const Storage = (() => {
   const KEY_HISTORY = 'rm_tour_history';
   const MAX_HISTORY = 30;
 
+  let syncTimer = null;
+  function syncToServer() {
+    if (typeof Api === 'undefined' || !Api.isAuthed()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      Api.putTours(loadCurrent(), loadHistory()).catch((e) => console.warn('sync failed', e));
+    }, 800);
+  }
+
   function saveCurrent(tour) {
     try {
       localStorage.setItem(KEY_CURRENT, JSON.stringify(tour));
+      syncToServer();
     } catch (e) {
       console.error('Save failed', e);
     }
@@ -23,6 +33,7 @@ const Storage = (() => {
 
   function clearCurrent() {
     localStorage.removeItem(KEY_CURRENT);
+    syncToServer();
   }
 
   // Called when a tour is finished or cancelled — appends a dated snapshot to history
@@ -35,6 +46,7 @@ const Storage = (() => {
         points: tour.points,
       });
       localStorage.setItem(KEY_HISTORY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+      syncToServer();
     } catch (e) {
       console.error('Archive failed', e);
     }

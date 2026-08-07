@@ -12,7 +12,42 @@ const App = (() => {
     if (tour) Storage.saveCurrent(tour);
   }
 
-  function init() {
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        reg.update();
+        setInterval(() => reg.update(), 60 * 1000);
+      }).catch((e) => console.warn('SW registration failed', e));
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    });
+  }
+
+  async function init() {
+    registerSW();
+
+    // не авторизован — показываем экран входа
+    if (!Api.isAuthed()) {
+      Router.show('auth');
+      return;
+    }
+
+    // подтягиваем туры профиля с сервера в локальную копию
+    try {
+      const data = await Api.getTours();
+      if (data.current) localStorage.setItem('rm_current_tour', JSON.stringify(data.current));
+      else localStorage.removeItem('rm_current_tour');
+      localStorage.setItem('rm_tour_history', JSON.stringify(data.history || []));
+    } catch (e) {
+      if (e.status === 401) { Api.clearSession(); Router.show('auth'); return; }
+      // сеть недоступна — продолжаем с локальной копией
+    }
+
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {
       tour = saved;
@@ -20,24 +55,14 @@ const App = (() => {
     } else {
       Router.show('home');
     }
+  }
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').then((reg) => {
-          // проверять обновление при старте и раз в минуту
-          reg.update();
-          setInterval(() => reg.update(), 60 * 1000);
-        }).catch((e) => console.warn('SW registration failed', e));
-
-        // как только новый service worker взял управление — один раз перезагрузить на свежую версию
-        let reloaded = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (reloaded) return;
-          reloaded = true;
-          window.location.reload();
-        });
-      });
-    }
+  function logout() {
+    Api.clearSession();
+    localStorage.removeItem('rm_current_tour');
+    localStorage.removeItem('rm_tour_history');
+    tour = null;
+    window.location.reload();
   }
 
   return {
@@ -46,6 +71,7 @@ const App = (() => {
     setTour,
     saveTour,
     init,
+    logout,
   };
 })();
 

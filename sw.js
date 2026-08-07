@@ -1,14 +1,16 @@
-const CACHE_NAME = 'routemaster-v23';
+const CACHE_NAME = 'routemaster-v24';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './css/styles.css',
   './js/utils.js',
+  './js/api.js',
   './js/storage.js',
   './js/geocode.js',
   './js/testdata.js',
   './js/ui-home.js',
+  './js/ui-auth.js',
   './js/ui-paste.js',
   './js/ui-scan.js',
   './js/ui-validate.js',

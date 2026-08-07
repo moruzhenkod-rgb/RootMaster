@@ -5,6 +5,9 @@ const UIHome = (() => {
     root = container;
     root.addEventListener('click', onClick);
 
+    const userEl = root.querySelector('#home-user');
+    if (userEl && typeof Api !== 'undefined') userEl.textContent = Api.displayName();
+
     const historyBtn = root.querySelector('[data-action="open-history"]');
     if (!Storage.hasHistory()) {
       historyBtn.disabled = true;
@@ -21,7 +24,10 @@ const UIHome = (() => {
     if (!btn) return;
     const action = btn.dataset.action;
 
-    if (action === 'paste-text') {
+    if (action === 'logout') {
+      App.logout();
+      return;
+    } else if (action === 'paste-text') {
       Router.show('paste');
     } else if (action === 'open-history') {
       if (!Storage.hasHistory()) {
