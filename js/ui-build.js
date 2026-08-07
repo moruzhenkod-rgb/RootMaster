@@ -63,7 +63,9 @@ const UIBuild = (() => {
           App.saveTour();
           updatePolyline();
         });
-        m.bindTooltip(p.editedText.split(',')[0], { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
+        const tipAddr = Utils.escapeHtml(p.editedText.split(',')[0]);
+        const tipHtml = p.company ? `<b>${Utils.escapeHtml(p.company)}</b><br>${tipAddr}` : tipAddr;
+        m.bindTooltip(tipHtml, { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
