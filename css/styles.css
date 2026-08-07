@@ -263,16 +263,18 @@ button {
 .marker-dot.numbered { background: var(--accent); border-color: #60a5fa; color: white; }
 /* подпись адреса над точкой */
 .addr-tip {
-  background: rgba(15,23,42,0.9);
+  background: rgba(15,23,42,0.88);
   color: #e2e8f0;
   border: none;
-  border-radius: 6px;
-  font-size: 11px;
+  border-radius: 5px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 2px 6px;
+  padding: 1px 5px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 .addr-tip::before { display: none; }
+/* при отдалённой карте подписи прячем, чтобы не было каши */
+.hide-tips .addr-tip { display: none !important; }
 .marker-dot.done { background: var(--success); border-color: #34d399; color: white; opacity: 0.55; }
 .marker-dot.skip { background: var(--bg-elevated); border: 2px dashed var(--text-faint); color: var(--text-faint); }
 .marker-dot.warn { border-color: var(--warning); }

@@ -6,6 +6,7 @@ const UIBuild = (() => {
     root.addEventListener('click', onClick);
     initMap();
     renderMarkers();
+    updateLabelZoom();
     locateMe();
   }
 
@@ -21,6 +22,7 @@ const UIBuild = (() => {
     map = L.map('build-map', { zoomControl: true, attributionControl: false }).setView(center, 13);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     polyline = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.85 }).addTo(map);
+    map.on('zoomend', updateLabelZoom);
   }
 
   function locateMe() {
@@ -76,6 +78,11 @@ const UIBuild = (() => {
   function clearLegLabels() {
     legLabels.forEach((l) => map.removeLayer(l));
     legLabels = [];
+  }
+
+  function updateLabelZoom() {
+    if (!map) return;
+    map.getContainer().classList.toggle('hide-tips', map.getZoom() < 15);
   }
 
   function updateArrows() {
