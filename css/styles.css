@@ -426,3 +426,10 @@ button {
   margin: 8px 0;
   letter-spacing: 0.5px;
 }
+
+/* Название фирмы */
+.stop-company, .addr-company { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
+.sheet-company { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+/* Посылки и вес */
+.stop-meta, .addr-meta { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.sheet-meta { font-size: 14px; color: #cbd5e1; margin: 6px 0; }

@@ -97,8 +97,10 @@ const UIActive = (() => {
       <div class="stop-card ${p.tourStatus === 'done' ? 'done' : ''} ${p.order == null ? 'off-route' : ''}" data-id="${p.id}">
         <div class="stop-num">${p.order != null ? p.order : '⚠'}</div>
         <div class="stop-body">
+          ${p.company ? `<div class="stop-company">${Utils.escapeHtml(p.company)}</div>` : ''}
           <div class="stop-addr">${Utils.escapeHtml(p.editedText)}</div>
           ${p.key ? `<div class="stop-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
+          ${p.parcels || p.weight ? `<div class="stop-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)} шт` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
           <div class="stop-status">${statusText(p)}</div>
         </div>
         <div class="stop-check" data-action="quick-done">${p.tourStatus === 'done' ? '✓' : ''}</div>
@@ -208,8 +210,10 @@ const UIActive = (() => {
     if (!p) return;
     const content = document.getElementById('sheet-content');
     content.innerHTML = `
+      ${p.company ? `<div class="sheet-company">${Utils.escapeHtml(p.company)}</div>` : ''}
       <div class="sheet-address">${Utils.escapeHtml(p.editedText)}</div>
       ${p.key ? `<div class="sheet-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
+      ${p.parcels || p.weight ? `<div class="sheet-meta">${p.parcels ? `📦 Посылок: ${Utils.escapeHtml(p.parcels)}` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ Вес: ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
       <div class="sheet-status">${statusText(p)}</div>
       <div class="sheet-actions">
         <button class="btn btn-primary" data-action="navigate">🧭 Поехали в Google Maps</button>

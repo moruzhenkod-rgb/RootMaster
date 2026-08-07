@@ -43,7 +43,9 @@ const UIValidate = (() => {
           <div class="addr-text">${Utils.escapeHtml(p.editedText)}</div>
           <div class="addr-status-badge">${statusLabel(p)}</div>
         </div>
+        ${p.company ? `<div class="addr-company">${Utils.escapeHtml(p.company)}</div>` : ''}
         ${p.key ? `<div class="addr-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
+        ${p.parcels || p.weight ? `<div class="addr-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)} шт` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
         ${p.foundAddress && p.geoStatus !== 'ok' ? `<div class="addr-found">📍 На карте нашлось: ${Utils.escapeHtml(p.foundAddress)}</div>` : ''}
         ${
           p.geoStatus !== 'ok'

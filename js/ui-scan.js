@@ -58,9 +58,9 @@ const UIScan = (() => {
     for (let i = 0; i < lines.length; i++) {
       if (cancelled) return;
       setProgress(`Проверено ${i} из ${lines.length} адресов`, i / lines.length);
-      const { address, key } = parseLine(lines[i]);
-      const geo = await Geocode.lookup(address);
-      points.push(buildPoint(address, key, geo));
+      const parsed = parseLine(lines[i]);
+      const geo = await Geocode.lookup(parsed.address);
+      points.push(buildPoint(parsed, geo));
     }
     if (cancelled) return;
 
@@ -73,26 +73,52 @@ const UIScan = (() => {
     Router.show(needsValidation ? 'validate' : 'build');
   }
 
-  // Формат строки: "Адрес — Ключ" (разделитель — длинное тире).
-  // Ключ указывается с кодом города, напр. "19061 0028".
+  // Формат (части через « — »), порядок полей свободный, распознаём по меткам:
+  //   Фирма — Адрес — Ключ: X — Посылок: N — Вес: Y
+  // Поддерживается и короткий вид: «Адрес — Ключ».
   function parseLine(line) {
-    const parts = line.split('—');
-    if (parts.length >= 2) {
-      return { address: parts[0].trim(), key: parts.slice(1).join('—').trim() };
+    const parts = line.split('—').map((s) => s.trim()).filter(Boolean);
+    const res = { company: '', address: '', key: '', parcels: '', weight: '' };
+    const rest = [];
+    parts.forEach((part) => {
+      if (/^(ключ|key)[\s:]/i.test(part)) {
+        res.key = part.replace(/^(ключ|key)\s*:?\s*/i, '').trim();
+      } else if (/^(посыл|пакет|packages?|parcels?)/i.test(part)) {
+        res.parcels = (part.match(/\d+/) || [''])[0];
+      } else if (/^(вес|weight|gewicht)/i.test(part)) {
+        res.weight = part.replace(/^(вес|weight|gewicht)\s*:?\s*/i, '').trim();
+      } else {
+        rest.push(part);
+      }
+    });
+    // адрес — часть с почтовым индексом (5 цифр) и буквами
+    const addrIdx = rest.findIndex((p) => /\d{5}/.test(p) && /[a-zA-Zа-яё]{3,}/i.test(p));
+    if (addrIdx >= 0) res.address = rest.splice(addrIdx, 1)[0];
+    // ключ без метки (короткий формат): часть только из цифр/пробелов/дефисов
+    if (!res.key) {
+      const keyIdx = rest.findIndex((p) => /^[\d\s-]+$/.test(p));
+      if (keyIdx >= 0) res.key = rest.splice(keyIdx, 1)[0].trim();
     }
-    return { address: line.trim(), key: '' };
+    // если адрес не определился — первая оставшаяся часть
+    if (!res.address && rest.length) res.address = rest.shift();
+    // остаток — название фирмы
+    if (rest.length) res.company = rest.join(', ');
+    return res;
   }
 
-  function buildPoint(address, key, geo) {
+  function buildPoint(parsed, geo) {
     let geoStatus = 'error';
     if (geo) {
       geoStatus = geo.confidence === 'low' ? 'warn' : 'ok';
     }
     return {
       id: Utils.uid(),
-      rawText: address,
-      editedText: address,
-      key: key || '',
+      rawText: parsed.address,
+      editedText: parsed.address,
+      company: parsed.company || '',
+      key: parsed.key || '',
+      parcels: parsed.parcels || '',
+      weight: parsed.weight || '',
       lat: geo ? geo.lat : null,
       lng: geo ? geo.lng : null,
       foundAddress: geo ? geo.displayName : null,
