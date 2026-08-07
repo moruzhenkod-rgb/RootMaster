@@ -553,13 +553,14 @@ button {
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15,23,42,0.92);
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,0.4);
   border-radius: 6px;
-  padding: 2px 7px;
+  padding: 3px 8px;
   white-space: nowrap;
   text-align: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
   pointer-events: none;
 }
-.mk-firm { display: block; color: #fff; font-weight: 700; font-size: 11px; }
-.mk-addr { display: block; color: #cbd5e1; font-size: 10px; }
+.mk-firm { display: block; color: #fde047; font-weight: 700; font-size: 11px; }
+.mk-addr { display: block; color: #e2e8f0; font-size: 10px; }
