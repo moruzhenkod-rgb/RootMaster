@@ -96,6 +96,8 @@ const UIActive = (() => {
 
   function statusText(p) {
     if (p.tourStatus === 'done') return 'Выполнено';
+    if (p.tourStatus === 'skip') return 'Не еду';
+    if (p.tourStatus === 'transferred') return 'Передано другому';
     return 'В пути';
   }
 
@@ -111,7 +113,6 @@ const UIActive = (() => {
           <div class="stop-status">${statusText(p)}</div>
         </div>
         <div class="stop-check" data-action="quick-done">${p.tourStatus === 'done' ? '✓' : ''}</div>
-        <div class="drag-handle" data-drag>≡</div>
       </div>`;
   }
 
@@ -129,65 +130,13 @@ const UIActive = (() => {
     });
   }
 
-  function bindDragReorder(container) {
-    function cardAfter(y) {
-      const cards = [...container.querySelectorAll('.stop-card:not(.dragging)')];
-      return cards.find((card) => {
-        const box = card.getBoundingClientRect();
-        return y < box.top + box.height / 2;
-      }) || null;
-    }
-
-    function applyOrder() {
-      const ids = [...container.querySelectorAll('.stop-card')].map((c) => c.dataset.id);
-      ids.forEach((id, i) => {
-        const pt = App.tour.points.find((p) => p.id === id);
-        if (pt) pt.order = i + 1;
-      });
-      App.saveTour();
-      renderMarkers();
-      renderList();
-    }
-
-    container.querySelectorAll('.drag-handle').forEach((handle) => {
-      let dragEl = null;
-
-      const onMove = (e) => {
-        if (!dragEl) return;
-        e.preventDefault();
-        const after = cardAfter(e.clientY);
-        if (after == null) container.appendChild(dragEl);
-        else container.insertBefore(dragEl, after);
-      };
-
-      const onUp = () => {
-        handle.removeEventListener('pointermove', onMove);
-        handle.removeEventListener('pointerup', onUp);
-        handle.removeEventListener('pointercancel', onUp);
-        if (!dragEl) return;
-        dragEl.classList.remove('dragging');
-        dragEl = null;
-        applyOrder();
-      };
-
-      handle.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dragEl = handle.closest('.stop-card');
-        if (!dragEl) return;
-        dragEl.classList.add('dragging');
-        try { handle.setPointerCapture(e.pointerId); } catch (_) {}
-        handle.addEventListener('pointermove', onMove);
-        handle.addEventListener('pointerup', onUp);
-        handle.addEventListener('pointercancel', onUp);
-      });
-    });
-  }
-
   function renderList() {
     const list = document.getElementById('active-list');
     const doneList = document.getElementById('active-done');
-    const pts = sortedPoints().filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
+    const cancelledList = document.getElementById('active-cancelled');
+    const all = sortedPoints();
+    const cancelled = all.filter((p) => p.tourStatus === 'skip' || p.tourStatus === 'transferred');
+    const pts = all.filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
     const pending = pts.filter((p) => p.tourStatus !== 'done');
     const done = pts.filter((p) => p.tourStatus === 'done');
     const offRoute = pending.filter((p) => p.order == null);
@@ -203,7 +152,6 @@ const UIActive = (() => {
     if (!pending.length) html = '<div class="empty-hint">Все точки выполнены 🎉</div>';
     list.innerHTML = html;
     bindCards(list);
-    bindDragReorder(list);
 
     // завершённые — отдельная вкладка
     if (doneList) {
@@ -214,8 +162,17 @@ const UIActive = (() => {
     }
 
     // счётчик на вкладке «Завершённые»
+    if (cancelledList) {
+      cancelledList.innerHTML = cancelled.length
+        ? cancelled.map(stopCardHtml).join('')
+        : '<div class="empty-hint">Нет отменённых точек</div>';
+      bindCards(cancelledList);
+    }
+
     const doneTab = document.querySelector('.screen-active .switch-btn[data-view="done"]');
     if (doneTab) doneTab.textContent = done.length ? `✓ Готово (${done.length})` : '✓ Готово';
+    const cancTab = document.querySelector('.screen-active .switch-btn[data-view="cancelled"]');
+    if (cancTab) cancTab.textContent = cancelled.length ? `✕ Отменённые (${cancelled.length})` : '✕ Отменённые';
 
     updateCounter();
     updateEndButton();
@@ -366,6 +323,8 @@ const UIActive = (() => {
       document.getElementById('active-list').classList.toggle('hidden', currentView !== 'list');
       const doneEl = document.getElementById('active-done');
       if (doneEl) doneEl.classList.toggle('hidden', currentView !== 'done');
+      const cancEl = document.getElementById('active-cancelled');
+      if (cancEl) cancEl.classList.toggle('hidden', currentView !== 'cancelled');
       if (currentView === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
     }
   }
