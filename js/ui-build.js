@@ -1,5 +1,5 @@
 const UIBuild = (() => {
-  let root, map, markers = {}, polyline, meMarker;
+  let root, map, markers = {}, polyline, meMarker, legLabels = [];
 
   function mount(container) {
     root = container;
@@ -73,12 +73,60 @@ const UIBuild = (() => {
     updateButton();
   }
 
-  function updatePolyline() {
+  function clearLegLabels() {
+    legLabels.forEach((l) => map.removeLayer(l));
+    legLabels = [];
+  }
+
+  function fmtDuration(sec) {
+    const m = Math.round(sec / 60);
+    if (m < 60) return `${m} мин`;
+    const h = Math.floor(m / 60);
+    return `${h} ч ${m % 60} мин`;
+  }
+
+  async function updatePolyline() {
     const numbered = App.tour.points
       .filter((p) => p.order != null)
-      .sort((a, b) => a.order - b.order)
-      .map((p) => [p.lat, p.lng]);
-    polyline.setLatLngs(numbered);
+      .sort((a, b) => a.order - b.order);
+    clearLegLabels();
+    if (numbered.length < 2) {
+      polyline.setLatLngs(numbered.map((p) => [p.lat, p.lng]));
+      return;
+    }
+    // прямые линии сразу (мгновенный отклик), маршрут по дорогам подгрузим следом
+    polyline.setLatLngs(numbered.map((p) => [p.lat, p.lng]));
+
+    const coords = numbered.map((p) => `${p.lng},${p.lat}`).join(';');
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code !== 'Ok' || !data.routes || !data.routes[0]) return;
+      const route = data.routes[0];
+      // линия по дорогам
+      polyline.setLatLngs(route.geometry.coordinates.map(([lng, lat]) => [lat, lng]));
+      // подписи времени в пути на каждом участке
+      (route.legs || []).forEach((leg, i) => {
+        const a = numbered[i];
+        const b = numbered[i + 1];
+        if (!a || !b) return;
+        const mid = [(a.lat + b.lat) / 2, (a.lng + b.lng) / 2];
+        const label = L.marker(mid, {
+          icon: L.divIcon({
+            className: '',
+            html: `<div class="leg-label">${fmtDuration(leg.duration)}</div>`,
+            iconSize: [56, 20],
+          }),
+          interactive: false,
+          keyboard: false,
+        }).addTo(map);
+        legLabels.push(label);
+      });
+    } catch (e) {
+      // нет сети/роутинга — остаются прямые линии
+      console.warn('OSRM routing failed', e);
+    }
   }
 
   function updateButton() {

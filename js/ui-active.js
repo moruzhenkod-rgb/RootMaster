@@ -43,14 +43,17 @@ const UIActive = (() => {
 
   function locateMe() {
     if (!navigator.geolocation) return;
+    let centered = false;
     navigator.geolocation.watchPosition(
       (pos) => {
+        const ll = [pos.coords.latitude, pos.coords.longitude];
         const icon = L.divIcon({ className: '', html: '<div class="marker-me"></div>', iconSize: [20, 20] });
         if (meMarker) map.removeLayer(meMarker);
-        meMarker = L.marker([pos.coords.latitude, pos.coords.longitude], { icon, zIndexOffset: 1000 }).addTo(map);
+        meMarker = L.marker(ll, { icon, zIndexOffset: 1000 }).addTo(map);
+        if (!centered) { centered = true; if (map) map.setView(ll, 14); }
       },
       () => {},
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, maximumAge: 5000 }
     );
   }
 
@@ -66,7 +69,7 @@ const UIActive = (() => {
   function renderMarkers() {
     App.tour.points.forEach((p) => {
       if (p.lat == null || p.lng == null) return;
-      if (p.tourStatus === 'skip' || p.tourStatus === 'transferred') {
+      if (p.tourStatus === 'skip' || p.tourStatus === 'transferred' || p.tourStatus === 'done') {
         if (markers[p.id]) { map.removeLayer(markers[p.id]); delete markers[p.id]; }
         return;
       }

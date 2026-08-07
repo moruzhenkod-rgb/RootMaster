@@ -455,3 +455,16 @@ button {
 }
 /* в «Завершённых» перетаскивание не нужно */
 #active-done .drag-handle { display: none; }
+
+/* Подпись времени в пути на участке маршрута */
+.leg-label {
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  text-align: center;
+}
