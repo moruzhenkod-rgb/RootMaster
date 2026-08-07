@@ -104,6 +104,7 @@ const UIActive = (() => {
           <div class="stop-status">${statusText(p)}</div>
         </div>
         <div class="stop-check" data-action="quick-done">${p.tourStatus === 'done' ? '✓' : ''}</div>
+        <div class="drag-handle" data-drag>≡</div>
       </div>`;
   }
 
@@ -118,6 +119,56 @@ const UIActive = (() => {
           openSheet(id);
         }
       });
+    });
+  }
+
+  function bindDragReorder(container) {
+    let dragEl = null;
+
+    function cardAfter(y) {
+      const cards = [...container.querySelectorAll('.stop-card:not(.dragging)')];
+      return cards.find((card) => {
+        const box = card.getBoundingClientRect();
+        return y < box.top + box.height / 2;
+      }) || null;
+    }
+
+    function onMove(e) {
+      if (!dragEl) return;
+      e.preventDefault();
+      const y = e.touches[0].clientY;
+      const after = cardAfter(y);
+      if (after == null) container.appendChild(dragEl);
+      else container.insertBefore(dragEl, after);
+    }
+
+    function onEnd() {
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      if (!dragEl) return;
+      dragEl.classList.remove('dragging');
+      dragEl = null;
+      // новый порядок по позиции карточек → пересчитать order
+      const ids = [...container.querySelectorAll('.stop-card')].map((c) => c.dataset.id);
+      ids.forEach((id, i) => {
+        const pt = App.tour.points.find((p) => p.id === id);
+        if (pt) pt.order = i + 1;
+      });
+      App.saveTour();
+      renderMarkers();
+      renderList();
+    }
+
+    container.querySelectorAll('.drag-handle').forEach((handle) => {
+      handle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragEl = handle.closest('.stop-card');
+        if (!dragEl) return;
+        dragEl.classList.add('dragging');
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+      }, { passive: false });
     });
   }
 
@@ -140,6 +191,7 @@ const UIActive = (() => {
     if (!pending.length) html = '<div class="empty-hint">Все точки выполнены 🎉</div>';
     list.innerHTML = html;
     bindCards(list);
+    bindDragReorder(list);
 
     // завершённые — отдельная вкладка
     if (doneList) {

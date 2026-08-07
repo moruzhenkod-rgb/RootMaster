@@ -433,3 +433,25 @@ button {
 /* Посылки и вес */
 .stop-meta, .addr-meta { font-size: 12px; color: #94a3b8; margin-top: 4px; }
 .sheet-meta { font-size: 14px; color: #cbd5e1; margin: 6px 0; }
+
+/* Ручка перетаскивания точек */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  align-self: stretch;
+  font-size: 22px;
+  color: #64748b;
+  cursor: grab;
+  touch-action: none;   /* чтобы жест таскал карточку, а не скроллил список */
+  user-select: none;
+}
+.drag-handle:active { cursor: grabbing; color: #38bdf8; }
+.stop-card.dragging {
+  opacity: 0.85;
+  background: #1e293b;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+/* в «Завершённых» перетаскивание не нужно */
+#active-done .drag-handle { display: none; }
