@@ -53,8 +53,16 @@ const UIBuild = (() => {
       if (p.lat == null || p.lng == null) return;
       let m = markers[p.id];
       if (!m) {
-        m = L.marker([p.lat, p.lng], { icon: markerIcon(p) }).addTo(map);
+        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: true }).addTo(map);
         m.on('click', () => onMarkerTap(p.id));
+        m.on('dragend', () => {
+          const ll = m.getLatLng();
+          p.lat = ll.lat;
+          p.lng = ll.lng;
+          p.manualCoords = true;
+          App.saveTour();
+          updatePolyline();
+        });
         m.bindTooltip(p.editedText, { direction: 'top' });
         markers[p.id] = m;
       } else {

@@ -72,8 +72,15 @@ const UIActive = (() => {
       }
       let m = markers[p.id];
       if (!m) {
-        m = L.marker([p.lat, p.lng], { icon: markerIcon(p) }).addTo(map);
-        const el = m.getElement && m.getElement();
+        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: true }).addTo(map);
+        m.on('dragend', () => {
+          const ll = m.getLatLng();
+          p.lat = ll.lat;
+          p.lng = ll.lng;
+          p.manualCoords = true;
+          App.saveTour();
+          Utils.toast('Точка перемещена', 'success');
+        });
         m.on('add', () => {
           const domEl = m.getElement();
           if (domEl) {
@@ -295,8 +302,12 @@ const UIActive = (() => {
   }
 
   function navigateTo(p) {
+    // ведём по координатам маркера (учитывает ручную коррекцию), иначе по тексту адреса
+    const dest = (p.lat != null && p.lng != null)
+      ? `${p.lat},${p.lng}`
+      : encodeURIComponent(p.editedText);
     const url =
-      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.editedText)}` +
+      `https://www.google.com/maps/dir/?api=1&destination=${dest}` +
       `&travelmode=driving`;
     const link = document.createElement('a');
     link.href = url;
