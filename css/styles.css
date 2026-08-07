@@ -542,5 +542,6 @@ button {
 .home-logout:active { background: var(--bg-elevated); }
 .app-header { display: flex; align-items: center; }
 
-/* Фирма в подписи над точкой */
-.addr-tip b { color: #fff; font-weight: 700; }
+/* Фирма и адрес в подписи над точкой */
+.tip-firm { display: block; color: #fff; font-weight: 700; font-size: 11px; }
+.tip-addr { display: block; color: #cbd5e1; font-size: 10px; }

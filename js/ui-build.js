@@ -64,7 +64,7 @@ const UIBuild = (() => {
           updatePolyline();
         });
         const tipAddr = Utils.escapeHtml(p.editedText.split(',')[0]);
-        const tipHtml = p.company ? `<b>${Utils.escapeHtml(p.company)}</b><br>${tipAddr}` : tipAddr;
+        const tipHtml = p.company ? `<span class="tip-firm">${Utils.escapeHtml(p.company)}</span><span class="tip-addr">${tipAddr}</span>` : tipAddr;
         m.bindTooltip(tipHtml, { permanent: true, direction: 'top', className: 'addr-tip', offset: [0, -16] });
         markers[p.id] = m;
       } else {
