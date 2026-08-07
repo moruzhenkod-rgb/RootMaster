@@ -104,14 +104,17 @@ const UIBuild = (() => {
   }
 
   async function updatePolyline() {
-    const numbered = App.tour.points
+    const all = App.tour.points
       .filter((p) => p.order != null)
       .sort((a, b) => a.order - b.order);
     clearLegLabels();
-    if (numbered.length < 2) {
-      polyline.setLatLngs(numbered.map((p) => [p.lat, p.lng]));
+    if (all.length < 2) {
+      polyline.setLatLngs(all.map((p) => [p.lat, p.lng]));
+      if (arrows) { map.removeLayer(arrows); arrows = null; }
       return;
     }
+    // показываем маршрут ТОЛЬКО между двумя последними выбранными точками — без каши
+    const numbered = all.slice(-2);
     // прямые линии сразу (мгновенный отклик), маршрут по дорогам подгрузим следом
     polyline.setLatLngs(numbered.map((p) => [p.lat, p.lng]));
     updateArrows();
