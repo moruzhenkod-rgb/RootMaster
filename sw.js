@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v9';
+const CACHE_NAME = 'routemaster-v11';
 const APP_SHELL = [
   './',
   './index.html',
@@ -53,12 +53,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for same-origin app shell
+  // Same-origin app shell — stale-while-revalidate:
+  // отдаём из кеша сразу (быстро + оффлайн), а в фоне тянем свежую версию и обновляем кеш
   event.respondWith(
-    caches.match(event.request).then(
-      (cached) =>
-        cached ||
-        fetch(event.request).catch(() => new Response('', { status: 504, statusText: 'offline' }))
-    )
+    caches.match(event.request).then((cached) => {
+      const network = fetch(event.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
+          return res;
+        })
+        .catch(() => cached || new Response('', { status: 504, statusText: 'offline' }));
+      return cached || network;
+    })
   );
 });

@@ -23,7 +23,19 @@ const App = (() => {
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW registration failed', e));
+        navigator.serviceWorker.register('sw.js').then((reg) => {
+          // проверять обновление при старте и раз в минуту
+          reg.update();
+          setInterval(() => reg.update(), 60 * 1000);
+        }).catch((e) => console.warn('SW registration failed', e));
+
+        // как только новый service worker взял управление — один раз перезагрузить на свежую версию
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloaded) return;
+          reloaded = true;
+          window.location.reload();
+        });
       });
     }
   }
