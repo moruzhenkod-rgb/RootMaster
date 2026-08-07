@@ -27,6 +27,9 @@ const UIHome = (() => {
     if (action === 'logout') {
       App.logout();
       return;
+    } else if (action === 'open-clients') {
+      Router.show('clients');
+      return;
     } else if (action === 'paste-text') {
       Router.show('paste');
     } else if (action === 'open-history') {

@@ -3,6 +3,7 @@ const Router = (() => {
   const screens = {
     auth: UIAuth,
     home: UIHome,
+    clients: UIClients,
     paste: UIPaste,
     scan: UIScan,
     validate: UIValidate,

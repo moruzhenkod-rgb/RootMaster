@@ -48,6 +48,12 @@ const App = (() => {
       // сеть недоступна — продолжаем с локальной копией
     }
 
+    // подтягиваем базу клиентов (для автозамены и предложений)
+    try {
+      const cl = await Api.getClients();
+      localStorage.setItem('rm_clients', JSON.stringify(cl.clients || []));
+    } catch (e) { /* не критично */ }
+
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {
       tour = saved;

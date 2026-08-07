@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v33';
+const CACHE_NAME = 'routemaster-v34';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const APP_SHELL = [
   './js/testdata.js',
   './js/ui-home.js',
   './js/ui-auth.js',
+  './js/ui-clients.js',
   './js/ui-paste.js',
   './js/ui-scan.js',
   './js/ui-validate.js',
