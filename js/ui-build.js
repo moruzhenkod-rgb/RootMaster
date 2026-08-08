@@ -43,8 +43,7 @@ const UIBuild = (() => {
     const label = point.order != null ? point.order : '?';
     const firm = point.company ? `<span class="mk-firm">${Utils.escapeHtml(point.company)}</span>` : '';
     const addr = Utils.escapeHtml(point.editedText.split(',')[0]);
-    const key = point.key ? `<span class="mk-key">🔑 ${Utils.escapeHtml(point.key)}</span>` : '';
-    const labelBox = `<div class="mk-label">${firm}<span class="mk-addr">${addr}</span>${key}</div>`;
+    const labelBox = `<div class="mk-label">${firm}<span class="mk-addr">${addr}</span></div>`;
     return L.divIcon({
       className: 'mk-icon',
       html: `${labelBox}<div class="${cls.join(' ')}">${label}</div>`,
@@ -119,16 +118,15 @@ const UIBuild = (() => {
       .filter((p) => p.order != null)
       .sort((a, b) => a.order - b.order);
     clearLegLabels();
+    if (arrows) { map.removeLayer(arrows); arrows = null; }
     if (all.length < 2) {
       polyline.setLatLngs(all.map((p) => [p.lat, p.lng]));
-      if (arrows) { map.removeLayer(arrows); arrows = null; }
       return;
     }
     // показываем маршрут ТОЛЬКО между двумя последними выбранными точками — без каши
     const numbered = all.slice(-2);
     // прямые линии сразу (мгновенный отклик), маршрут по дорогам подгрузим следом
     polyline.setLatLngs(numbered.map((p) => [p.lat, p.lng]));
-    updateArrows();
 
     const coords = numbered.map((p) => `${p.lng},${p.lat}`).join(';');
     const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
@@ -139,7 +137,6 @@ const UIBuild = (() => {
       const route = data.routes[0];
       // линия по дорогам
       polyline.setLatLngs(route.geometry.coordinates.map(([lng, lat]) => [lat, lng]));
-      updateArrows();
       // подписи времени в пути на каждом участке
       (route.legs || []).forEach((leg, i) => {
         const a = numbered[i];
