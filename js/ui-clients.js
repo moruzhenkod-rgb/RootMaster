@@ -74,6 +74,7 @@ const UIClients = (() => {
       lng: c.lng,
       foundAddress: c.address,
       matchedHouse: true,
+      manualCoords: !!c.manual,
       geoStatus: (c.lat != null && c.lng != null) ? 'ok' : 'error',
       order: null,
       tourStatus: 'pending',

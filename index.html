@@ -68,7 +68,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v3.6</footer>
+    <footer class="home-footer">RouteMaster PWA · v3.7</footer>
   </div>
 </template>
 
@@ -128,6 +128,11 @@
     </header>
     <div id="build-map" class="map-full"></div>
     <div class="build-hint">Коснитесь точек по порядку следования</div>
+    <div id="move-confirm" class="move-confirm hidden">
+      <span class="move-confirm-text">Точка перемещена</span>
+      <button class="btn btn-success" data-action="confirm-move">✓ Подтвердить</button>
+      <button class="btn btn-ghost" data-action="cancel-move">Отменить</button>
+    </div>
     <footer class="sticky-footer">
       <button class="btn btn-primary btn-large" id="btn-load-route" data-action="load-route" disabled>
         Загрузить RouteMaster

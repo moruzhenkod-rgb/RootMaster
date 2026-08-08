@@ -73,7 +73,9 @@ const UIScan = (() => {
       } else {
         geo = await Geocode.lookup(parsed.address);
       }
-      points.push(buildPoint(parsed, geo));
+      const pt = buildPoint(parsed, geo);
+      if (known && known.manual) pt.manualCoords = true; // закреплённая позиция клиента
+      points.push(pt);
     }
     if (cancelled) return;
 

@@ -62,16 +62,17 @@ const UIBuild = (() => {
         const pid = p.id;
         m.on('dragstart', () => {
           const pt = App.tour.points.find((x) => x.id === pid);
-          if (pt && pt.origLat == null) { pt.origLat = pt.lat; pt.origLng = pt.lng; }
+          if (!pt) return;
+          if (pt.origLat == null) { pt.origLat = pt.lat; pt.origLng = pt.lng; } // самое первое (для тройного тапа)
+          pt._preLat = pt.lat; pt._preLng = pt.lng; // позиция до этого перемещения (для отмены)
         });
         m.on('dragend', () => {
           const pt = App.tour.points.find((x) => x.id === pid);
           const ll = m.getLatLng();
           pt.lat = ll.lat;
           pt.lng = ll.lng;
-          pt.manualCoords = true;
-          App.saveTour();
           updatePolyline();
+          showMoveConfirm(pt, m); // подтвердить / отменить
         });
         m.on('click', () => handleTap(pid, m));
         markers[p.id] = m;
@@ -205,6 +206,36 @@ const UIBuild = (() => {
     Utils.toast('Точка возвращена на место', 'success');
   }
 
+  let pendingMove = null;
+  function showMoveConfirm(pt, m) {
+    pendingMove = { pt, m };
+    const el = document.getElementById('move-confirm');
+    if (el) el.classList.remove('hidden');
+  }
+  function hideMoveConfirm() {
+    pendingMove = null;
+    const el = document.getElementById('move-confirm');
+    if (el) el.classList.add('hidden');
+  }
+  function confirmMove() {
+    if (!pendingMove) return;
+    pendingMove.pt.manualCoords = true;
+    App.saveTour();
+    Utils.toast('Точка закреплена за клиентом', 'success');
+    hideMoveConfirm();
+  }
+  function cancelMove() {
+    if (!pendingMove) return;
+    const { pt, m } = pendingMove;
+    pt.lat = pt._preLat;
+    pt.lng = pt._preLng;
+    m.setLatLng([pt.lat, pt.lng]);
+    updatePolyline();
+    App.saveTour();
+    Utils.toast('Возвращено на место', '');
+    hideMoveConfirm();
+  }
+
   function onMarkerTap(id) {
     const point = App.tour.points.find((p) => p.id === id);
     if (!point) return;
@@ -226,6 +257,9 @@ const UIBuild = (() => {
   }
 
   function onClick(e) {
+    if (e.target.closest('[data-action="confirm-move"]')) { confirmMove(); return; }
+    if (e.target.closest('[data-action="cancel-move"]')) { cancelMove(); return; }
+
     const backBtn = e.target.closest('[data-action="back-validate"]');
     if (backBtn) { Router.show('validate'); return; }
 
