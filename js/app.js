@@ -39,7 +39,7 @@ const App = (() => {
     tour.points.forEach((p) => {
       const c = byAddr[norm(p.editedText)];
       if (!c) return;
-      if (!p.cell && c.cell) { p.cell = c.cell; changed = true; }
+      if ((c.cell || '') !== (p.cell || '')) { p.cell = c.cell || ''; changed = true; } // синхронизируем ящик (в т.ч. чистим старый формат)
       if (!p.key && c.key) { p.key = c.key; changed = true; }
       if (!p.company && c.company) { p.company = c.company; changed = true; }
       if (!p.manualCoords && c.manual && c.lat != null && c.lng != null) {
@@ -79,7 +79,8 @@ const App = (() => {
     if (saved && saved.points && saved.points.length) {
       tour = saved;
       try { enrichFromClients(); } catch (e) { console.warn('enrich failed', e); }
-      Router.show(saved.stage || 'home');
+      // тур загружен (в работе) → сразу список адресов; недозавершённый — в меню (данные не теряются)
+      Router.show(saved.stage === 'active' ? 'active' : 'home');
     } else {
       Router.show('home');
     }
