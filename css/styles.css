@@ -607,10 +607,28 @@ button {
   flex-direction: column;
   padding-bottom: 0;
 }
+#bottom-sheet.tall #sheet-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sheet-close {
+  align-self: flex-end;
+  background: var(--bg-elevated);
+  border: 1px solid var(--text-faint);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
 .sheet-map-wrap {
   position: relative;
   flex: 1;
-  min-height: 300px;
+  min-height: 0;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -640,7 +658,7 @@ button {
 .sheet-info .sheet-company { font-size: 14px; }
 .sheet-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   padding: 6px 0 8px;
 }

@@ -235,9 +235,10 @@ const UIActive = (() => {
     const done = p.tourStatus === 'done';
     // адрес для карты: координаты, если позиция закреплена вручную, иначе текст адреса
     const q = (p.manualCoords && p.lat != null && p.lng != null) ? `${p.lat},${p.lng}` : p.editedText;
-    const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=16&output=embed`;
+    const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=17&t=k&output=embed`;
     const content = document.getElementById('sheet-content');
     content.innerHTML = `
+      <button class="sheet-close" data-action="close-sheet">✕ Закрыть</button>
       <div class="sheet-map-wrap">
         <iframe class="sheet-gmap" src="${mapUrl}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         <div class="sheet-map-overlay" data-action="open-gmap">🧭 Открыть в Google Maps</div>
@@ -252,22 +253,16 @@ const UIActive = (() => {
         <button class="sheet-sq" data-action="navigate"><span>🧭</span><small>Навигация</small></button>
         <button class="sheet-sq ${done ? '' : 'ok'}" data-action="toggle-done"><span>${done ? '↺' : '✓'}</span><small>${done ? 'Вернуть' : 'Готово'}</small></button>
         <button class="sheet-sq" data-action="open-context"><span>⋯</span><small>Статус</small></button>
-        <button class="sheet-sq" data-action="set-cell"><span>🗄</span><small>Ячейка</small></button>
       </div>
     `;
     content.querySelector('[data-action="navigate"]').addEventListener('click', () => navigateTo(p));
     const ov = content.querySelector('[data-action="open-gmap"]');
     if (ov) ov.addEventListener('click', () => navigateTo(p));
+    const cl = content.querySelector('[data-action="close-sheet"]');
+    if (cl) cl.addEventListener('click', () => closeSheet());
     content.querySelector('[data-action="toggle-done"]').addEventListener('click', () => { toggleDone(id); closeSheet(); });
     content.querySelector('[data-action="open-context"]').addEventListener('click', () => { closeSheet(); openContextMenu(id); });
-    content.querySelector('[data-action="set-cell"]').addEventListener('click', () => {
-      const v = window.prompt('Ячейка, где лежит ключ' + (p.company ? ' (' + p.company + ')' : ''), p.cell || '');
-      if (v == null) return;
-      p.cell = v.trim();
-      App.saveTour();
-      closeSheet();
-      openSheet(id);
-    });
+
     document.getElementById('bottom-sheet-overlay').classList.remove('hidden');
     document.getElementById('bottom-sheet').classList.add('tall');
   }
