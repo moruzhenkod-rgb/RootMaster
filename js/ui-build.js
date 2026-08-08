@@ -282,15 +282,23 @@ const UIBuild = (() => {
     if (v == null) return;
     const t = String(v).trim();
     if (t === '') {
+      // убрать номер у точки и уплотнить остальные без дыр
       p.order = null;
+      const rest = App.tour.points.filter((x) => x.order != null).sort((a, b) => a.order - b.order);
+      rest.forEach((x, i) => { x.order = i + 1; });
     } else {
-      const num = parseInt(t, 10);
+      let num = parseInt(t, 10);
       if (isNaN(num) || num < 1) { Utils.toast('Введите число больше 0', ''); return; }
-      p.order = num;
+      // вставляем точку на позицию num, остальные сдвигаются; сквозная перенумерация без дублей
+      p.order = null;
+      const rest = App.tour.points.filter((x) => x.id !== pid && x.order != null).sort((a, b) => a.order - b.order);
+      if (num > rest.length + 1) num = rest.length + 1;
+      rest.splice(num - 1, 0, p);
+      rest.forEach((x, i) => { x.order = i + 1; });
     }
     App.saveTour();
     renderMarkers();
-    Utils.toast('Номер задан', 'success');
+    Utils.toast('Порядок обновлён', 'success');
   }
 
   function onMarkerTap(id) {
