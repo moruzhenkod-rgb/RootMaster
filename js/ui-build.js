@@ -113,6 +113,25 @@ const UIBuild = (() => {
     return `${h} ч ${m % 60} мин`;
   }
 
+  async function autoRoute() {
+    const pts = App.tour.points.filter((p) => p.lat != null && p.lng != null);
+    if (pts.length < 2) { Utils.toast('Нужно минимум 2 точки на карте', ''); return; }
+    Utils.toast('Строю оптимальный маршрут…', '');
+    const coords = pts.map((p) => `${p.lng},${p.lat}`).join(';');
+    const url = `https://router.project-osrm.org/trip/v1/driving/${coords}?source=first&roundtrip=false`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code !== 'Ok' || !data.waypoints) { Utils.toast('Не удалось построить маршрут', 'error'); return; }
+      data.waypoints.forEach((wp, i) => { pts[i].order = wp.waypoint_index + 1; });
+      App.saveTour();
+      renderMarkers();
+      Utils.toast('Маршрут построен — проверь порядок', 'success');
+    } catch (e) {
+      Utils.toast('Нет связи с сервисом маршрутов', 'error');
+    }
+  }
+
   async function updatePolyline() {
     const all = App.tour.points
       .filter((p) => p.order != null)
@@ -254,6 +273,7 @@ const UIBuild = (() => {
   }
 
   function onClick(e) {
+    if (e.target.closest('[data-action="auto-route"]')) { autoRoute(); return; }
     if (e.target.closest('[data-action="confirm-move"]')) { confirmMove(); return; }
     if (e.target.closest('[data-action="cancel-move"]')) { cancelMove(); return; }
 

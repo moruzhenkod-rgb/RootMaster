@@ -673,3 +673,15 @@ button {
 .sheet-sq.ok { background: var(--success); border-color: var(--success); }
 .sheet-sq.ok small, .sheet-sq.ok span { color: #fff; }
 .sheet-cell { font-size: 13px; color: #a78bfa; font-weight: 700; }
+
+/* Кнопка авто-построения маршрута */
+.btn-auto-route {
+  position: absolute;
+  left: 12px; right: 12px; bottom: 84px;
+  z-index: 600;
+  background: #7c3aed; color: #fff;
+  border: none; border-radius: 12px;
+  padding: 12px; font-size: 14px; font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
