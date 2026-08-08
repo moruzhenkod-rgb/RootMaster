@@ -599,3 +599,36 @@ button {
 .move-confirm.hidden { display: none; }
 .move-confirm-text { flex: 1; font-size: 13px; color: #e2e8f0; font-weight: 600; }
 .move-confirm .btn { padding: 8px 12px; font-size: 13px; width: auto; }
+
+/* Экран точки со встроенной Google картой */
+#bottom-sheet.tall {
+  height: 82vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+.sheet-gmap {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  min-height: 200px;
+  background: var(--bg-elevated);
+}
+.sheet-info { padding: 10px 4px 4px; }
+.sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 0 12px;
+}
+.sheet-sq {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 4px;
+  background: var(--bg-elevated); border: 1px solid var(--text-faint);
+  border-radius: 12px; color: var(--text); cursor: pointer;
+}
+.sheet-sq span { font-size: 22px; }
+.sheet-sq small { font-size: 11px; color: var(--text-dim); }
+.sheet-sq.ok { background: var(--success); border-color: var(--success); }
+.sheet-sq.ok small, .sheet-sq.ok span { color: #fff; }

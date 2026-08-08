@@ -232,33 +232,30 @@ const UIActive = (() => {
     activePointId = id;
     const p = App.tour.points.find((pt) => pt.id === id);
     if (!p) return;
+    const done = p.tourStatus === 'done';
+    // адрес для карты: координаты, если позиция закреплена вручную, иначе текст адреса
+    const q = (p.manualCoords && p.lat != null && p.lng != null) ? `${p.lat},${p.lng}` : p.editedText;
+    const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=16&output=embed`;
     const content = document.getElementById('sheet-content');
     content.innerHTML = `
-      ${p.company ? `<div class="sheet-company">${Utils.escapeHtml(p.company)}</div>` : ''}
-      <div class="sheet-address">${Utils.escapeHtml(p.editedText)}</div>
-      ${p.key ? `<div class="sheet-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
-      ${p.parcels || p.weight ? `<div class="sheet-meta">${p.parcels ? `📦 Посылок: ${Utils.escapeHtml(p.parcels)}` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ Вес: ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
-      <div class="sheet-status">${statusText(p)}</div>
-      <div class="sheet-actions">
-        <button class="btn btn-primary" data-action="navigate">🧭 Поехали в Google Maps</button>
-        <button class="btn ${p.tourStatus === 'done' ? 'btn-secondary' : 'btn-success'}" data-action="toggle-done">
-          ${p.tourStatus === 'done' ? '↺ Вернуть в работу' : '✓ Точка выполнена'}
-        </button>
-        <button class="btn btn-ghost" data-action="open-context">⋯ Статус точки</button>
+      <iframe class="sheet-gmap" src="${mapUrl}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="sheet-info">
+        ${p.company ? `<div class="sheet-company">${Utils.escapeHtml(p.company)}</div>` : ''}
+        <div class="sheet-address">${Utils.escapeHtml(p.editedText)}</div>
+        ${p.key ? `<div class="sheet-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
+        ${p.parcels || p.weight ? `<div class="sheet-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)}` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
+      </div>
+      <div class="sheet-grid">
+        <button class="sheet-sq" data-action="navigate"><span>🧭</span><small>Навигация</small></button>
+        <button class="sheet-sq ${done ? '' : 'ok'}" data-action="toggle-done"><span>${done ? '↺' : '✓'}</span><small>${done ? 'Вернуть' : 'Готово'}</small></button>
+        <button class="sheet-sq" data-action="open-context"><span>⋯</span><small>Статус</small></button>
       </div>
     `;
-    content.querySelector('[data-action="navigate"]').addEventListener('click', () => {
-      navigateTo(p);
-    });
-    content.querySelector('[data-action="toggle-done"]').addEventListener('click', () => {
-      toggleDone(id);
-      closeSheet();
-    });
-    content.querySelector('[data-action="open-context"]').addEventListener('click', () => {
-      closeSheet();
-      openContextMenu(id);
-    });
+    content.querySelector('[data-action="navigate"]').addEventListener('click', () => navigateTo(p));
+    content.querySelector('[data-action="toggle-done"]').addEventListener('click', () => { toggleDone(id); closeSheet(); });
+    content.querySelector('[data-action="open-context"]').addEventListener('click', () => { closeSheet(); openContextMenu(id); });
     document.getElementById('bottom-sheet-overlay').classList.remove('hidden');
+    document.getElementById('bottom-sheet').classList.add('tall');
   }
 
   function navigateTo(p) {
@@ -281,6 +278,8 @@ const UIActive = (() => {
 
   function closeSheet() {
     document.getElementById('bottom-sheet-overlay').classList.add('hidden');
+    const bs = document.getElementById('bottom-sheet');
+    if (bs) bs.classList.remove('tall');
   }
 
   function onSheetOverlayClick(e) {
