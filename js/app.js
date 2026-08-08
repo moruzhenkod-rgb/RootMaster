@@ -28,6 +28,27 @@ const App = (() => {
     });
   }
 
+  function enrichFromClients() {
+    let clients = [];
+    try { clients = JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) { return; }
+    if (!clients.length || !tour || !tour.points) return;
+    const norm = (a) => String(a || '').toLowerCase().replace(/[^0-9a-zа-яё]+/gi, ' ').trim();
+    const byAddr = {};
+    clients.forEach((c) => { byAddr[norm(c.address)] = c; });
+    let changed = false;
+    tour.points.forEach((p) => {
+      const c = byAddr[norm(p.editedText)];
+      if (!c) return;
+      if (!p.cell && c.cell) { p.cell = c.cell; changed = true; }
+      if (!p.key && c.key) { p.key = c.key; changed = true; }
+      if (!p.company && c.company) { p.company = c.company; changed = true; }
+      if (!p.manualCoords && c.manual && c.lat != null && c.lng != null) {
+        p.lat = c.lat; p.lng = c.lng; p.manualCoords = true; changed = true;
+      }
+    });
+    if (changed) saveTour();
+  }
+
   async function init() {
     registerSW();
 
@@ -57,6 +78,7 @@ const App = (() => {
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {
       tour = saved;
+      enrichFromClients();
       Router.show(saved.stage || 'home');
     } else {
       Router.show('home');
