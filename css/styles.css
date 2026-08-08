@@ -602,7 +602,7 @@ button {
 
 /* Экран точки со встроенной Google картой */
 #bottom-sheet.tall {
-  height: 82vh;
+  height: 94vh;
   display: flex;
   flex-direction: column;
   padding-bottom: 0;
@@ -612,23 +612,25 @@ button {
   width: 100%;
   border: 0;
   border-radius: 12px;
-  min-height: 200px;
+  min-height: 300px;
   background: var(--bg-elevated);
 }
-.sheet-info { padding: 10px 4px 4px; }
+.sheet-info { padding: 6px 4px 2px; }
+.sheet-info .sheet-address { font-size: 13px; }
+.sheet-info .sheet-company { font-size: 14px; }
 .sheet-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 8px 0 12px;
+  gap: 6px;
+  padding: 6px 0 8px;
 }
 .sheet-sq {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 10px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 7px 4px;
   background: var(--bg-elevated); border: 1px solid var(--text-faint);
-  border-radius: 12px; color: var(--text); cursor: pointer;
+  border-radius: 10px; color: var(--text); cursor: pointer;
 }
-.sheet-sq span { font-size: 22px; }
-.sheet-sq small { font-size: 11px; color: var(--text-dim); }
+.sheet-sq span { font-size: 19px; }
+.sheet-sq small { font-size: 10px; color: var(--text-dim); }
 .sheet-sq.ok { background: var(--success); border-color: var(--success); }
 .sheet-sq.ok small, .sheet-sq.ok span { color: #fff; }
