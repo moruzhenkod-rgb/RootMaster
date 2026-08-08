@@ -109,7 +109,10 @@ const UIScan = (() => {
     });
     // адрес — часть с немецким индексом (РОВНО 5 цифр как отдельное слово) и буквами.
     // \b\d{5}\b важно: у фирмы вроде «WM SE KST 511300» число из 6 цифр не считается индексом
-    const addrIdx = rest.findIndex((p) => /\b\d{5}\b/.test(p) && /[a-zA-Zа-яё]{3,}/i.test(p));
+    const streetRe = /(str\.|stra(ss|ß)e|\bstr\b|weg|ring|allee|platz|chaussee|ufer|damm|hauptstr)/i;
+    let addrIdx = rest.findIndex((p) => /\b\d{5}\b/.test(p) && /[a-zA-Zа-яё]{3,}/i.test(p));
+    // если индекса нет (адрес без PLZ) — определяем по уличным признакам: номер дома + улица или запятая с городом
+    if (addrIdx < 0) addrIdx = rest.findIndex((p) => /\d/.test(p) && (streetRe.test(p) || /,/.test(p)));
     if (addrIdx >= 0) res.address = rest.splice(addrIdx, 1)[0];
     // ключ без метки (короткий формат): часть только из цифр/пробелов/дефисов
     if (!res.key) {
