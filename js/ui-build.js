@@ -127,13 +127,28 @@ const UIBuild = (() => {
     const unknown = pts.filter((p) => orderByAddr[norm(p.editedText)] == null);
 
     if (known.length >= 2) {
+      // привычный порядок из памяти
       known.sort((a, b) => orderByAddr[norm(a.editedText)] - orderByAddr[norm(b.editedText)]);
-      let n = 1;
-      known.forEach((p) => { p.order = n++; });
-      unknown.forEach((p) => { p.order = n++; }); // новые адреса — в конец
+      const route = known.slice();
+      const dist = (a, b) => (a && b && a.lat != null && b.lat != null) ? Utils.haversine(a.lat, a.lng, b.lat, b.lng) : 0;
+      // каждую новую точку вставляем туда, где она меньше всего удлиняет маршрут
+      for (const p of unknown) {
+        if (p.lat == null || p.lng == null) { route.push(p); continue; }
+        let bestPos = route.length, bestCost = Infinity;
+        for (let i = 0; i <= route.length; i++) {
+          const a = route[i - 1], b = route[i];
+          let cost;
+          if (!a) cost = b ? dist(p, b) : 0;
+          else if (!b) cost = dist(a, p);
+          else cost = dist(a, p) + dist(p, b) - dist(a, b);
+          if (cost < bestCost) { bestCost = cost; bestPos = i; }
+        }
+        route.splice(bestPos, 0, p);
+      }
+      route.forEach((p, i) => { p.order = i + 1; });
       App.saveTour();
       renderMarkers();
-      Utils.toast('Маршрут по вашему обычному порядку' + (unknown.length ? ' (+' + unknown.length + ' новых в конце)' : ''), 'success');
+      Utils.toast('Привычный порядок' + (unknown.length ? ' + ' + unknown.length + ' новых вставлены по пути' : ''), 'success');
       return;
     }
 
