@@ -74,7 +74,6 @@ const UIBuild = (() => {
           showMoveConfirm(pt, m); // подтвердить / отменить
         });
         m.on('click', () => handleTap(pid, m));
-        m.on('contextmenu', () => setOrderManually(pid));
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
@@ -228,6 +227,7 @@ const UIBuild = (() => {
       const n = clickCount;
       clickCount = 0;
       if (n >= 3) resetMarker(pid, m);
+      else if (n === 2) setOrderManually(pid);
       else if (n === 1) onMarkerTap(pid);
     }, 350);
   }
