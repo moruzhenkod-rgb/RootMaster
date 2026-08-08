@@ -246,7 +246,7 @@ const UIActive = (() => {
       <div class="sheet-info">
         ${p.company ? `<div class="sheet-company">${Utils.escapeHtml(p.company)}</div>` : ''}
         <div class="sheet-address">${Utils.escapeHtml(p.editedText)}</div>
-        ${p.key || p.cell ? `<div class="sheet-key">${p.key ? `🔑 ${Utils.escapeHtml(p.key)}` : ''}${p.key && p.cell ? '  ·  ' : ''}${p.cell ? `🗄 Ячейка ${Utils.escapeHtml(p.cell)}` : ''}</div>` : ''}
+        ${p.key || p.cell ? `<div class="sheet-key">${p.key ? `🔑 ${Utils.escapeHtml(p.key)}` : ''}${p.key && p.cell ? '  ·  ' : ''}${p.cell ? `🗄 Ящик ${Utils.escapeHtml(p.cell)}` : ''}</div>` : ''}
         ${p.parcels || p.weight ? `<div class="sheet-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)}` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
       </div>
       <div class="sheet-grid">
