@@ -602,25 +602,45 @@ button {
 
 /* Экран точки со встроенной Google картой */
 #bottom-sheet.tall {
-  height: 94vh;
+  height: 96vh;
   display: flex;
   flex-direction: column;
   padding-bottom: 0;
 }
-.sheet-gmap {
+.sheet-map-wrap {
+  position: relative;
   flex: 1;
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
   min-height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.sheet-gmap {
+  width: 100%;
+  height: 100%;
+  border: 0;
   background: var(--bg-elevated);
+  pointer-events: none; /* тап уходит на оверлей → Google Maps */
+}
+.sheet-map-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(0,0,0,0.35));
+  cursor: pointer;
 }
 .sheet-info { padding: 6px 4px 2px; }
 .sheet-info .sheet-address { font-size: 13px; }
 .sheet-info .sheet-company { font-size: 14px; }
 .sheet-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   padding: 6px 0 8px;
 }
@@ -634,3 +654,4 @@ button {
 .sheet-sq small { font-size: 10px; color: var(--text-dim); }
 .sheet-sq.ok { background: var(--success); border-color: var(--success); }
 .sheet-sq.ok small, .sheet-sq.ok span { color: #fff; }
+.sheet-cell { font-size: 13px; color: #a78bfa; font-weight: 700; }

@@ -75,6 +75,7 @@ const UIScan = (() => {
       }
       const pt = buildPoint(parsed, geo);
       if (known && known.manual) pt.manualCoords = true; // закреплённая позиция клиента
+      if (known && known.cell) pt.cell = known.cell; // ячейка, где лежит ключ
       points.push(pt);
     }
     if (cancelled) return;

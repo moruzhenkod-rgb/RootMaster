@@ -111,7 +111,7 @@ const UIActive = (() => {
         <div class="stop-body">
           ${p.company ? `<div class="stop-company">${Utils.escapeHtml(p.company)}</div>` : ''}
           <div class="stop-addr">${Utils.escapeHtml(p.editedText)}</div>
-          ${p.key ? `<div class="stop-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
+          ${p.key || p.cell ? `<div class="stop-key">${p.key ? `🔑 ${Utils.escapeHtml(p.key)}` : ''}${p.key && p.cell ? ' · ' : ''}${p.cell ? `🗄 ${Utils.escapeHtml(p.cell)}` : ''}</div>` : ''}
           ${p.parcels || p.weight ? `<div class="stop-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)} шт` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
           <div class="stop-status">${statusText(p)}</div>
         </div>
@@ -238,22 +238,36 @@ const UIActive = (() => {
     const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=16&output=embed`;
     const content = document.getElementById('sheet-content');
     content.innerHTML = `
-      <iframe class="sheet-gmap" src="${mapUrl}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="sheet-map-wrap">
+        <iframe class="sheet-gmap" src="${mapUrl}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="sheet-map-overlay" data-action="open-gmap">🧭 Открыть в Google Maps</div>
+      </div>
       <div class="sheet-info">
         ${p.company ? `<div class="sheet-company">${Utils.escapeHtml(p.company)}</div>` : ''}
         <div class="sheet-address">${Utils.escapeHtml(p.editedText)}</div>
-        ${p.key ? `<div class="sheet-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
+        ${p.key || p.cell ? `<div class="sheet-key">${p.key ? `🔑 ${Utils.escapeHtml(p.key)}` : ''}${p.key && p.cell ? '  ·  ' : ''}${p.cell ? `🗄 Ячейка ${Utils.escapeHtml(p.cell)}` : ''}</div>` : ''}
         ${p.parcels || p.weight ? `<div class="sheet-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)}` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
       </div>
       <div class="sheet-grid">
         <button class="sheet-sq" data-action="navigate"><span>🧭</span><small>Навигация</small></button>
         <button class="sheet-sq ${done ? '' : 'ok'}" data-action="toggle-done"><span>${done ? '↺' : '✓'}</span><small>${done ? 'Вернуть' : 'Готово'}</small></button>
         <button class="sheet-sq" data-action="open-context"><span>⋯</span><small>Статус</small></button>
+        <button class="sheet-sq" data-action="set-cell"><span>🗄</span><small>Ячейка</small></button>
       </div>
     `;
     content.querySelector('[data-action="navigate"]').addEventListener('click', () => navigateTo(p));
+    const ov = content.querySelector('[data-action="open-gmap"]');
+    if (ov) ov.addEventListener('click', () => navigateTo(p));
     content.querySelector('[data-action="toggle-done"]').addEventListener('click', () => { toggleDone(id); closeSheet(); });
     content.querySelector('[data-action="open-context"]').addEventListener('click', () => { closeSheet(); openContextMenu(id); });
+    content.querySelector('[data-action="set-cell"]').addEventListener('click', () => {
+      const v = window.prompt('Ячейка, где лежит ключ' + (p.company ? ' (' + p.company + ')' : ''), p.cell || '');
+      if (v == null) return;
+      p.cell = v.trim();
+      App.saveTour();
+      closeSheet();
+      openSheet(id);
+    });
     document.getElementById('bottom-sheet-overlay').classList.remove('hidden');
     document.getElementById('bottom-sheet').classList.add('tall');
   }
