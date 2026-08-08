@@ -74,6 +74,7 @@ const UIBuild = (() => {
           showMoveConfirm(pt, m); // подтвердить / отменить
         });
         m.on('click', () => handleTap(pid, m));
+        m.on('contextmenu', () => setOrderManually(pid));
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
@@ -272,6 +273,24 @@ const UIBuild = (() => {
     App.saveTour();
     Utils.toast('Возвращено на место', '');
     hideMoveConfirm();
+  }
+
+  function setOrderManually(pid) {
+    const p = App.tour.points.find((x) => x.id === pid);
+    if (!p) return;
+    const v = window.prompt('Номер точки в маршруте (пусто — убрать номер)', p.order != null ? p.order : '');
+    if (v == null) return;
+    const t = String(v).trim();
+    if (t === '') {
+      p.order = null;
+    } else {
+      const num = parseInt(t, 10);
+      if (isNaN(num) || num < 1) { Utils.toast('Введите число больше 0', ''); return; }
+      p.order = num;
+    }
+    App.saveTour();
+    renderMarkers();
+    Utils.toast('Номер задан', 'success');
   }
 
   function onMarkerTap(id) {
