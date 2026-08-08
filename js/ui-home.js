@@ -8,6 +8,13 @@ const UIHome = (() => {
     const userEl = root.querySelector('#home-user');
     if (userEl && typeof Api !== 'undefined') userEl.textContent = Api.displayName();
 
+    // кнопка "Мой тур" — видна только если есть загруженный активный тур
+    const myTourBtn = root.querySelector('#btn-my-tour');
+    if (myTourBtn) {
+      const t = App.tour;
+      if (t && t.points && t.points.length && t.stage === 'active') myTourBtn.style.display = '';
+    }
+
     const historyBtn = root.querySelector('[data-action="open-history"]');
     if (!Storage.hasHistory()) {
       historyBtn.disabled = true;
@@ -30,6 +37,9 @@ const UIHome = (() => {
     } else if (action === 'open-clients') {
       Router.show('clients');
       return;
+    } else if (action === 'open-tour') {
+      Router.show('active');
+      return;
     } else if (action === 'paste-text') {
       Router.show('paste');
     } else if (action === 'open-history') {
@@ -38,10 +48,6 @@ const UIHome = (() => {
         return;
       }
       Router.show('history');
-    } else if (action === 'test-run') {
-      const points = TestData.generate();
-      App.setTour({ points, stage: 'build' }, 'build');
-      Router.show('build');
     }
   }
 

@@ -58,7 +58,7 @@ const UIBuild = (() => {
       if (p.lat == null || p.lng == null) return;
       let m = markers[p.id];
       if (!m) {
-        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: false }).addTo(map);
+        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: true }).addTo(map);
         const pid = p.id;
         m.on('dragstart', () => {
           const pt = App.tour.points.find((x) => x.id === pid);
@@ -72,10 +72,8 @@ const UIBuild = (() => {
           pt.manualCoords = true;
           App.saveTour();
           updatePolyline();
-          if (m.dragging) m.dragging.disable(); // защита обратно
         });
         m.on('click', () => handleTap(pid, m));
-        m.on('contextmenu', () => enableDrag(m)); // долгое нажатие / правый клик → включить перетаскивание
         markers[p.id] = m;
       } else {
         m.setIcon(markerIcon(p));
@@ -194,13 +192,6 @@ const UIBuild = (() => {
     }, 350);
   }
 
-  // зажатие включает перетаскивание (защита от случайного сдвига)
-  function enableDrag(m) {
-    if (m.dragging) m.dragging.enable();
-    if (navigator.vibrate) navigator.vibrate(40);
-    Utils.toast('Точку можно двигать — потяните', 'success');
-  }
-
   function resetMarker(pid, m) {
     const p = App.tour.points.find((x) => x.id === pid);
     if (!p) return;
@@ -209,7 +200,6 @@ const UIBuild = (() => {
     p.lng = p.origLng;
     p.manualCoords = false;
     m.setLatLng([p.lat, p.lng]);
-    if (m.dragging) m.dragging.disable();
     App.saveTour();
     updatePolyline();
     Utils.toast('Точка возвращена на место', 'success');

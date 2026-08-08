@@ -262,8 +262,9 @@ const UIActive = (() => {
   }
 
   function navigateTo(p) {
-    // ведём по координатам маркера (учитывает ручную коррекцию), иначе по тексту адреса
-    const dest = (p.lat != null && p.lng != null)
+    // по координатам ведём ТОЛЬКО если точку переставили вручную;
+    // иначе — по тексту адреса (чётче, чем метка геокодера)
+    const dest = (p.manualCoords && p.lat != null && p.lng != null)
       ? `${p.lat},${p.lng}`
       : encodeURIComponent(p.editedText);
     const url =
@@ -313,7 +314,7 @@ const UIActive = (() => {
 
   function onHeaderClick(e) {
     const backBtn = e.target.closest('[data-action="back-build"]');
-    if (backBtn) { Router.show('build'); return; }
+    if (backBtn) { Router.show('home'); return; }
 
     const endBtn = e.target.closest('[data-action="end-tour"]');
     if (endBtn) { endTour(); return; }
