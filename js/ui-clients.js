@@ -29,6 +29,7 @@ const UIClients = (() => {
           <div class="client-addr">${Utils.escapeHtml(c.address)}</div>
           ${c.key ? `<div class="client-key">🔑 ${Utils.escapeHtml(c.key)}</div>` : ''}
         </div>
+        <button class="client-edit" data-action="edit-client">✏️</button>
         <div class="client-seen">${c.seen || 1}×</div>
       </div>`).join('');
     updateBtn();
@@ -54,11 +55,36 @@ const UIClients = (() => {
     }
     const add = e.target.closest('[data-action="add-clients"]');
     if (add) { addToTour(); return; }
+    const editBtn = e.target.closest('[data-action="edit-client"]');
+    if (editBtn) {
+      const c = editBtn.closest('.client-card');
+      if (c) editClient(+c.dataset.idx);
+      return;
+    }
     const card = e.target.closest('.client-card');
     if (card) {
       const i = +card.dataset.idx;
       if (selected.has(i)) selected.delete(i); else selected.add(i);
       render();
+    }
+  }
+
+  async function editClient(i) {
+    const cs = clients();
+    const c = cs[i];
+    if (!c) return;
+    const address = window.prompt('Адрес' + (c.company ? ' — ' + c.company : ''), c.address || '');
+    if (address == null) return;
+    const a = address.trim();
+    if (!a) return;
+    try {
+      await Api.updateClient(c.company || '', c.address || '', a);
+      const data = await Api.getClients();
+      localStorage.setItem('rm_clients', JSON.stringify(data.clients || []));
+      Utils.toast('Адрес обновлён', 'success');
+      render();
+    } catch (e) {
+      Utils.toast(e.message || 'Не удалось сохранить', 'error');
     }
   }
 
