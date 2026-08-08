@@ -60,7 +60,7 @@ const UIScan = (() => {
       if (cancelled) return;
       setProgress(`Проверено ${i} из ${lines.length} адресов`, i / lines.length);
       const parsed = parseLine(lines[i]);
-      const known = ClientMatch.matchClient(parsed.address, clients);
+      const known = ClientMatch.matchClient(parsed.address, parsed.company, clients);
       let geo;
       if (known) {
         // адрес узнан по базе клиентов — подставляем сохранённые данные

@@ -44,14 +44,23 @@ const ClientMatch = (() => {
   }
 
   // найти клиента для автоматической подстановки (строгий порог — без подтверждения пользователя)
-  function matchClient(address, clients) {
+  function matchClient(address, company, clients) {
     const key = normAddr(address);
     if (!key || !clients || !clients.length) return null;
+    const cNorm = normAddr(company || '');
+    // все точные совпадения по адресу — на одном адресе может быть несколько фирм
+    const exact = clients.filter((c) => normAddr(c.address) === key);
+    if (exact.length) {
+      if (exact.length === 1 || !cNorm) return exact[0];
+      return exact.find((c) => normAddr(c.company) === cNorm)
+        || exact.find((c) => normAddr(c.company).split(' ')[0] === cNorm.split(' ')[0])
+        || exact[0];
+    }
+    // подмножество токенов / опечатки
     let best = null, bestDist = Infinity;
     for (const c of clients) {
       const ck = normAddr(c.address);
       if (!ck) continue;
-      if (ck === key) return c;
       const keyTokens = tokenize(key), ckTokens = tokenize(ck);
       const [shortTokens, longTokens] = keyTokens.length <= ckTokens.length ? [keyTokens, ckTokens] : [ckTokens, keyTokens];
       if (shortTokens.length) {
