@@ -78,7 +78,7 @@ const App = (() => {
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {
       tour = saved;
-      enrichFromClients();
+      try { enrichFromClients(); } catch (e) { console.warn('enrich failed', e); }
       Router.show(saved.stage || 'home');
     } else {
       Router.show('home');
