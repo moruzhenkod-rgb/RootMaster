@@ -418,6 +418,37 @@ button {
   line-height: 1.35;
 }
 
+/* Подсказка о похожем клиенте из базы (адрес не найден геокодером) */
+.addr-suggestion {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+}
+.addr-suggestion-text {
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.4;
+}
+.addr-suggestion-actions { display: flex; gap: 8px; margin-top: 8px; }
+.addr-suggestion-actions button {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.addr-suggestion-actions button.primary {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #fff;
+  font-weight: 700;
+}
+
 /* Подсказка в пустых списках */
 .empty-hint {
   text-align: center;
@@ -675,13 +706,20 @@ button {
 .sheet-cell { font-size: 13px; color: #a78bfa; font-weight: 700; }
 
 /* Кнопка авто-построения маршрута */
+.build-footer {
+  display: flex; flex-direction: row; gap: 10px; align-items: stretch;
+}
+.build-footer .btn-large {
+  flex: 1;
+  flex-direction: row;
+  padding: 14px 12px;
+}
 .btn-auto-route {
-  position: absolute;
-  left: 12px; right: 12px; bottom: 84px;
-  z-index: 600;
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
   background: #7c3aed; color: #fff;
-  border: none; border-radius: 12px;
-  padding: 12px; font-size: 14px; font-weight: 700;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  border: none; border-radius: var(--radius-lg);
+  padding: 14px 14px; font-size: 13px; font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
 }

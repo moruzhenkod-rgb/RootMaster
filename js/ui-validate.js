@@ -32,11 +32,25 @@ const UIValidate = (() => {
     return p.geoStatus !== 'error' || p.skippedByUser;
   }
 
+  // похожий клиент из базы для точек, которые не удалось найти автоматически —
+  // предлагаем подтвердить замену вручную, а не сразу подставляем
+  function suggestion(p) {
+    if (p.geoStatus !== 'error' || p.skippedByUser || p.suggestionDismissed) return null;
+    const clients = ClientMatch.loadClients();
+    const found = ClientMatch.suggestClient(p.editedText, clients);
+    if (!found) return null;
+    // не предлагаем то, что уже совпадает с текущим текстом
+    if (ClientMatch.normAddr(found.client.address) === ClientMatch.normAddr(p.editedText)) return null;
+    return found;
+  }
+
   function render() {
     const list = document.getElementById('validate-list');
     list.innerHTML = points()
       .map(
-        (p, i) => `
+        (p, i) => {
+          const sug = suggestion(p);
+          return `
       <div class="addr-card ${statusClass(p)}" data-id="${p.id}">
         <div class="addr-card-top">
           <div class="addr-index">${i + 1}</div>
@@ -47,6 +61,17 @@ const UIValidate = (() => {
         ${p.key ? `<div class="addr-key">🔑 ${Utils.escapeHtml(p.key)}</div>` : ''}
         ${p.parcels || p.weight ? `<div class="addr-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)} шт` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
         ${p.foundAddress && p.geoStatus !== 'ok' ? `<div class="addr-found">📍 На карте нашлось: ${Utils.escapeHtml(p.foundAddress)}</div>` : ''}
+        ${
+          sug
+            ? `<div class="addr-suggestion">
+                <div class="addr-suggestion-text">Похоже, это уже есть в базе: <b>${Utils.escapeHtml(sug.client.company || sug.client.address)}</b>${sug.client.company ? ` — ${Utils.escapeHtml(sug.client.address)}` : ''}</div>
+                <div class="addr-suggestion-actions">
+                  <button data-action="accept-suggestion" class="primary">✓ Заменить</button>
+                  <button data-action="dismiss-suggestion">Нет, это другое</button>
+                </div>
+              </div>`
+            : ''
+        }
         ${
           p.geoStatus !== 'ok'
             ? `<div class="addr-actions">
@@ -59,7 +84,8 @@ const UIValidate = (() => {
               </div>`
             : ''
         }
-      </div>`
+      </div>`;
+        }
       )
       .join('');
 
@@ -97,6 +123,49 @@ const UIValidate = (() => {
       point.tourStatus = 'skip';
       App.saveTour();
       render();
+    } else if (action === 'dismiss-suggestion') {
+      point.suggestionDismissed = true;
+      render();
+    } else if (action === 'accept-suggestion') {
+      const clients = ClientMatch.loadClients();
+      const found = ClientMatch.suggestClient(point.editedText, clients);
+      if (!found) return;
+      const known = found.client;
+      point.editedText = known.address;
+      point.rawText = known.address;
+      if (known.company) point.company = known.company;
+      if (known.key) point.key = known.key;
+      if (known.cell) point.cell = known.cell;
+      if (known.manual) point.manualCoords = true;
+      if (known.lat != null && known.lng != null) {
+        point.lat = known.lat;
+        point.lng = known.lng;
+        point.foundAddress = known.address;
+        point.matchedHouse = true;
+        point.geoStatus = 'ok';
+        point.skippedByUser = false;
+        point.tourStatus = 'pending';
+        App.saveTour();
+        render();
+      } else {
+        const btn = card.querySelector('[data-action="accept-suggestion"]');
+        if (btn) { btn.textContent = 'Проверяю…'; btn.disabled = true; }
+        const geo = await Geocode.lookup(known.address);
+        if (geo) {
+          point.lat = geo.lat;
+          point.lng = geo.lng;
+          point.foundAddress = geo.displayName;
+          point.matchedHouse = !!geo.matchedHouse;
+          point.geoStatus = geo.confidence === 'low' ? 'warn' : 'ok';
+          point.skippedByUser = false;
+          point.tourStatus = 'pending';
+        } else {
+          point.geoStatus = 'error';
+          Utils.toast('Адрес из базы тоже не найден на карте', 'error');
+        }
+        App.saveTour();
+        render();
+      }
     } else if (action === 'recheck') {
       const input = card.querySelector('[data-action="edit-input"]');
       const newText = input.value.trim();

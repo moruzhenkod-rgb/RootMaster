@@ -68,7 +68,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v5.3</footer>
+    <footer class="home-footer">RouteMaster PWA · v5.5</footer>
   </div>
 </template>
 
@@ -133,8 +133,8 @@
       <button class="btn btn-success" data-action="confirm-move">✓ Подтвердить</button>
       <button class="btn btn-ghost" data-action="cancel-move">Отменить</button>
     </div>
-    <button class="btn-auto-route" data-action="auto-route">🧭 Построить маршрут автоматически</button>
-    <footer class="sticky-footer">
+    <footer class="sticky-footer build-footer">
+      <button class="btn-auto-route" data-action="auto-route">🧭 Авто-маршрут</button>
       <button class="btn btn-primary btn-large" id="btn-load-route" data-action="load-route" disabled>
         Загрузить RouteMaster
       </button>
@@ -213,6 +213,7 @@
 <script src="js/api.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/geocode.js"></script>
+<script src="js/client-match.js"></script>
 <script src="js/testdata.js"></script>
 <script src="js/ui-home.js"></script>
 <script src="js/ui-paste.js"></script>

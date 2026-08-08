@@ -54,13 +54,13 @@ const UIScan = (() => {
       return;
     }
 
-    const clients = loadClients();
+    const clients = ClientMatch.loadClients();
     const points = [];
     for (let i = 0; i < lines.length; i++) {
       if (cancelled) return;
       setProgress(`Проверено ${i} из ${lines.length} адресов`, i / lines.length);
       const parsed = parseLine(lines[i]);
-      const known = matchClient(parsed.address, clients);
+      const known = ClientMatch.matchClient(parsed.address, clients);
       let geo;
       if (known) {
         // адрес узнан по базе клиентов — подставляем сохранённые данные
@@ -87,43 +87,6 @@ const UIScan = (() => {
     const needsValidation = points.some((p) => p.geoStatus !== 'ok');
     App.setTour(tour, needsValidation ? 'validate' : 'build');
     Router.show(needsValidation ? 'validate' : 'build');
-  }
-
-  function loadClients() {
-    try { return JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) { return []; }
-  }
-  function normAddr(a) {
-    return String(a || '').toLowerCase().replace(/[^0-9a-zа-яё]+/gi, ' ').trim();
-  }
-  // расстояние Левенштейна — для распознавания адреса с опечаткой
-  function levenshtein(a, b) {
-    const m = a.length, n = b.length;
-    if (!m) return n; if (!n) return m;
-    let prev = Array.from({ length: n + 1 }, (_, j) => j);
-    for (let i = 1; i <= m; i++) {
-      const cur = [i];
-      for (let j = 1; j <= n; j++) {
-        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-      }
-      prev = cur;
-    }
-    return prev[n];
-  }
-  // найти клиента по адресу (точное совпадение или близкое — с помаркой)
-  function matchClient(address, clients) {
-    if (!clients || !clients.length) return null;
-    const key = normAddr(address);
-    if (!key) return null;
-    let best = null, bestDist = Infinity;
-    for (const c of clients) {
-      const ck = normAddr(c.address);
-      if (!ck) continue;
-      if (ck === key) return c;
-      const dist = levenshtein(key, ck);
-      const thr = Math.max(2, Math.floor(ck.length * 0.2));
-      if (dist <= thr && dist < bestDist) { best = c; bestDist = dist; }
-    }
-    return best;
   }
 
   // Формат (части через « — »), порядок полей свободный, распознаём по меткам:
