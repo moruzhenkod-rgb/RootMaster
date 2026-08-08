@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v50';
+const CACHE_NAME = 'routemaster-v51';
 const APP_SHELL = [
   './',
   './index.html',
@@ -22,6 +22,10 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];
+
+self.addEventListener('message', (e) => {
+  if (e.data === 'skip-waiting') self.skipWaiting();
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

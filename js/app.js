@@ -17,7 +17,17 @@ const App = (() => {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
         reg.update();
-        setInterval(() => reg.update(), 60 * 1000);
+        setInterval(() => reg.update(), 30 * 1000);
+        // как только новая версия установилась — сразу активируем её
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage('skip-waiting');
+            }
+          });
+        });
       }).catch((e) => console.warn('SW registration failed', e));
       let reloaded = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
