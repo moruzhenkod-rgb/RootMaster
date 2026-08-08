@@ -116,6 +116,28 @@ const UIBuild = (() => {
   async function autoRoute() {
     const pts = App.tour.points.filter((p) => p.lat != null && p.lng != null);
     if (pts.length < 2) { Utils.toast('Нужно минимум 2 точки на карте', ''); return; }
+
+    // порядок из памяти — повторяем привычный маршрут (как ездили раньше), не от местоположения
+    let clients = [];
+    try { clients = JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) {}
+    const norm = (a) => String(a || '').toLowerCase().replace(/[^0-9a-zа-яё]+/gi, ' ').trim();
+    const orderByAddr = {};
+    clients.forEach((c) => { if (c.order != null) orderByAddr[norm(c.address)] = c.order; });
+    const known = pts.filter((p) => orderByAddr[norm(p.editedText)] != null);
+    const unknown = pts.filter((p) => orderByAddr[norm(p.editedText)] == null);
+
+    if (known.length >= 2) {
+      known.sort((a, b) => orderByAddr[norm(a.editedText)] - orderByAddr[norm(b.editedText)]);
+      let n = 1;
+      known.forEach((p) => { p.order = n++; });
+      unknown.forEach((p) => { p.order = n++; }); // новые адреса — в конец
+      App.saveTour();
+      renderMarkers();
+      Utils.toast('Маршрут по вашему обычному порядку' + (unknown.length ? ' (+' + unknown.length + ' новых в конце)' : ''), 'success');
+      return;
+    }
+
+    // истории порядка ещё нет — строим оптимально через OSRM
     Utils.toast('Строю оптимальный маршрут…', '');
     const coords = pts.map((p) => `${p.lng},${p.lat}`).join(';');
     const url = `https://router.project-osrm.org/trip/v1/driving/${coords}?source=first&roundtrip=false`;
