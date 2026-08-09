@@ -724,3 +724,12 @@ button {
   cursor: pointer;
 }
 .client-edit { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px 8px; flex-shrink: 0; }
+.client-edit-form { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.client-edit-form input {
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--text-faint);
+  background: var(--bg-elevated); color: var(--text); font-size: 14px; width: 100%;
+}
+.client-edit-form .edit-row { display: flex; gap: 6px; }
+.client-edit-form .edit-actions { display: flex; gap: 6px; margin-top: 2px; }
+.client-edit-form .edit-actions .btn { flex: 1; padding: 8px; font-size: 13px; }
+.client-card.editing { display: block; }
