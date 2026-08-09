@@ -47,7 +47,8 @@ const Api = (() => {
   const getTours = () => req('/tours');
   const getClients = () => req('/clients');
   const updateClient = (company, oldAddress, address, akey, cell, newCompany) => req('/client', { method: 'PUT', body: JSON.stringify({ company, oldAddress, address, akey, cell, newCompany }) });
+  const deleteClient = (company, address) => req('/client', { method: 'DELETE', body: JSON.stringify({ company, address }) });
   const putTours = (current, history) => req('/tours', { method: 'PUT', body: JSON.stringify({ current, history }) });
 
-  return { token, displayName, username, isAuthed, setSession, clearSession, register, login, getTours, putTours, getClients, updateClient };
+  return { token, displayName, username, isAuthed, setSession, clearSession, register, login, getTours, putTours, getClients, updateClient, deleteClient };
 })();

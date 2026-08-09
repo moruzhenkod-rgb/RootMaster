@@ -733,3 +733,4 @@ button {
 .client-edit-form .edit-actions { display: flex; gap: 6px; margin-top: 2px; }
 .client-edit-form .edit-actions .btn { flex: 1; padding: 8px; font-size: 13px; }
 .client-card.editing { display: block; }
+.client-delete { width: 100%; margin-top: 6px; padding: 8px; font-size: 13px; }

@@ -39,6 +39,7 @@ const UIClients = (() => {
             <button class="btn btn-success" data-action="save-client">Сохранить</button>
             <button class="btn btn-ghost" data-action="cancel-edit">Отмена</button>
           </div>
+          <button class="btn btn-danger client-delete" data-action="delete-client">🗑 Удалить клиента</button>
         </div>
       </div>`;
       }
@@ -82,6 +83,8 @@ const UIClients = (() => {
     if (saveBtn) { saveClient(saveBtn.closest('.client-card')); return; }
     const cancelBtn = e.target.closest('[data-action="cancel-edit"]');
     if (cancelBtn) { editing = -1; render(); return; }
+    const delBtn = e.target.closest('[data-action="delete-client"]');
+    if (delBtn) { deleteClient(delBtn.closest('.client-card')); return; }
 
     const editBtn = e.target.closest('[data-action="edit-client"]');
     if (editBtn) {
@@ -117,6 +120,23 @@ const UIClients = (() => {
       render();
     } catch (e) {
       Utils.toast(e.message || 'Не удалось сохранить', 'error');
+    }
+  }
+
+  async function deleteClient(card) {
+    if (!card) return;
+    const c = clients()[+card.dataset.idx];
+    if (!c) return;
+    if (!window.confirm('Удалить клиента ' + (c.company || c.address) + '?')) return;
+    try {
+      await Api.deleteClient(c.company || '', c.address || '');
+      const data = await Api.getClients();
+      localStorage.setItem('rm_clients', JSON.stringify(data.clients || []));
+      editing = -1;
+      Utils.toast('Клиент удалён', 'success');
+      render();
+    } catch (e) {
+      Utils.toast(e.message || 'Не удалось удалить', 'error');
     }
   }
 
