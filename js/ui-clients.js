@@ -73,15 +73,17 @@ const UIClients = (() => {
     const cs = clients();
     const c = cs[i];
     if (!c) return;
-    const address = window.prompt('Адрес' + (c.company ? ' — ' + c.company : ''), c.address || '');
+    const newCompany = window.prompt('Название фирмы', c.company || '');
+    if (newCompany == null) return;
+    const address = window.prompt('Адрес', c.address || '');
     if (address == null) return;
     const a = address.trim();
     if (!a) return;
     try {
-      await Api.updateClient(c.company || '', c.address || '', a);
+      await Api.updateClient(c.company || '', c.address || '', a, undefined, undefined, newCompany.trim());
       const data = await Api.getClients();
       localStorage.setItem('rm_clients', JSON.stringify(data.clients || []));
-      Utils.toast('Адрес обновлён', 'success');
+      Utils.toast('Сохранено', 'success');
       render();
     } catch (e) {
       Utils.toast(e.message || 'Не удалось сохранить', 'error');
