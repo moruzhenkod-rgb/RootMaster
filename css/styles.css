@@ -734,3 +734,5 @@ button {
 .client-edit-form .edit-actions .btn { flex: 1; padding: 8px; font-size: 13px; }
 .client-card.editing { display: block; }
 .client-delete { width: 100%; margin-top: 6px; padding: 8px; font-size: 13px; }
+.edit-map-hint { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.edit-map { height: 220px; border-radius: 10px; overflow: hidden; margin-top: 4px; }

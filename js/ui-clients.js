@@ -1,5 +1,5 @@
 const UIClients = (() => {
-  let root, selected = new Set(), editing = -1;
+  let root, selected = new Set(), editing = -1, editCoords = null, editMap = null;
 
   function mount(container) {
     root = container;
@@ -35,6 +35,8 @@ const UIClients = (() => {
             <input data-field="key" value="${esc(c.key)}" placeholder="Ключ">
             <input data-field="cell" value="${esc(c.cell)}" placeholder="Ящик">
           </div>
+          <div class="edit-map-hint">📍 Тапни по карте, чтобы поставить точку клиента${c.lat != null ? '' : ' (сейчас без координат)'}</div>
+          <div class="edit-map" id="edit-map-${i}"></div>
           <div class="edit-actions">
             <button class="btn btn-success" data-action="save-client">Сохранить</button>
             <button class="btn btn-ghost" data-action="cancel-edit">Отмена</button>
@@ -56,6 +58,26 @@ const UIClients = (() => {
       </div>`;
     }).join('');
     updateBtn();
+    if (editing >= 0) setTimeout(() => initEditMap(cs[editing]), 30);
+  }
+
+  function initEditMap(c) {
+    const el = root.querySelector('#edit-map-' + editing);
+    if (!el || typeof L === 'undefined') return;
+    if (editMap) { editMap.remove(); editMap = null; }
+    const hasC = (c.lat != null && c.lng != null);
+    const center = hasC ? [c.lat, c.lng] : [53.6355, 11.4012]; // Schwerin по умолчанию
+    editMap = L.map(el, { zoomControl: true, attributionControl: false }).setView(center, hasC ? 15 : 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(editMap);
+    let marker = hasC ? L.marker(center, { draggable: true }).addTo(editMap) : null;
+    editCoords = hasC ? { lat: c.lat, lng: c.lng } : null;
+    if (marker) marker.on('dragend', () => { const ll = marker.getLatLng(); editCoords = { lat: ll.lat, lng: ll.lng }; });
+    editMap.on('click', (e) => {
+      if (marker) marker.setLatLng(e.latlng);
+      else { marker = L.marker(e.latlng, { draggable: true }).addTo(editMap); marker.on('dragend', () => { const ll = marker.getLatLng(); editCoords = { lat: ll.lat, lng: ll.lng }; }); }
+      editCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+    });
+    setTimeout(() => editMap.invalidateSize(), 60);
   }
 
   function updateBtn() {
@@ -82,7 +104,7 @@ const UIClients = (() => {
     const saveBtn = e.target.closest('[data-action="save-client"]');
     if (saveBtn) { saveClient(saveBtn.closest('.client-card')); return; }
     const cancelBtn = e.target.closest('[data-action="cancel-edit"]');
-    if (cancelBtn) { editing = -1; render(); return; }
+    if (cancelBtn) { editing = -1; editCoords = null; if (editMap) { editMap.remove(); editMap = null; } render(); return; }
     const delBtn = e.target.closest('[data-action="delete-client"]');
     if (delBtn) { deleteClient(delBtn.closest('.client-card')); return; }
 
@@ -112,10 +134,13 @@ const UIClients = (() => {
     const cell = get('cell');
     if (!address) { Utils.toast('Адрес не может быть пустым', 'error'); return; }
     try {
-      await Api.updateClient(c.company || '', c.address || '', address, key, cell, newCompany);
+      const lat = editCoords ? editCoords.lat : undefined;
+      const lng = editCoords ? editCoords.lng : undefined;
+      await Api.updateClient(c.company || '', c.address || '', address, key, cell, newCompany, lat, lng);
       const data = await Api.getClients();
       localStorage.setItem('rm_clients', JSON.stringify(data.clients || []));
-      editing = -1;
+      editing = -1; editCoords = null;
+      if (editMap) { editMap.remove(); editMap = null; }
       Utils.toast('Сохранено', 'success');
       render();
     } catch (e) {
