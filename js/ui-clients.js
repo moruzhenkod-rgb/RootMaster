@@ -1,14 +1,19 @@
 const UIClients = (() => {
-  let root, selected = new Set(), editing = -1, editCoords = null, editMap = null;
+  let root, selected = new Set(), editing = -1, editCoords = null, editMap = null, searchQuery = '';
 
   function mount(container) {
     root = container;
     selected = new Set();
     editing = -1;
     root.addEventListener('click', onClick);
+    root.addEventListener('input', onInput);
     render();
   }
-  function unmount() { root.removeEventListener('click', onClick); }
+  function unmount() { root.removeEventListener('click', onClick); root.removeEventListener('input', onInput); }
+
+  function onInput(e) {
+    if (e.target && e.target.id === 'clients-search') { searchQuery = e.target.value.toLowerCase().trim(); render(); }
+  }
 
   function clients() {
     try { return JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) { return []; }
@@ -24,7 +29,10 @@ const UIClients = (() => {
       updateBtn();
       return;
     }
-    list.innerHTML = cs.map((c, i) => {
+    const q = searchQuery;
+    const items = cs.map((c, i) => ({ c, i })).filter(({ c }) => !q || (c.company || '').toLowerCase().includes(q) || (c.address || '').toLowerCase().includes(q));
+    if (!items.length) { list.innerHTML = '<div class="empty-hint">Ничего не найдено</div>'; updateBtn(); return; }
+    list.innerHTML = items.map(({ c, i }) => {
       if (i === editing) {
         return `
       <div class="client-card editing" data-idx="${i}">
