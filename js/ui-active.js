@@ -158,8 +158,9 @@ const UIActive = (() => {
 
     // завершённые — отдельная вкладка
     if (doneList) {
-      doneList.innerHTML = done.length
-        ? done.map(stopCardHtml).join('')
+      const doneSorted = done.slice().sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+      doneList.innerHTML = doneSorted.length
+        ? doneSorted.map(stopCardHtml).join('')
         : '<div class="empty-hint">Пока нет завершённых точек</div>';
       bindCards(doneList);
     }
@@ -219,10 +220,12 @@ const UIActive = (() => {
     Utils.toast(finishing ? 'Тур завершён' : 'Тур отменён');
   }
 
+  let doneSeq = 0;
   function toggleDone(id) {
     const p = App.tour.points.find((pt) => pt.id === id);
     if (!p) return;
-    p.tourStatus = p.tourStatus === 'done' ? 'pending' : 'done';
+    if (p.tourStatus === 'done') { p.tourStatus = 'pending'; delete p.doneAt; }
+    else { p.tourStatus = 'done'; p.doneAt = ++doneSeq + (App.tour.points.length * 1e6); }
     App.saveTour();
     renderMarkers();
     renderList();
