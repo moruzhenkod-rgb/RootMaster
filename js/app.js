@@ -52,10 +52,16 @@ const App = (() => {
       if (!p.key && c.key) { p.key = c.key; changed = true; }
       if (!p.company && c.company) { p.company = c.company; changed = true; }
       // подтягиваем координаты клиента, если у точки их нет или она «не на карте»
-      const noCoords = (p.lat == null || p.lng == null || p.geoStatus === 'error');
+      let noCoords = (p.lat == null || p.lng == null || p.geoStatus === 'error');
       if (c.lat != null && c.lng != null) {
-        if (c.manual && !p.manualCoords) { p.lat = c.lat; p.lng = c.lng; p.manualCoords = true; p.geoStatus = 'ok'; changed = true; }
-        else if (noCoords) { p.lat = c.lat; p.lng = c.lng; p.geoStatus = 'ok'; if (c.manual) p.manualCoords = true; changed = true; }
+        if (c.manual && !p.manualCoords) { p.lat = c.lat; p.lng = c.lng; p.manualCoords = true; p.geoStatus = 'ok'; changed = true; noCoords = false; }
+        else if (noCoords) { p.lat = c.lat; p.lng = c.lng; p.geoStatus = 'ok'; if (c.manual) p.manualCoords = true; changed = true; noCoords = false; }
+      }
+      // fallback: если координат всё ещё нет — берём у ЛЮБОЙ записи с той же фирмой, где координаты есть
+      if (noCoords && p.company) {
+        const pc = String(p.company).toLowerCase().trim();
+        const alt = clients.find((x) => x.lat != null && x.lng != null && String(x.company || '').toLowerCase().trim() === pc);
+        if (alt) { p.lat = alt.lat; p.lng = alt.lng; p.geoStatus = 'ok'; if (alt.manual) p.manualCoords = true; changed = true; }
       }
     });
     if (changed) saveTour();

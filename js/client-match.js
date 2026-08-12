@@ -50,20 +50,26 @@ const ClientMatch = (() => {
     const cNorm = normAddr(company || '');
     const cw = cNorm.split(' ')[0];
 
-    // 1) кандидаты той же фирмы (по первому слову названия) + похожий адрес.
-    //    Из них берём с координатами (ручные в приоритете) — чтобы точка встала на карту,
-    //    даже если адрес отличается частично (Schwerin/Pampow, опечатки).
-    if (cw) {
-      const firmPool = clients.filter((c) => normAddr(c.company).split(' ')[0] === cw);
+    // 1) кандидаты той же фирмы: сначала ТОЧНОЕ совпадение названия (надёжно),
+    //    иначе по первому слову (только если оно длинное — избегаем «h», «a»).
+    let firmPool = cNorm ? clients.filter((c) => normAddr(c.company) === cNorm) : [];
+    const exactFirm = firmPool.length > 0;
+    if (!firmPool.length && cw.length >= 3) {
+      firmPool = clients.filter((c) => normAddr(c.company).split(' ')[0] === cw);
+    }
+    if (firmPool.length) {
       const scored = firmPool.map((c) => ({
         c,
         sim: similarity(key, normAddr(c.address)),
         coord: (c.lat != null && c.lng != null) ? 1 : 0,
         manual: c.manual ? 1 : 0,
-      })).filter((x) => x.sim >= 0.5);
-      if (scored.length) {
-        scored.sort((a, b) => (b.coord - a.coord) || (b.manual - a.manual) || (b.sim - a.sim));
-        return scored[0].c;
+      }));
+      // если фирма совпала ТОЧНО — берём запись с координатами даже при слабом адресе;
+      // иначе требуем достаточную похожесть адреса
+      const good = scored.filter((s) => s.sim >= 0.5 || (exactFirm && s.coord));
+      if (good.length) {
+        good.sort((a, b) => (b.coord - a.coord) || (b.manual - a.manual) || (b.sim - a.sim));
+        return good[0].c;
       }
     }
 
