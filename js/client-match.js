@@ -48,28 +48,51 @@ const ClientMatch = (() => {
     const key = normAddr(address);
     if (!key || !clients || !clients.length) return null;
     const cNorm = normAddr(company || '');
-    // все точные совпадения по адресу — на одном адресе может быть несколько фирм
+    const cw = cNorm.split(' ')[0];
+
+    // 1) кандидаты той же фирмы (по первому слову названия) + похожий адрес.
+    //    Из них берём с координатами (ручные в приоритете) — чтобы точка встала на карту,
+    //    даже если адрес отличается частично (Schwerin/Pampow, опечатки).
+    if (cw) {
+      const firmPool = clients.filter((c) => normAddr(c.company).split(' ')[0] === cw);
+      const scored = firmPool.map((c) => ({
+        c,
+        sim: similarity(key, normAddr(c.address)),
+        coord: (c.lat != null && c.lng != null) ? 1 : 0,
+        manual: c.manual ? 1 : 0,
+      })).filter((x) => x.sim >= 0.5);
+      if (scored.length) {
+        scored.sort((a, b) => (b.coord - a.coord) || (b.manual - a.manual) || (b.sim - a.sim));
+        return scored[0].c;
+      }
+    }
+
+    // 2) точное совпадение адреса — предпочитаем запись с координатами (и с той же фирмой)
     const exact = clients.filter((c) => normAddr(c.address) === key);
     if (exact.length) {
-      if (exact.length === 1 || !cNorm) return exact[0];
-      return exact.find((c) => normAddr(c.company) === cNorm)
-        || exact.find((c) => normAddr(c.company).split(' ')[0] === cNorm.split(' ')[0])
-        || exact[0];
+      const pool = (cNorm && exact.some((c) => normAddr(c.company).split(' ')[0] === cw))
+        ? exact.filter((c) => normAddr(c.company).split(' ')[0] === cw) : exact;
+      return pool.find((c) => c.lat != null && c.manual) || pool.find((c) => c.lat != null) || pool[0];
     }
-    // подмножество токенов / опечатки
-    let best = null, bestDist = Infinity;
+
+    // 3) подмножество токенов / опечатки — с координатами в приоритете
+    let best = null, bestScore = -1;
     for (const c of clients) {
       const ck = normAddr(c.address);
       if (!ck) continue;
       const keyTokens = tokenize(key), ckTokens = tokenize(ck);
       const [shortTokens, longTokens] = keyTokens.length <= ckTokens.length ? [keyTokens, ckTokens] : [ckTokens, keyTokens];
+      let hit = false;
       if (shortTokens.length) {
         const longSet = new Set(longTokens);
-        if (shortTokens.every((t) => longSet.has(t))) return c;
+        if (shortTokens.every((t) => longSet.has(t))) hit = true;
       }
       const dist = levenshtein(key, ck);
       const thr = Math.max(2, Math.floor(Math.min(key.length, ck.length) * 0.25));
-      if (dist <= thr && dist < bestDist) { best = c; bestDist = dist; }
+      if (hit || dist <= thr) {
+        const score = (c.lat != null ? 1000 : 0) + (hit ? 500 : 0) - dist;
+        if (score > bestScore) { best = c; bestScore = score; }
+      }
     }
     return best;
   }

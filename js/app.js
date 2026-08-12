@@ -42,18 +42,20 @@ const App = (() => {
     let clients = [];
     try { clients = JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) { return; }
     if (!clients.length || !tour || !tour.points) return;
-    const norm = (a) => String(a || '').toLowerCase().replace(/[^0-9a-zа-яё]+/gi, ' ').trim();
-    const byAddr = {};
-    clients.forEach((c) => { byAddr[norm(c.address)] = c; });
     let changed = false;
     tour.points.forEach((p) => {
-      const c = byAddr[norm(p.editedText)];
+      // умный поиск клиента: по фирме + похожему адресу, с приоритетом записи с координатами
+      const c = (typeof ClientMatch !== 'undefined')
+        ? ClientMatch.matchClient(p.editedText, p.company, clients) : null;
       if (!c) return;
-      if ((c.cell || '') !== (p.cell || '')) { p.cell = c.cell || ''; changed = true; } // синхронизируем ящик (в т.ч. чистим старый формат)
+      if ((c.cell || '') !== (p.cell || '')) { p.cell = c.cell || ''; changed = true; }
       if (!p.key && c.key) { p.key = c.key; changed = true; }
       if (!p.company && c.company) { p.company = c.company; changed = true; }
-      if (!p.manualCoords && c.manual && c.lat != null && c.lng != null) {
-        p.lat = c.lat; p.lng = c.lng; p.manualCoords = true; changed = true;
+      // подтягиваем координаты клиента, если у точки их нет или она «не на карте»
+      const noCoords = (p.lat == null || p.lng == null || p.geoStatus === 'error');
+      if (c.lat != null && c.lng != null) {
+        if (c.manual && !p.manualCoords) { p.lat = c.lat; p.lng = c.lng; p.manualCoords = true; p.geoStatus = 'ok'; changed = true; }
+        else if (noCoords) { p.lat = c.lat; p.lng = c.lng; p.geoStatus = 'ok'; if (c.manual) p.manualCoords = true; changed = true; }
       }
     });
     if (changed) saveTour();
