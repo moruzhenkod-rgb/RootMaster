@@ -128,7 +128,7 @@
       });
     }
 
-    function setVolume(v) { v = Math.max(0, Math.min(12, Number(v) || 0)); volume = v; if (outNode) { try { outNode.gain.value = v; } catch (e) {} } }
+    function setVolume(v) { v = Math.max(0, Math.min(30, Number(v) || 0)); volume = v; if (outNode) { try { outNode.gain.value = v; } catch (e) {} } }
     function getVolume() { return volume; }
     function clear() { queue = []; playing = false; current = null; }
     function getQueue() { return queue.slice(); }
