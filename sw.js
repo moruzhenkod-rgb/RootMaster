@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v81';
+const CACHE_NAME = 'routemaster-v82';
 const APP_SHELL = [
   './',
   './index.html',

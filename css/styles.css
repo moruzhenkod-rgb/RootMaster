@@ -510,7 +510,7 @@ button {
 
 /* Глобальный индикатор — виден поверх любого экрана приложения */
 .radar-indicator {
-  position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(calc(-50% + 46px));
   z-index: 5000;
   width: 34px; height: 34px; border-radius: 50%;
   background: var(--bg-elevated); border: 1px solid var(--border);
