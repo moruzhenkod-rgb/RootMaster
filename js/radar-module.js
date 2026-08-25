@@ -183,7 +183,6 @@
       '[out:json][timeout:' + timeout + '];(' +
       'node["highway"="speed_camera"](' + bboxStr + ');' +
       'node["man_made"="surveillance"](' + bboxStr + ');' +
-      'node["highway"="bus_stop"](' + bboxStr + ');' +
       ');out body;'
     );
   }
@@ -206,7 +205,8 @@
           redLight: tags['camera:type'] === 'red_light' || null,
           source: 'osm',
         };
-      });
+      })
+      .filter((h) => h.type !== 'bus_stop');
   }
 
   // прямоугольник lat/lon вокруг центра радиусом radiusKm — bbox для Overpass-запроса

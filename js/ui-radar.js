@@ -110,9 +110,8 @@ const UIRadar = (() => {
   function hazardIcon(type) {
     const cls = type === 'accident' ? 'radar-map-marker radar-map-marker-accident'
       : type === 'roadworks' ? 'radar-map-marker radar-map-marker-roadworks'
-      : type === 'bus_stop' ? 'radar-map-marker radar-map-marker-bus'
       : 'radar-map-marker radar-map-marker-camera';
-    const glyph = type === 'accident' ? '!' : type === 'roadworks' ? '⚠' : type === 'bus_stop' ? 'Б' : '📷';
+    const glyph = type === 'accident' ? '!' : type === 'roadworks' ? '⚠' : '📷';
     return L.divIcon({ className: '', html: `<div class="${cls}">${glyph}</div>`, iconSize: [26, 26] });
   }
 
