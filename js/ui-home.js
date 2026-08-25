@@ -21,6 +21,11 @@ const UIHome = (() => {
       if (t && t.points && t.points.length && t.stage === 'active') myTourBtn.style.display = '';
     }
 
+    // доступ к настройкам/самотесту и радару — только админ (Dima)
+    if (typeof Api !== 'undefined' && !Api.isAdmin()) {
+      ['open-settings', 'open-radar'].forEach((a) => { const b = root.querySelector('[data-action="' + a + '"]'); if (b) b.style.display = 'none'; });
+    }
+
     const historyBtn = root.querySelector('[data-action="open-history"]');
     if (!Storage.hasHistory()) {
       historyBtn.disabled = true;
@@ -47,6 +52,7 @@ const UIHome = (() => {
       Router.show('clients');
       return;
     } else if (action === 'open-radar') {
+      if (typeof Api !== 'undefined' && !Api.isAdmin()) return;
       Router.show('radar');
       return;
     } else if (action === 'open-tour') {
@@ -55,6 +61,7 @@ const UIHome = (() => {
     } else if (action === 'paste-text') {
       Router.show('paste');
     } else if (action === 'open-settings') {
+      if (typeof Api !== 'undefined' && !Api.isAdmin()) return;
       Router.show('settings');
       return;
     } else if (action === 'open-history') {

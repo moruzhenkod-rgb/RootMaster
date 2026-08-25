@@ -68,6 +68,7 @@ const App = (() => {
   }
 
   async function init() {
+    if (typeof Api !== 'undefined' && !Api.isAdmin()) { const ind = document.getElementById('radar-global-indicator'); if (ind) ind.style.display = 'none'; }
     registerSW();
 
     // предзагружаем озвучку радар-детектора заранее, чтобы первая фраза не запаздывала

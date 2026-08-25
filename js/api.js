@@ -8,6 +8,8 @@ const Api = (() => {
   const displayName = () => localStorage.getItem(NAME_KEY) || '';
   const username = () => localStorage.getItem(USER_KEY) || '';
   const isAuthed = () => !!token();
+  const ADMIN_USERS = ['r038']; // админы (по логину)
+  const isAdmin = () => ADMIN_USERS.indexOf((username() || '').toLowerCase()) !== -1 || (displayName() || '').toLowerCase() === 'dima';
 
   function setSession(data) {
     localStorage.setItem(TOKEN_KEY, data.token);
@@ -50,5 +52,5 @@ const Api = (() => {
   const deleteClient = (company, address) => req('/client', { method: 'DELETE', body: JSON.stringify({ company, address }) });
   const putTours = (current, history) => req('/tours', { method: 'PUT', body: JSON.stringify({ current, history }) });
 
-  return { token, displayName, username, isAuthed, setSession, clearSession, register, login, getTours, putTours, getClients, updateClient, deleteClient };
+  return { token, displayName, username, isAuthed, isAdmin, setSession, clearSession, register, login, getTours, putTours, getClients, updateClient, deleteClient };
 })();

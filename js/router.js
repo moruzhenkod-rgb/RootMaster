@@ -20,6 +20,7 @@ const Router = (() => {
   const container = () => document.getElementById('app');
 
   function show(name, params) {
+    if ((name === 'settings' || name === 'radar') && typeof Api !== 'undefined' && !Api.isAdmin()) { name = 'home'; }
     if (current && current.module.unmount) {
       current.module.unmount();
     }
