@@ -15,7 +15,12 @@
   const HEADING_MAX_ANGLE = 35; // курс уже, чем это — считаем объект «впереди»
   const REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000; // база камер обновляется не чаще раза в 3 часа
   const DEFAULT_RADIUS_KM = 15;
-  const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
+  const OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  ];
+  const OVERPASS_ENDPOINT = OVERPASS_ENDPOINTS[0];
   const KNOWN_LIMITS = [30, 50, 60, 70, 80, 100];
   const THRESHOLD_DISTS = [1000, 500, 200];
 
@@ -170,8 +175,8 @@
   function overpassHazardType(tags) {
     tags = tags || {};
     if (tags.highway === 'speed_camera') return 'camera';
+    if (tags.enforcement === 'maxspeed') return 'camera';
     if (tags.man_made === 'surveillance') return 'camera';
-    if (tags.highway === 'bus_stop') return 'bus_stop';
     return 'camera';
   }
 
@@ -182,7 +187,8 @@
     return (
       '[out:json][timeout:' + timeout + '];(' +
       'node["highway"="speed_camera"](' + bboxStr + ');' +
-      'node["man_made"="surveillance"](' + bboxStr + ');' +
+      'node["enforcement"="maxspeed"](' + bboxStr + ');' +
+      'node["man_made"="surveillance"]["surveillance:type"="camera"]["surveillance:zone"="traffic"](' + bboxStr + ');' +
       ');out body;'
     );
   }
@@ -223,14 +229,20 @@
     const fetchImpl = opts.fetch || (typeof fetch !== 'undefined' ? fetch : null);
     if (!fetchImpl || !bbox) return [];
     const query = buildOverpassQuery(bbox);
-    const res = await fetchImpl(OVERPASS_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: query,
-    });
-    if (!res.ok) throw new Error('overpass ' + res.status);
-    const json = await res.json();
-    return parseOverpassElements(json);
+    let lastErr = null;
+    for (let i = 0; i < OVERPASS_ENDPOINTS.length; i++) {
+      try {
+        const res = await fetchImpl(OVERPASS_ENDPOINTS[i], {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: query,
+        });
+        if (!res.ok) { lastErr = new Error('overpass ' + res.status); continue; }
+        const json = await res.json();
+        return parseOverpassElements(json);
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('overpass failed');
   }
 
   // ---------------------------------------------------------------------
