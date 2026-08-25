@@ -335,6 +335,7 @@
     let refreshTimer = null;
     let gpsLost = false;
     let announced = new Set(); // `${hazardId}:${thresholdDist}` — защита от повторной озвучки
+    let primed = false; // при старте засеиваем уже-близкие камеры, чтобы не вываливать всё сразу
     let listeners = [];
     let hazardsListeners = [];
     let posListeners = [];
@@ -458,6 +459,7 @@
     }
 
     async function start() {
+      primed = false;
       if (state === 'loading' || state === 'active') return;
       setState('loading');
       const center = await getCurrentPosition();
@@ -496,6 +498,18 @@
       if (gpsLost) { gpsLost = false; speak(['system_gps_found']); }
       const speedKmh = c.speed != null && !Number.isNaN(c.speed) ? c.speed * 3.6 : null;
       emitPosition({ lat: c.latitude, lon: c.longitude, heading: c.heading, speedKmh });
+      // при первом фиксе — пометить уже-близкие камеры «озвученными» (без звука), чтобы не болтать при запуске
+      if (!primed && hazards.length) {
+        hazards.forEach((h) => {
+          THRESHOLD_DISTS.forEach((td) => {
+            const ck = audioKeyForThreshold(h, td);
+            if (ck && ck.indexOf('cam_') === 0 && haversineDistance(c.latitude, c.longitude, h.lat, h.lon) <= td) {
+              announced.add(h.id + ':' + td);
+            }
+          });
+        });
+        primed = true;
+      }
       checkHazards(c.latitude, c.longitude, c.heading, speedKmh);
     }
 
