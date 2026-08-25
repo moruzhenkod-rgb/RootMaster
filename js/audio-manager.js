@@ -1,6 +1,7 @@
-// AudioManager: предзагрузка озвучки радар-детектора и последовательное воспроизведение (очередь) —
-// если сработали сразу две фразы («камера 500м» + «лимит 50»), они не накладываются друг на друга,
-// а проигрываются одна за другой. UMD: глобал AudioManager в браузере, module.exports в Node/Jest.
+// AudioManager: озвучка радар-детектора через Web Audio API (AudioContext) —
+// короткие сигналы как «звуковой эффект» поверх фона (навигатор/музыка), НЕ как медиа-плеер:
+// не перехватывает медиа-сессию iOS, не лезет в контролы, минимальная задержка. Очередь — без наложения фраз.
+// UMD: глобал AudioManager в браузере, module.exports в Node/Jest.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
     module.exports = factory();
@@ -11,8 +12,6 @@
   'use strict';
 
   const BASE_PATH = 'audio/radar/';
-
-  // полный список звуков радар-детектора; каждый ключ = имя файла без расширения в audio/radar/
   const MANIFEST = [
     'system_start', 'system_stop', 'system_gps_lost', 'system_gps_found', 'system_updated',
     'cam_1000m', 'cam_1000m_bus', 'cam_500m', 'cam_500m_red', 'cam_500m_mobile', 'cam_200m',
@@ -22,49 +21,69 @@
 
   function createAudioManager(opts) {
     opts = opts || {};
-    const AudioCtor = opts.AudioCtor || (typeof Audio !== 'undefined' ? Audio : null);
     const basePath = opts.basePath || BASE_PATH;
     const manifest = opts.manifest || MANIFEST;
-    const onFallback = opts.onFallback || function () {}; // вызывается, если для ключа нет загруженного файла
+    const onFallback = opts.onFallback || function () {};
+    const fetchImpl = opts.fetch || (typeof fetch !== 'undefined' ? fetch : null);
+    const ACtor = opts.AudioContext ||
+      (typeof AudioContext !== 'undefined' ? AudioContext :
+        (typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null));
 
-    const elements = new Map(); // key -> предзагруженный шаблонный HTMLAudioElement
-    const available = new Set(); // ключи, чей файл реально загрузился
+    let ctx = null;
+    const buffers = new Map(); // key -> AudioBuffer
+    const available = new Set();
     let queue = [];
     let playing = false;
     let current = null;
 
-    // предзагружает весь манифест; отсутствующие/битые файлы не считаются ошибкой на уровне приложения —
-    // такие ключи просто не попадут в available, и speak() воспользуется TTS-фолбэком
+    function ensureCtx() {
+      if (ctx || !ACtor) return ctx;
+      try { ctx = new ACtor(); } catch (e) { ctx = null; }
+      return ctx;
+    }
+
+    function decode(arrayBuffer) {
+      return new Promise((resolve, reject) => {
+        // старый iOS требует колбэк-форму decodeAudioData
+        try {
+          const p = ctx.decodeAudioData(arrayBuffer, resolve, reject);
+          if (p && typeof p.then === 'function') p.then(resolve, reject);
+        } catch (e) { reject(e); }
+      });
+    }
+
     function preload() {
-      if (!AudioCtor) return Promise.resolve([]);
-      return Promise.all(manifest.map((key) => new Promise((resolve) => {
-        let done = false;
-        const audio = new AudioCtor(basePath + key + '.mp3');
-        audio.preload = 'auto';
-        const finish = (ok) => {
-          if (done) return;
-          done = true;
-          if (ok) available.add(key);
-          elements.set(key, audio);
-          resolve(key);
-        };
-        if (typeof audio.addEventListener === 'function') {
-          audio.addEventListener('canplaythrough', () => finish(true), { once: true });
-          audio.addEventListener('loadeddata', () => finish(true), { once: true });
-          audio.addEventListener('error', () => finish(false), { once: true });
-        } else {
-          finish(false);
-        }
-        if (typeof audio.load === 'function') audio.load();
-      })));
+      ensureCtx();
+      if (!ctx || !fetchImpl) return Promise.resolve([]);
+      return Promise.all(manifest.map(function (key) {
+        if (available.has(key)) return Promise.resolve(key);
+        return fetchImpl(basePath + key + '.mp3')
+          .then(function (res) { return res && res.ok ? res.arrayBuffer() : null; })
+          .then(function (arr) { return arr ? decode(arr) : null; })
+          .then(function (buf) { if (buf) { buffers.set(key, buf); available.add(key); } return key; })
+          .catch(function () { return key; });
+      }));
     }
 
     function has(key) { return available.has(key); }
 
-    // ставит один или несколько ключей в очередь; проигрываются строго последовательно
+    // разблокировка/возобновление AudioContext — вызвать из пользовательского жеста (кнопка СТАРТ)
+    function unlock() {
+      ensureCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended' && typeof ctx.resume === 'function') ctx.resume().catch(function () {});
+      try {
+        const b = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = b;
+        src.connect(ctx.destination);
+        src.start(0);
+      } catch (e) {}
+    }
+
     function enqueue(keys) {
       const list = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
-      queue.push(...list);
+      queue.push.apply(queue, list);
       if (!playing) processQueue();
     }
 
@@ -77,34 +96,16 @@
     }
 
     function playOne(key) {
-      return new Promise((resolve) => {
-        if (!available.has(key)) { onFallback(key); resolve(); return; }
-        // переиспользуем предзагруженный элемент (он разблокирован жестом на iOS), клон был бы «немым»
-        const audio = elements.get(key) || (AudioCtor ? new AudioCtor(basePath + key + '.mp3') : null);
-        if (!audio) { resolve(); return; }
-        const finish = () => resolve();
-        try { audio.currentTime = 0; } catch (e) {}
-        if (typeof audio.addEventListener === 'function') {
-          audio.addEventListener('ended', finish, { once: true });
-          audio.addEventListener('error', finish, { once: true });
-        }
-        const playResult = typeof audio.play === 'function' ? audio.play() : null;
-        if (playResult && typeof playResult.catch === 'function') playResult.catch(finish);
-        if (typeof audio.addEventListener !== 'function') finish();
-      });
-    }
-
-    // разблокировка звука на iOS/Android: вызвать из обработчика пользовательского жеста (кнопка СТАРТ)
-    function unlock() {
-      elements.forEach((audio) => {
+      return new Promise(function (resolve) {
+        if (!ctx || !available.has(key)) { onFallback(key); resolve(); return; }
+        if (ctx.state === 'suspended' && typeof ctx.resume === 'function') ctx.resume().catch(function () {});
         try {
-          const p = audio.play();
-          if (p && typeof p.then === 'function') {
-            p.then(() => { audio.pause(); try { audio.currentTime = 0; } catch (e) {} }).catch(() => {});
-          } else if (typeof audio.pause === 'function') {
-            audio.pause();
-          }
-        } catch (e) {}
+          const src = ctx.createBufferSource();
+          src.buffer = buffers.get(key);
+          src.connect(ctx.destination);
+          src.onended = function () { resolve(); };
+          src.start(0);
+        } catch (e) { resolve(); }
       });
     }
 
@@ -116,7 +117,6 @@
     return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent, unlock };
   }
 
-  // единый экземпляр для приложения (браузер) — предзагружается при старте app.js
   let singleton = null;
   function getInstance() {
     if (!singleton) singleton = createAudioManager();
