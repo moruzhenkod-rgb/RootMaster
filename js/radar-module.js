@@ -190,9 +190,13 @@
       '[out:json][timeout:' + timeout + '];(' +
       'node["highway"="speed_camera"](' + bboxStr + ');' +
       'node["enforcement"="maxspeed"](' + bboxStr + ');' +
+      'way["enforcement"="maxspeed"](' + bboxStr + ');' +
+      'relation["enforcement"="maxspeed"](' + bboxStr + ');' +
       'node["man_made"="surveillance"]["surveillance:type"="camera"]["surveillance:zone"="traffic"](' + bboxStr + ');' +
       'way["highway"="construction"](' + bboxStr + ');' +
       'node["highway"="construction"](' + bboxStr + ');' +
+      'relation["highway"="construction"](' + bboxStr + ');' +
+      'way["construction:highway"](' + bboxStr + ');' +
       ');out center;'
     );
   }
