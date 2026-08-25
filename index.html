@@ -33,6 +33,58 @@
     </footer>
   </div>
 </template>
+<template id="tpl-manual">
+  <div class="screen screen-clients">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Ручная загрузка тура</h2>
+    </header>
+    <div class="clients-list">
+      <div class="manual-add-box">
+        <button class="btn btn-primary" data-action="cam-open" style="width:100%;margin-bottom:12px">📷 Сканировать этикетку (сканер)</button>
+        <div class="manual-add-title">➕ Или ввести вручную</div>
+        <input id="m-company" placeholder="Фирма (необязательно)" />
+        <input id="m-address" placeholder="Адрес: улица дом, индекс город" />
+        <div class="edit-row">
+          <input id="m-key" placeholder="Ключ (необязательно)" />
+          <button class="btn btn-secondary" data-action="manual-add-point">Добавить</button>
+        </div>
+      </div>
+      <div id="manual-new-list"></div>
+      <div class="manual-sep">— или выбрать из базы —</div>
+      <input id="manual-search" class="clients-search" placeholder="🔍 Поиск по фирме или адресу" />
+      <div id="manual-clients-list"></div>
+    </div>
+    <footer class="sticky-footer">
+      <button class="btn btn-primary btn-large" id="btn-manual-build" data-action="manual-build" disabled>Собрать тур (0)</button>
+    </footer>
+    <div id="cam-overlay" class="cam-overlay" style="display:none">
+      <video id="cam-video" playsinline autoplay muted></video>
+      <div class="cam-frame"></div>
+      <div class="cam-status" id="cam-status"></div>
+      <div class="cam-controls">
+        <button class="btn btn-ghost" data-action="cam-close">Готово</button>
+        <button class="btn btn-primary" data-action="cam-shot">📸 Скан сейчас</button>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="tpl-settings">
+  <div class="screen screen-clients">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Настройки</h2>
+    </header>
+    <div class="set-tabs">
+      <button class="set-tab active" data-tab="dupes">Дубликаты</button>
+      <button class="set-tab" data-tab="nogeo">Без гео</button>
+      <button class="set-tab" data-tab="cells">Ячейки/Фирмы</button>
+      <button class="set-tab" data-tab="test">Самотест</button>
+    </div>
+    <div id="set-content" class="clients-list"></div>
+    <div id="set-modal" class="set-modal" style="display:none"></div>
+  </div>
+</template>
 <template id="tpl-auth">
   <div class="screen screen-auth">
     <div id="auth-box"></div>
@@ -41,7 +93,7 @@
 <template id="tpl-home">
   <div class="screen screen-home">
     <header class="app-header">
-      <div class="app-logo">🚚 <span>RouteMaster</span></div>
+      <div class="app-logo">🚚 <span>RouteMaster</span> <span class="app-version" id="app-version"></span></div>
       <div class="home-profile">
         <span class="home-user" id="home-user"></span>
         <button class="home-logout" data-action="logout">Выйти</button>
@@ -58,10 +110,20 @@
         <span>Вставить список</span>
         <span class="btn-sub">Ввести адреса текстом вручную</span>
       </button>
+      <button class="btn btn-primary btn-large" data-action="open-manual">
+        <span class="btn-icon">🧰</span>
+        <span>Ручная загрузка тура</span>
+        <span class="btn-sub">Выбрать из базы или ввести вручную</span>
+      </button>
       <button class="btn btn-secondary btn-large" data-action="open-clients">
         <span class="btn-icon">🗂</span>
         <span>Мои клиенты</span>
         <span class="btn-sub">Постоянные адреса — добавить в тур</span>
+      </button>
+      <button class="btn btn-secondary btn-large" data-action="open-settings">
+        <span class="btn-icon">⚙️</span>
+        <span>Настройки</span>
+        <span class="btn-sub">Дубликаты · без гео · ячейки · самотест</span>
       </button>
       <button class="btn btn-secondary btn-large" data-action="open-history">
         <span class="btn-icon">🕓</span>
@@ -69,7 +131,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v6.7</footer>
+    <footer class="home-footer">RouteMaster PWA · v8.1</footer>
   </div>
 </template>
 
@@ -159,6 +221,7 @@
     <div id="active-list" class="active-list"></div>
     <div id="active-done" class="active-list hidden"></div>
     <div id="active-cancelled" class="active-list hidden"></div>
+    <button class="fab-add" data-action="add-parcel" title="Добавить посылку">➕</button>
     <footer class="sticky-footer">
       <button class="btn btn-primary btn-large" id="btn-end-tour" data-action="end-tour">Завершить тур</button>
     </footer>
@@ -208,6 +271,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 <script src="js/utils.js"></script>
@@ -215,6 +279,8 @@
 <script src="js/storage.js"></script>
 <script src="js/geocode.js"></script>
 <script src="js/client-match.js"></script>
+<script src="js/place-picker.js"></script>
+<script src="js/cam-scanner.js"></script>
 <script src="js/testdata.js"></script>
 <script src="js/ui-home.js"></script>
 <script src="js/ui-paste.js"></script>
@@ -226,6 +292,8 @@
 <script src="js/ui-history-detail.js"></script>
 <script src="js/ui-auth.js"></script>
 <script src="js/ui-clients.js"></script>
+<script src="js/ui-manual.js"></script>
+<script src="js/ui-settings.js"></script>
 <script src="js/router.js"></script>
 <script src="js/app.js"></script>
 </body>

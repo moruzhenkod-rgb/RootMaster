@@ -4,6 +4,8 @@ const Router = (() => {
     auth: UIAuth,
     home: UIHome,
     clients: UIClients,
+    manual: UIManual,
+    settings: UISettings,
     paste: UIPaste,
     scan: UIScan,
     validate: UIValidate,

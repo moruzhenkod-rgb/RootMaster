@@ -6,12 +6,33 @@ const ClientMatch = (() => {
   }
 
   function normAddr(a) {
-    return String(a || '').toLowerCase().replace(/[^0-9a-zа-яё]+/gi, ' ').trim();
+    let s = String(a || '').toLowerCase();
+    // транслитерация немецких умлаутов: ö→oe, ü→ue, ä→ae, ß→ss (единое написание)
+    s = s.replace(/ß/g, 'ss').replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue');
+    s = s.replace(/[^0-9a-zа-яё]+/gi, ' ').trim();
+    // раскрыть сокращение улицы: ...str / str. → ...strasse (Bornhoevedstr → bornhoevedstrasse)
+    s = s.replace(/str\b/g, 'strasse');
+    // склеить номер дома с литерой: «65 a» → «65a» (совпадение с «65a»)
+    s = s.replace(/(\d)\s+([a-zа-яё])(?=\s|$)/gi, '$1$2');
+    return s.replace(/\s+/g, ' ').trim();
   }
 
   function tokenize(s) {
     return s.split(' ').filter(Boolean);
   }
+
+  // номер дома из нормализованного адреса (1-3 цифры, не 5-значный индекс)
+  function houseNum(s) {
+    const toks = String(s || '').split(' ');
+    for (const t of toks) {
+      if (/^\d{5}$/.test(t)) continue; // это PLZ
+      const m = t.match(/^(\d{1,3})[a-zа-яё]?$/);
+      if (m) return m[1];
+    }
+    return '';
+  }
+  // совместимы, если у одного нет номера или номера совпадают
+  function houseCompat(a, b) { return !a || !b || a === b; }
 
   // расстояние Левенштейна — для распознавания адреса с опечаткой
   function levenshtein(a, b) {
@@ -49,6 +70,7 @@ const ClientMatch = (() => {
     if (!key || !clients || !clients.length) return null;
     const cNorm = normAddr(company || '');
     const cw = cNorm.split(' ')[0];
+    const qNum = houseNum(key);
 
     // 1) кандидаты той же фирмы: сначала ТОЧНОЕ совпадение названия (надёжно),
     //    иначе по первому слову (только если оно длинное — избегаем «h», «a»).
@@ -66,7 +88,7 @@ const ClientMatch = (() => {
       }));
       // если фирма совпала ТОЧНО — берём запись с координатами даже при слабом адресе;
       // иначе требуем достаточную похожесть адреса
-      const good = scored.filter((s) => s.sim >= 0.5 || (exactFirm && s.coord));
+      const good = scored.filter((s) => (s.sim >= 0.5 || (exactFirm && s.coord)) && houseCompat(qNum, houseNum(normAddr(s.c.address))));
       if (good.length) {
         good.sort((a, b) => (b.coord - a.coord) || (b.manual - a.manual) || (b.sim - a.sim));
         return good[0].c;
@@ -86,6 +108,7 @@ const ClientMatch = (() => {
     for (const c of clients) {
       const ck = normAddr(c.address);
       if (!ck) continue;
+      if (!houseCompat(qNum, houseNum(ck))) continue;
       const keyTokens = tokenize(key), ckTokens = tokenize(ck);
       const [shortTokens, longTokens] = keyTokens.length <= ckTokens.length ? [keyTokens, ckTokens] : [ckTokens, keyTokens];
       let hit = false;

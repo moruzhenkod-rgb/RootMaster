@@ -1,5 +1,7 @@
 const UIActive = (() => {
   let root, map, markers = {}, meMarker, currentView = 'list', activePointId = null;
+  let apResults = [];
+  let editPointId = null, editCoords = null, editManual = false;
 
   function mount(container) {
     root = container;
@@ -21,6 +23,11 @@ const UIActive = (() => {
     document.getElementById('context-menu-overlay').removeEventListener('click', onContextOverlayClick);
     closeSheet();
     closeContext();
+    if (typeof PlacePicker !== 'undefined') PlacePicker.close();
+    const apov = document.getElementById('addp-overlay');
+    if (apov) apov.remove();
+    const epov = document.getElementById('editp-overlay');
+    if (epov) epov.remove();
     if (map) { map.remove(); map = null; }
     markers = {};
   }
@@ -92,6 +99,7 @@ const UIActive = (() => {
         });
         markers[p.id] = m;
       } else {
+        m.setLatLng([p.lat, p.lng]);
         m.setIcon(markerIcon(p));
       }
     });
@@ -252,13 +260,19 @@ const UIActive = (() => {
         ${p.key || p.cell ? `<div class="sheet-key">${p.key ? `🔑 ${Utils.escapeHtml(p.key)}` : ''}${p.key && p.cell ? '  ·  ' : ''}${p.cell ? `🗄 Ящик ${Utils.escapeHtml(p.cell)}` : ''}</div>` : ''}
         ${p.parcels || p.weight ? `<div class="sheet-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)}` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}
       </div>
+      <button class="btn btn-primary btn-large sheet-route" data-action="navigate">🧭 Маршрут</button>
       <div class="sheet-grid">
-        <button class="sheet-sq" data-action="navigate"><span>🧭</span><small>Навигация</small></button>
+        <button class="sheet-sq" data-action="edit-point"><span>✏️</span><small>Изменить</small></button>
+        <button class="sheet-sq" data-action="place-on-map"><span>📍</span><small>Точка</small></button>
         <button class="sheet-sq ${done ? '' : 'ok'}" data-action="toggle-done"><span>${done ? '↺' : '✓'}</span><small>${done ? 'Вернуть' : 'Готово'}</small></button>
         <button class="sheet-sq" data-action="open-context"><span>⋯</span><small>Статус</small></button>
       </div>
     `;
     content.querySelector('[data-action="navigate"]').addEventListener('click', () => navigateTo(p));
+    const placeBtn = content.querySelector('[data-action="place-on-map"]');
+    if (placeBtn) placeBtn.addEventListener('click', () => openPlace(id));
+    const editBtn = content.querySelector('[data-action="edit-point"]');
+    if (editBtn) editBtn.addEventListener('click', () => openEditPoint(id));
     const ov = content.querySelector('[data-action="open-gmap"]');
     if (ov) ov.addEventListener('click', () => navigateTo(p));
     const cl = content.querySelector('[data-action="close-sheet"]');
@@ -324,6 +338,7 @@ const UIActive = (() => {
   }
 
   function onHeaderClick(e) {
+    if (e.target.closest('[data-action="add-parcel"]')) { openAddParcel(); return; }
     const backBtn = e.target.closest('[data-action="back-build"]');
     if (backBtn) { Router.show('home'); return; }
 
@@ -342,6 +357,287 @@ const UIActive = (() => {
       if (cancEl) cancEl.classList.toggle('hidden', currentView !== 'cancelled');
       if (currentView === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
     }
+  }
+
+  // ─── Ручная постановка точки посылки (через общий PlacePicker) ───
+  function openPlace(id) {
+    const p = App.tour.points.find((pt) => pt.id === id);
+    if (!p) return;
+    closeSheet();
+    const me = meMarker ? meMarker.getLatLng() : null;
+    PlacePicker.open({
+      title: '📍 Где находится посылка?',
+      subtitle: (p.company ? p.company + ' · ' : '') + p.editedText,
+      coords: (p.lat != null && p.lng != null) ? { lat: p.lat, lng: p.lng } : null,
+      me: me ? [me.lat, me.lng] : null,
+      onSave: (c) => {
+        p.lat = c.lat; p.lng = c.lng; p.manualCoords = true; p.geoStatus = 'ok';
+        if (p.order == null) {
+          const orders = App.tour.points.filter((x) => x.order != null).map((x) => x.order);
+          p.order = (orders.length ? Math.max.apply(null, orders) : 0) + 1;
+        }
+        App.saveTour();
+        renderMarkers();
+        renderList();
+        Utils.toast('Точка поставлена ✓ и запомнена', 'success');
+      },
+    });
+  }
+
+  // ─── Добавить посылку прямо в активный тур (сохранённый тур не сбрасывается) ───
+  function openAddParcel() {
+    let ov = document.getElementById('addp-overlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'addp-overlay';
+      ov.className = 'addp-overlay';
+      ov.innerHTML = `
+        <div class="addp-card">
+          <h3>➕ Добавить посылку в тур</h3>
+          <button class="btn btn-secondary" style="width:100%;margin-bottom:10px" data-action="ap-scan">📷 Сканировать этикетку</button>
+          <input id="ap-search" placeholder="🔍 Поиск в базе клиентов">
+          <div id="ap-results" class="ap-results"></div>
+          <input id="ap-company" placeholder="Фирма (необязательно)">
+          <input id="ap-address" placeholder="Адрес: улица дом, индекс город">
+          <div class="edit-row">
+            <input id="ap-key" placeholder="Ключ">
+            <input id="ap-cell" placeholder="Ячейка">
+          </div>
+          <input id="ap-pos" inputmode="numeric" placeholder="№ остановки (пусто = в конец)">
+          <div class="addp-hint">Скан / поиск в базе / ввод вручную. Не встанет на карту — уйдёт в «Не на карте», поставишь точку.</div>
+          <div class="addp-actions">
+            <button class="btn btn-ghost" data-action="ap-cancel">Отмена</button>
+            <button class="btn btn-primary" id="ap-save-btn" data-action="ap-save">Добавить</button>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      ov.addEventListener('click', onAddParcelClick);
+      ov.addEventListener('input', onAddParcelInput);
+    }
+    ov.style.display = 'flex';
+    apResults = [];
+    const r = document.getElementById('ap-results'); if (r) r.innerHTML = '';
+    const a = document.getElementById('ap-company'); if (a) a.focus();
+  }
+
+  function closeAddParcel() {
+    const ov = document.getElementById('addp-overlay');
+    if (ov) {
+      ov.style.display = 'none';
+      ['ap-company','ap-address','ap-key','ap-cell','ap-search','ap-pos'].forEach((i) => { const el = document.getElementById(i); if (el) el.value = ''; });
+      const r = document.getElementById('ap-results'); if (r) r.innerHTML = '';
+    }
+    apResults = [];
+  }
+
+  function onAddParcelInput(e) {
+    if (e.target && e.target.id === 'ap-search') renderApResults(e.target.value.toLowerCase().trim());
+  }
+
+  function renderApResults(q) {
+    const box = document.getElementById('ap-results');
+    if (!box) return;
+    if (!q) { box.innerHTML = ''; apResults = []; return; }
+    let clients = [];
+    try { clients = JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) {}
+    const nq = (typeof ClientMatch !== 'undefined') ? ClientMatch.normAddr(q) : q;
+    apResults = clients.filter((c) => (typeof ClientMatch !== 'undefined')
+      ? (ClientMatch.normAddr(c.company).includes(nq) || ClientMatch.normAddr(c.address).includes(nq)) : true).slice(0, 8);
+    box.innerHTML = apResults.length
+      ? apResults.map((c, i) => `<div class="ap-item" data-action="ap-pick" data-idx="${i}">${c.company ? `<div class="ap-firm">${Utils.escapeHtml(c.company)}</div>` : ''}<div class="ap-addr">${Utils.escapeHtml(c.address)}</div></div>`).join('')
+      : '<div class="ap-empty">Ничего не найдено</div>';
+  }
+
+  function onAddParcelClick(e) {
+    if (e.target.closest('[data-action="ap-cancel"]')) { closeAddParcel(); return; }
+    if (e.target.closest('[data-action="ap-save"]')) { saveParcel(); return; }
+    if (e.target.closest('[data-action="ap-scan"]')) {
+      if (typeof CamScanner === 'undefined') { Utils.toast('Сканер не загрузился', 'error'); return; }
+      CamScanner.open({ onResult: (rr) => {
+        const c = document.getElementById('ap-company'), a = document.getElementById('ap-address');
+        if (c) c.value = rr.company || '';
+        if (a) a.value = rr.address || '';
+        Utils.toast('Распознано — проверь и жми «Добавить»', 'success');
+      } });
+      return;
+    }
+    const pick = e.target.closest('[data-action="ap-pick"]');
+    if (pick) {
+      const c = apResults[+pick.dataset.idx]; if (!c) return;
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      set('ap-company', c.company); set('ap-address', c.address); set('ap-key', c.key); set('ap-cell', c.cell);
+      const box = document.getElementById('ap-results'); if (box) box.innerHTML = '';
+      const srch = document.getElementById('ap-search'); if (srch) srch.value = '';
+      apResults = [];
+      return;
+    }
+  }
+
+  async function saveParcel() {
+    const v = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    let company = v('ap-company'), address = v('ap-address'), key = v('ap-key'), cell = v('ap-cell');
+    if (!address) { Utils.toast('Введите адрес', 'error'); return; }
+    const btn = document.getElementById('ap-save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Добавляю…'; }
+    let clients = [];
+    try { clients = JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) {}
+    const known = (typeof ClientMatch !== 'undefined') ? ClientMatch.matchClient(address, company, clients) : null;
+    let lat = null, lng = null, manual = false;
+    if (known) {
+      if (known.address) address = known.address; // чистый адрес из базы
+      if (!company && known.company) company = known.company;
+      if (!key && known.key) key = known.key;
+      if (!cell && known.cell) cell = known.cell;
+      if (known.lat != null && known.lng != null) { lat = known.lat; lng = known.lng; manual = !!known.manual; }
+    }
+    if (lat == null && typeof Geocode !== 'undefined') {
+      try { const geo = await Geocode.lookup(address); if (geo) { lat = geo.lat; lng = geo.lng; } } catch (e) {}
+    }
+    const posRaw = v('ap-pos');
+    const pos = posRaw ? parseInt(posRaw, 10) : null;
+    const orders = App.tour.points.filter((x) => x.order != null).map((x) => x.order);
+    const nextOrder = (orders.length ? Math.max.apply(null, orders) : 0) + 1;
+    let assignedOrder = null;
+    if (lat != null) {
+      if (pos && pos >= 1) {
+        // вставить на позицию pos — сдвинуть остальные вниз
+        App.tour.points.forEach((x) => { if (x.order != null && x.order >= pos) x.order += 1; });
+        assignedOrder = pos;
+      } else {
+        assignedOrder = nextOrder;
+      }
+    }
+    const pt = {
+      id: Utils.uid(), rawText: address, editedText: address,
+      company: company || '', key: key || '', cell: cell || '', parcels: '', weight: '',
+      lat: lat, lng: lng, foundAddress: null, matchedHouse: false,
+      manualCoords: manual, geoStatus: lat != null ? 'ok' : 'error',
+      order: assignedOrder, tourStatus: 'pending',
+    };
+    App.tour.points.push(pt);
+    App.saveTour();
+    renderMarkers();
+    renderList();
+    if (btn) { btn.disabled = false; btn.textContent = 'Добавить'; }
+    closeAddParcel();
+    Utils.toast(lat != null ? ('Посылка добавлена ✓' + (pos && pos >= 1 ? ' на позицию ' + pos : '')) : 'Добавлено — адрес не найден, поставь точку на карте', lat != null ? 'success' : 'error');
+  }
+
+  // ─── Редактирование точки в активном туре (адрес / № / геокодинг вручную) ───
+  function setPointPosition(p, newPos) {
+    const onRoute = App.tour.points.filter((x) => x.order != null && x.tourStatus !== 'skip' && x.tourStatus !== 'transferred');
+    onRoute.sort((a, b) => a.order - b.order);
+    const without = onRoute.filter((x) => x !== p);
+    let idx = Math.max(1, Math.min(newPos, without.length + 1)) - 1;
+    without.splice(idx, 0, p);
+    without.forEach((x, i) => { x.order = i + 1; });
+  }
+
+  function updateEpGeo() {
+    const el = document.getElementById('ep-geo');
+    if (el) el.textContent = editCoords
+      ? ('📍 координаты: ' + editCoords.lat.toFixed(5) + ', ' + editCoords.lng.toFixed(5) + (editManual ? ' (вручную)' : ''))
+      : '⚠️ без координат';
+  }
+
+  function openEditPoint(id) {
+    const p = App.tour.points.find((x) => x.id === id);
+    if (!p) return;
+    closeSheet();
+    editPointId = id;
+    editCoords = (p.lat != null && p.lng != null) ? { lat: p.lat, lng: p.lng } : null;
+    editManual = !!p.manualCoords;
+    let ov = document.getElementById('editp-overlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'editp-overlay';
+      ov.className = 'addp-overlay';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', onEditPointClick);
+    }
+    ov.innerHTML = `
+      <div class="addp-card">
+        <h3>✏️ Изменить точку</h3>
+        <input id="ep-company" placeholder="Фирма">
+        <input id="ep-address" placeholder="Адрес">
+        <div class="edit-row"><input id="ep-key" placeholder="Ключ"><input id="ep-cell" placeholder="Ячейка"></div>
+        <input id="ep-pos" inputmode="numeric" placeholder="№ остановки">
+        <div class="ep-geo" id="ep-geo"></div>
+        <div class="edit-row">
+          <button class="btn btn-secondary" data-action="ep-geocode">🔄 Геокодировать</button>
+          <button class="btn btn-secondary" data-action="ep-place">📍 На карте</button>
+        </div>
+        <div class="addp-actions">
+          <button class="btn btn-ghost" data-action="ep-cancel">Отмена</button>
+          <button class="btn btn-primary" id="ep-save-btn" data-action="ep-save">Сохранить</button>
+        </div>
+      </div>`;
+    ov.style.display = 'flex';
+    document.getElementById('ep-company').value = p.company || '';
+    document.getElementById('ep-address').value = p.editedText || '';
+    document.getElementById('ep-key').value = p.key || '';
+    document.getElementById('ep-cell').value = p.cell || '';
+    document.getElementById('ep-pos').value = p.order != null ? p.order : '';
+    updateEpGeo();
+  }
+
+  function closeEditPoint() {
+    const ov = document.getElementById('editp-overlay');
+    if (ov) ov.style.display = 'none';
+    editPointId = null; editCoords = null; editManual = false;
+  }
+
+  async function geocodeEdit() {
+    const addr = (document.getElementById('ep-address') || {}).value;
+    if (!addr || !addr.trim()) { Utils.toast('Введите адрес', 'error'); return; }
+    const btn = document.querySelector('[data-action="ep-geocode"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Ищу…'; }
+    let geo = null;
+    if (typeof Geocode !== 'undefined') { try { geo = await Geocode.lookup(addr.trim()); } catch (e) {} }
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Геокодировать'; }
+    if (geo) { editCoords = { lat: geo.lat, lng: geo.lng }; editManual = false; updateEpGeo(); Utils.toast('Адрес найден ✓', 'success'); }
+    else Utils.toast('Не найдено — поставь точку на карте', 'error');
+  }
+
+  function placeEdit() {
+    const me = meMarker ? meMarker.getLatLng() : null;
+    const addr = (document.getElementById('ep-address') || {}).value || '';
+    PlacePicker.open({
+      title: '📍 Поставить точку',
+      subtitle: addr,
+      coords: editCoords,
+      me: me ? [me.lat, me.lng] : null,
+      onSave: (c) => { editCoords = { lat: c.lat, lng: c.lng }; editManual = true; updateEpGeo(); },
+    });
+  }
+
+  function saveEditPoint() {
+    const p = App.tour.points.find((x) => x.id === editPointId);
+    if (!p) { closeEditPoint(); return; }
+    const v = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const address = v('ep-address');
+    if (!address) { Utils.toast('Адрес не может быть пустым', 'error'); return; }
+    p.company = v('ep-company');
+    p.editedText = address; p.rawText = address;
+    p.key = v('ep-key'); p.cell = v('ep-cell');
+    if (editCoords) { p.lat = editCoords.lat; p.lng = editCoords.lng; p.manualCoords = editManual; p.geoStatus = 'ok'; }
+    const posRaw = v('ep-pos');
+    const pos = posRaw ? parseInt(posRaw, 10) : null;
+    if (pos && pos >= 1) setPointPosition(p, pos);
+    // пересоздать метку на новом месте
+    if (markers[p.id]) { map.removeLayer(markers[p.id]); delete markers[p.id]; }
+    App.saveTour();
+    renderMarkers();
+    renderList();
+    closeEditPoint();
+    Utils.toast('Точка обновлена ✓', 'success');
+  }
+
+  function onEditPointClick(e) {
+    if (e.target.closest('[data-action="ep-cancel"]')) { closeEditPoint(); return; }
+    if (e.target.closest('[data-action="ep-save"]')) { saveEditPoint(); return; }
+    if (e.target.closest('[data-action="ep-geocode"]')) { geocodeEdit(); return; }
+    if (e.target.closest('[data-action="ep-place"]')) { placeEdit(); return; }
   }
 
   return { mount, unmount };

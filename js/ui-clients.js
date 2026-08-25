@@ -30,7 +30,12 @@ const UIClients = (() => {
       return;
     }
     const q = searchQuery;
-    const items = cs.map((c, i) => ({ c, i })).filter(({ c }) => !q || (c.company || '').toLowerCase().includes(q) || (c.address || '').toLowerCase().includes(q));
+    const nq = q ? ClientMatch.normAddr(q) : '';
+    const items = cs.map((c, i) => ({ c, i })).filter(({ c }) => {
+      if (!nq) return true;
+      // поиск устойчив к умлаутам/сокращениям (ö=oe, straße=str.)
+      return ClientMatch.normAddr(c.company).includes(nq) || ClientMatch.normAddr(c.address).includes(nq);
+    });
     if (!items.length) { list.innerHTML = '<div class="empty-hint">Ничего не найдено</div>'; updateBtn(); return; }
     list.innerHTML = items.map(({ c, i }) => {
       if (i === editing) {

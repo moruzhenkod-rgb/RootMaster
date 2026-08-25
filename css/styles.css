@@ -689,7 +689,7 @@ button {
 .sheet-info .sheet-company { font-size: 14px; }
 .sheet-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   padding: 6px 0 8px;
 }
@@ -742,3 +742,76 @@ button {
   color: var(--text); font-size: 14px; width: calc(100% - 24px);
 }
 .clients-search:focus { outline: none; border-color: var(--accent); }
+
+/* Ручная загрузка тура */
+.manual-add-box { background: var(--card, #1b1b1f); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+.manual-add-title { font-weight: 700; margin-bottom: 10px; font-size: 15px; }
+.manual-add-box input { width: 100%; margin-bottom: 8px; }
+.manual-sep { text-align: center; color: #9aa0a6; font-size: 13px; margin: 16px 0 10px; }
+#manual-new-list .client-card { border: 1px solid rgba(80,200,120,0.35); }
+
+/* Скан камерой (OCR) */
+.cam-overlay { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cam-overlay video { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.cam-frame { position: absolute; left: 8%; right: 8%; top: 30%; height: 24%; border: 2px solid rgba(255,201,60,0.9); border-radius: 12px; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.35); }
+.cam-status { position: absolute; top: 16px; left: 16px; right: 16px; text-align: center; color: #fff; background: rgba(0,0,0,0.55); padding: 8px 12px; border-radius: 10px; font-size: 14px; }
+.cam-controls { position: absolute; bottom: 24px; left: 0; right: 0; display: flex; gap: 12px; justify-content: center; padding: 0 20px; }
+.cam-controls .btn { min-width: 130px; }
+
+/* Экран настроек */
+.set-tabs { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; }
+.set-tab { flex: 0 0 auto; padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: #cfd2d6; font-size: 13px; font-weight: 600; }
+.set-tab.active { background: var(--accent, #4a90d9); color: #fff; border-color: transparent; }
+.set-note { color: #9aa0a6; font-size: 13px; margin: 4px 4px 12px; }
+.dupe-group { border: 1px solid rgba(255,180,60,0.35); border-radius: 12px; padding: 8px; margin-bottom: 12px; }
+.btn-sm { padding: 6px 10px; font-size: 13px; min-width: auto; }
+.set-modal { position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.set-modal-card { background: #1b1b1f; border-radius: 16px; padding: 16px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; }
+.set-modal-card h3 { margin: 0 0 12px; }
+.set-modal-card input { width: 100%; margin-bottom: 8px; }
+.set-modal-card .edit-map { height: 240px; border-radius: 12px; overflow: hidden; margin: 8px 0; }
+.test-row { padding: 9px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
+.test-ic { margin-right: 6px; }
+.test-detail { color: #9aa0a6; font-size: 13px; }
+.test-fail { color: #ff8a80; }
+
+/* Ручная постановка точки в активном туре */
+.place-overlay { position: fixed; inset: 0; z-index: 9999; background: #10131a; display: flex; flex-direction: column; }
+.place-head { padding: 14px 16px 8px; }
+.place-title { font-size: 17px; font-weight: 800; }
+.place-sub { color: #cfd2d6; font-size: 13px; margin-top: 3px; }
+.place-hint { color: #ffb84d; font-size: 12.5px; margin-top: 6px; }
+.place-map { flex: 1; min-height: 0; }
+.place-actions { display: flex; gap: 12px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+.place-actions .btn { flex: 1; }
+.sheet-place { width: 100%; margin: 4px 0 12px; }
+
+/* Демо рабочего тура в самотесте */
+.demo-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.demo-actions .btn { flex: 0 0 auto; }
+
+/* Бейдж версии в шапке */
+.app-version { display: inline-block; font-size: 12px; font-weight: 700; color: #111; background: #ffc93c; padding: 2px 8px; border-radius: 20px; vertical-align: middle; margin-left: 4px; }
+
+/* Добавить посылку в активный тур */
+.fab-add { position: fixed; right: 16px; bottom: 78px; z-index: 900; background: #2563eb; color: #fff; border: none; border-radius: 26px; padding: 12px 18px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+.addp-overlay { position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.addp-card { background: #1b1b1f; border-radius: 16px; padding: 16px; width: 100%; max-width: 460px; }
+.addp-card h3 { margin: 0 0 12px; }
+.addp-card input { width: 100%; margin-bottom: 8px; }
+.addp-hint { color: #9aa0a6; font-size: 12.5px; margin: 4px 0 14px; }
+.addp-actions { display: flex; gap: 10px; }
+.addp-actions .btn { flex: 1; }
+
+/* Компактная круглая кнопка добавления */
+.fab-add { width: 52px; height: 52px; padding: 0; border-radius: 50%; right: 14px; bottom: 88px; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+/* Результаты поиска базы в форме добавления */
+.ap-results { max-height: 180px; overflow-y: auto; margin-bottom: 8px; }
+.ap-item { padding: 8px 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 6px; }
+.ap-item:active { background: rgba(37,99,235,0.25); }
+.ap-firm { font-weight: 600; font-size: 14px; }
+.ap-addr { color: #9aa0a6; font-size: 13px; }
+.ap-empty { color: #9aa0a6; font-size: 13px; padding: 6px; }
+
+/* Статус координат в модалке редактирования точки */
+.ep-geo { font-size: 13px; color: #cfd2d6; margin: 6px 0 10px; }
