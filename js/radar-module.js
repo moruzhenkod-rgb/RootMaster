@@ -509,18 +509,12 @@
         THRESHOLD_DISTS.forEach((thresholdDist) => {
           const key = h.id + ':' + thresholdDist;
           if (dist <= thresholdDist && !announced.has(key)) {
+            const camKey = audioKeyForThreshold(h, thresholdDist);
+            // реагируем ТОЛЬКО на камеры (блиц): без лимитов скорости, аварий и дорожных работ
+            if (!camKey || camKey.indexOf('cam_') !== 0) return;
             announced.add(key);
-            const audioKeys = [audioKeyForThreshold(h, thresholdDist)];
-            if (thresholdDist === 500 && h.maxspeed) {
-              const lk = limitAudioKey(h.maxspeed);
-              if (lk) audioKeys.push(lk);
-            }
-            if (thresholdDist === 200 && h.maxspeed && speedKmh != null && speedKmh > h.maxspeed) {
-              audioKeys.push('speed_warning');
-            }
-            const finalKeys = audioKeys.filter(Boolean);
-            speak(finalKeys);
-            triggered.push({ hazard: h, thresholdDist, distance: dist, audioKeys: finalKeys });
+            speak([camKey]);
+            triggered.push({ hazard: h, thresholdDist, distance: dist, audioKeys: [camKey] });
           }
         });
       });
