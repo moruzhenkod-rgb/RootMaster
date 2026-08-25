@@ -12,6 +12,7 @@
   'use strict';
 
   const BASE_PATH = 'audio/radar/';
+  const OUTPUT_GAIN = 4.0; // усиление сигнала — громче фоновой музыки/навигатора
   const MANIFEST = [
     'system_start', 'system_stop', 'system_gps_lost', 'system_gps_found', 'system_updated',
     'cam_1000m', 'cam_1000m_bus', 'cam_500m', 'cam_500m_red', 'cam_500m_mobile', 'cam_200m',
@@ -30,6 +31,7 @@
         (typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null));
 
     let ctx = null;
+    let outNode = null; // усилитель+компрессор перед выходом
     const buffers = new Map(); // key -> AudioBuffer
     const available = new Set();
     let queue = [];
@@ -38,7 +40,23 @@
 
     function ensureCtx() {
       if (ctx || !ACtor) return ctx;
-      try { ctx = new ACtor(); } catch (e) { ctx = null; }
+      try {
+        ctx = new ACtor();
+        // усиление + компрессор: громко и чётко, без клиппинга/хрипа
+        const gain = ctx.createGain();
+        gain.gain.value = (opts.gain != null ? opts.gain : OUTPUT_GAIN);
+        let tail = gain;
+        if (typeof ctx.createDynamicsCompressor === 'function') {
+          const comp = ctx.createDynamicsCompressor();
+          try {
+            comp.threshold.value = -12; comp.knee.value = 12; comp.ratio.value = 12;
+            comp.attack.value = 0.003; comp.release.value = 0.15;
+          } catch (e) {}
+          gain.connect(comp); tail = comp;
+        }
+        tail.connect(ctx.destination);
+        outNode = gain;
+      } catch (e) { ctx = null; outNode = null; }
       return ctx;
     }
 
@@ -102,7 +120,7 @@
         try {
           const src = ctx.createBufferSource();
           src.buffer = buffers.get(key);
-          src.connect(ctx.destination);
+          src.connect(outNode || ctx.destination);
           src.onended = function () { resolve(); };
           src.start(0);
         } catch (e) { resolve(); }
