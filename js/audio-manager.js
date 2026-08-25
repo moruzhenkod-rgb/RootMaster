@@ -12,7 +12,7 @@
   'use strict';
 
   const BASE_PATH = 'audio/radar/';
-  const OUTPUT_GAIN = 4.0; // усиление сигнала — громче фоновой музыки/навигатора
+  const OUTPUT_GAIN = 7.0; // усиление сигнала — громче фоновой музыки/навигатора
   const MANIFEST = [
     'system_start', 'system_stop', 'system_gps_lost', 'system_gps_found', 'system_updated',
     'cam_1000m', 'cam_1000m_bus', 'cam_500m', 'cam_500m_red', 'cam_500m_mobile', 'cam_200m',
@@ -49,7 +49,7 @@
         if (typeof ctx.createDynamicsCompressor === 'function') {
           const comp = ctx.createDynamicsCompressor();
           try {
-            comp.threshold.value = -12; comp.knee.value = 12; comp.ratio.value = 12;
+            comp.threshold.value = -18; comp.knee.value = 10; comp.ratio.value = 16;
             comp.attack.value = 0.003; comp.release.value = 0.15;
           } catch (e) {}
           gain.connect(comp); tail = comp;
