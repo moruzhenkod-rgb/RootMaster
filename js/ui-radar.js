@@ -84,6 +84,7 @@ const UIRadar = (() => {
       if (typeof AudioManager !== 'undefined' && AudioManager.getInstance) {
         window.AudioManagerInstance = window.AudioManagerInstance || AudioManager.getInstance();
         window.AudioManagerInstance.preload();
+        if (window.AudioManagerInstance.unlock) window.AudioManagerInstance.unlock(); // разблокировать звук в жесте (iOS)
       }
       if (state === 'idle') r.start();
       else if (state === 'active') r.stop();

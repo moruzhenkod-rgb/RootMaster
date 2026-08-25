@@ -12,7 +12,7 @@
   'use strict';
 
   const EARTH_RADIUS_M = 6371000;
-  const HEADING_MAX_ANGLE = 35; // курс уже, чем это — считаем объект «впереди»
+  const HEADING_MAX_ANGLE = 60; // курс уже, чем это — считаем объект «впереди»
   const REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000; // база камер обновляется не чаще раза в 3 часа
   const DEFAULT_RADIUS_KM = 15;
   const OVERPASS_ENDPOINTS = [
@@ -517,6 +517,7 @@
       if (!primed && hazards.length) {
         hazards.forEach((h) => {
           THRESHOLD_DISTS.forEach((td) => {
+            if (td <= 200) return; // ближний порог не глушим — близкую камеру всегда озвучиваем
             const ck = audioKeyForThreshold(h, td);
             if (ck && ck.indexOf('cam_') === 0 && haversineDistance(c.latitude, c.longitude, h.lat, h.lon) <= td) {
               announced.add(h.id + ':' + td);
@@ -542,10 +543,12 @@
       hazards.forEach((h) => {
         const dist = haversineDistance(lat, lon, h.lat, h.lon);
         const brng = bearing(lat, lon, h.lat, h.lon);
-        if (!isHazardAhead(heading, brng, headingMaxAngle)) return;
+        const ahead = isHazardAhead(heading, brng, headingMaxAngle);
         THRESHOLD_DISTS.forEach((thresholdDist) => {
           const key = h.id + ':' + thresholdDist;
           if (dist <= thresholdDist && !announced.has(key)) {
+            // дальние — только по курсу; близкую камеру (<=250м) предупреждаем всегда
+            if (!ahead && dist > 250) return;
             const camKey = audioKeyForThreshold(h, thresholdDist);
             // реагируем ТОЛЬКО на камеры (блиц): без лимитов скорости, аварий и дорожных работ
             if (!camKey || camKey.indexOf('cam_') !== 0) return;

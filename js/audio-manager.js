@@ -79,12 +79,11 @@
     function playOne(key) {
       return new Promise((resolve) => {
         if (!available.has(key)) { onFallback(key); resolve(); return; }
-        const template = elements.get(key);
-        const audio = template && typeof template.cloneNode === 'function'
-          ? template.cloneNode(true)
-          : (AudioCtor ? new AudioCtor(basePath + key + '.mp3') : null);
+        // переиспользуем предзагруженный элемент (он разблокирован жестом на iOS), клон был бы «немым»
+        const audio = elements.get(key) || (AudioCtor ? new AudioCtor(basePath + key + '.mp3') : null);
         if (!audio) { resolve(); return; }
         const finish = () => resolve();
+        try { audio.currentTime = 0; } catch (e) {}
         if (typeof audio.addEventListener === 'function') {
           audio.addEventListener('ended', finish, { once: true });
           audio.addEventListener('error', finish, { once: true });
@@ -95,12 +94,26 @@
       });
     }
 
+    // разблокировка звука на iOS/Android: вызвать из обработчика пользовательского жеста (кнопка СТАРТ)
+    function unlock() {
+      elements.forEach((audio) => {
+        try {
+          const p = audio.play();
+          if (p && typeof p.then === 'function') {
+            p.then(() => { audio.pause(); try { audio.currentTime = 0; } catch (e) {} }).catch(() => {});
+          } else if (typeof audio.pause === 'function') {
+            audio.pause();
+          }
+        } catch (e) {}
+      });
+    }
+
     function clear() { queue = []; playing = false; current = null; }
     function getQueue() { return queue.slice(); }
     function isPlaying() { return playing; }
     function getCurrent() { return current; }
 
-    return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent };
+    return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent, unlock };
   }
 
   // единый экземпляр для приложения (браузер) — предзагружается при старте app.js
