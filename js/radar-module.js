@@ -348,6 +348,8 @@
     let gpsLost = false;
     let announced = new Set(); // `${hazardId}:${thresholdDist}` — защита от повторной озвучки
     let primed = false; // при старте засеиваем уже-близкие камеры, чтобы не вываливать всё сразу
+    let lastFetchCenter = null; // центр загруженной зоны камер (для подгрузки по движению)
+    let lastMoveFetchAt = 0;
     let listeners = [];
     let hazardsListeners = [];
     let posListeners = [];
@@ -399,9 +401,9 @@
 
     // подтягивает базу камер: из IndexedDB, если свежая (< 3ч), иначе скачивает заново через Overpass;
     // при ошибке сети — молча остаётся на последней сохранённой базе (офлайн-режим)
-    async function ensureHazards(center) {
+    async function ensureHazards(center, force) {
       const lastUpdate = await dbAdapter.getLastUpdate();
-      const stale = !lastUpdate || (now() - lastUpdate) >= refreshIntervalMs;
+      const stale = force || !lastUpdate || (now() - lastUpdate) >= refreshIntervalMs;
       if (!stale) {
         hazards = await dbAdapter.getHazards();
         lastUpdatedAt = lastUpdate;
@@ -425,6 +427,7 @@
         const ts = now();
         await dbAdapter.setHazards(hazards, ts);
         lastUpdatedAt = ts;
+        lastFetchCenter = center;
         if (lastUpdate) speak(['system_updated']);
       } catch (e) {
         hazards = await dbAdapter.getHazards();
@@ -475,7 +478,7 @@
       if (state === 'loading' || state === 'active') return;
       setState('loading');
       const center = await getCurrentPosition();
-      await ensureHazards(center);
+      await ensureHazards(center, true);
       speak(['system_start']);
       setState('active');
       gpsLost = false;
@@ -521,6 +524,14 @@
           });
         });
         primed = true;
+      }
+      // подгрузка камер по движению: отъехали от центра зоны — дотягиваем впереди (не чаще раза в минуту)
+      if (lastFetchCenter) {
+        const dCenter = haversineDistance(c.latitude, c.longitude, lastFetchCenter.lat, lastFetchCenter.lon);
+        if (dCenter > radiusKm * 1000 * 0.6 && !updating && (now() - lastMoveFetchAt) > 60000) {
+          lastMoveFetchAt = now();
+          ensureHazards({ lat: c.latitude, lon: c.longitude }, true);
+        }
       }
       checkHazards(c.latitude, c.longitude, c.heading, speedKmh);
     }
