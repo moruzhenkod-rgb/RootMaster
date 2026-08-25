@@ -14,11 +14,12 @@ const UIRadar = (() => {
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
     root.addEventListener('change', onChange);
+    document.addEventListener('visibilitychange', onVisibility);
     initVolume();
     const r = instance();
     unsubState = r.onStateChange(render);
     unsubHazards = r.onHazardsChange(renderHazardsOnMap);
-    unsubPos = r.onPosition(renderPositionOnMap);
+    unsubPos = r.onPosition(function (pos) { const m = audioMgr(); if (m && m.resume) m.resume(); renderPositionOnMap(pos); });
     unsubMeta = r.onMetaChange(renderDbStatus);
     render(r.getState());
     renderHazardsOnMap(r.getHazards());
@@ -33,6 +34,8 @@ const UIRadar = (() => {
     root.removeEventListener('click', onClick);
     root.removeEventListener('input', onInput);
     root.removeEventListener('change', onChange);
+    document.removeEventListener('visibilitychange', onVisibility);
+    releaseWakeLock();
     if (unsubState) unsubState();
     if (unsubHazards) unsubHazards();
     if (unsubPos) unsubPos();
@@ -91,8 +94,8 @@ const UIRadar = (() => {
         window.AudioManagerInstance.preload();
         if (window.AudioManagerInstance.unlock) window.AudioManagerInstance.unlock(); // разблокировать звук в жесте (iOS)
       }
-      if (state === 'idle') r.start();
-      else if (state === 'active') r.stop();
+      if (state === 'idle') { r.start(); requestWakeLock(); }
+      else if (state === 'active') { r.stop(); releaseWakeLock(); }
       return;
     }
     if (e.target.closest('[data-action="open-radar-map"]')) {
@@ -170,6 +173,19 @@ const UIRadar = (() => {
         html: `<div class="radar-map-chevron" style="transform: rotate(${heading}deg)">▲</div>`,
         iconSize: [28, 28],
       }));
+    }
+  }
+
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try { if (navigator.wakeLock && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', function () { wakeLock = null; }); } } catch (e) {}
+  }
+  function releaseWakeLock() { try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {} }
+  function onVisibility() {
+    if (document.visibilityState === 'visible') {
+      const r = instance();
+      if (r && r.getState && r.getState() === 'active') requestWakeLock();
+      const m = audioMgr(); if (m && m.resume) m.resume();
     }
   }
 

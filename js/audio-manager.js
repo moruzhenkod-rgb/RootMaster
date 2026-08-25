@@ -130,12 +130,13 @@
 
     function setVolume(v) { v = Math.max(0, Math.min(30, Number(v) || 0)); volume = v; if (outNode) { try { outNode.gain.value = v; } catch (e) {} } }
     function getVolume() { return volume; }
+    function resume() { ensureCtx(); if (ctx && ctx.state === 'suspended' && typeof ctx.resume === 'function') ctx.resume().catch(function () {}); }
     function clear() { queue = []; playing = false; current = null; }
     function getQueue() { return queue.slice(); }
     function isPlaying() { return playing; }
     function getCurrent() { return current; }
 
-    return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent, unlock, setVolume, getVolume };
+    return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent, unlock, setVolume, getVolume, resume };
   }
 
   let singleton = null;

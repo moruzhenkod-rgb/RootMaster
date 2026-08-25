@@ -177,7 +177,12 @@
     tags = tags || {};
     if (tags.highway === 'speed_camera') return 'camera';
     if (tags.enforcement === 'maxspeed') return 'camera';
-    if (tags.highway === 'construction') return 'roadworks';
+    if (tags.highway === 'construction' || tags['construction:highway']) {
+      const c = tags.construction || tags['construction:highway'] || '';
+      // только дорожные стройки; тротуары/дорожки/здания игнорируем
+      if (/^(footway|path|track|cycleway|steps|pedestrian|service|bridleway|house|apartments|residential_building|commercial|industrial|garage|garages|hut|shed|fire_station)$/.test(c)) return 'ignore';
+      return 'roadworks';
+    }
     if (tags.man_made === 'surveillance') return 'camera';
     return 'camera';
   }
@@ -222,7 +227,7 @@
           source: 'osm',
         };
       })
-      .filter((h) => h.type !== 'bus_stop');
+      .filter((h) => h.type !== 'bus_stop' && h.type !== 'ignore');
   }
 
   // прямоугольник lat/lon вокруг центра радиусом radiusKm — bbox для Overpass-запроса
