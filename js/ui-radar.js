@@ -13,6 +13,7 @@ const UIRadar = (() => {
     root = container;
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
+    root.addEventListener('change', onChange);
     initVolume();
     const r = instance();
     unsubState = r.onStateChange(render);
@@ -31,6 +32,7 @@ const UIRadar = (() => {
   function unmount() {
     root.removeEventListener('click', onClick);
     root.removeEventListener('input', onInput);
+    root.removeEventListener('change', onChange);
     if (unsubState) unsubState();
     if (unsubHazards) unsubHazards();
     if (unsubPos) unsubPos();
@@ -195,13 +197,18 @@ const UIRadar = (() => {
     if (label) label.textContent = v;
     localStorage.setItem('rm_radar_vol', String(v));
     const mgr = audioMgr();
-    if (mgr) {
-      if (mgr.setVolume) mgr.setVolume(v);
-      // тест-сигнал на выбранной громкости (разблокирует и даёт услышать уровень)
-      if (mgr.unlock) mgr.unlock();
-      if (mgr.preload) { try { mgr.preload(); } catch (er) {} }
-      if (mgr.enqueue) mgr.enqueue(['cam_200m']);
-    }
+    if (mgr && mgr.setVolume) mgr.setVolume(v); // только громкость, без звука
+  }
+
+  // тест-сигнал ОДИН раз, когда отпустил ползунок (не на каждый тик)
+  function onChange(e) {
+    if (!e.target || e.target.id !== 'radar-volume') return;
+    const mgr = audioMgr();
+    if (!mgr) return;
+    if (mgr.unlock) mgr.unlock();
+    if (mgr.preload) { try { mgr.preload(); } catch (er) {} }
+    if (mgr.clear) mgr.clear();        // сбросить очередь, чтобы не накапливалось
+    if (mgr.enqueue) mgr.enqueue(['cam_200m']);
   }
 
   return { mount, unmount };
