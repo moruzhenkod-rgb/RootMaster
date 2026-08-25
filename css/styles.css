@@ -107,11 +107,14 @@ button {
 /* ---------- Home ---------- */
 .home-main {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   gap: 16px;
   padding: 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .home-footer {
   text-align: center;
