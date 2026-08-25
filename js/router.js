@@ -6,6 +6,7 @@ const Router = (() => {
     clients: UIClients,
     manual: UIManual,
     settings: UISettings,
+    radar: UIRadar,
     paste: UIPaste,
     scan: UIScan,
     validate: UIValidate,

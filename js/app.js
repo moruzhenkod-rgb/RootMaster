@@ -70,6 +70,12 @@ const App = (() => {
   async function init() {
     registerSW();
 
+    // предзагружаем озвучку радар-детектора заранее, чтобы первая фраза не запаздывала
+    if (typeof AudioManager !== 'undefined') {
+      window.AudioManagerInstance = window.AudioManagerInstance || AudioManager.getInstance();
+      window.AudioManagerInstance.preload().catch(() => {});
+    }
+
     // не авторизован — показываем экран входа
     if (!Api.isAuthed()) {
       Router.show('auth');

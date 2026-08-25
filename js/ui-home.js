@@ -46,6 +46,9 @@ const UIHome = (() => {
     } else if (action === 'open-clients') {
       Router.show('clients');
       return;
+    } else if (action === 'open-radar') {
+      Router.show('radar');
+      return;
     } else if (action === 'open-tour') {
       Router.show('active');
       return;

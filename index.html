@@ -15,6 +15,11 @@
 <body>
 <div id="app"></div>
 
+<!-- Радар-детектор: компактный индикатор поверх всех экранов приложения -->
+<div id="radar-global-indicator" class="radar-indicator" data-state="idle" title="Радар-детектор">
+  <span class="radar-indicator-dot"></span>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container"></div>
 
@@ -85,6 +90,43 @@
     <div id="set-modal" class="set-modal" style="display:none"></div>
   </div>
 </template>
+<template id="tpl-radar">
+  <div class="screen screen-radar">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Радар-детектор</h2>
+    </header>
+    <div class="radar-body">
+      <button id="radar-main-btn" class="radar-circle" data-action="radar-toggle" data-state="idle">
+        <span class="radar-circle-label">СТАРТ</span>
+        <span class="radar-circle-spinner"></span>
+        <svg class="radar-chevrons" viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="6 15 12 9 18 15"></polyline>
+          <polyline points="6 11 12 5 18 11"></polyline>
+          <polyline points="6 19 12 13 18 19"></polyline>
+        </svg>
+      </button>
+      <p class="radar-status-text" id="radar-status-text">Детектор выключен</p>
+      <p class="radar-hint">Камеры контроля скорости, аварии и дорожные работы по ходу движения</p>
+      <div class="radar-db-row">
+        <span class="radar-db-status" id="radar-db-status">База камер: нет данных</span>
+        <button class="radar-db-refresh" id="radar-db-refresh" data-action="radar-refresh-db" title="Обновить базу камер">↻ Обновить</button>
+      </div>
+      <button class="btn btn-secondary" data-action="open-radar-map">🗺 Карта камер</button>
+    </div>
+  </div>
+  <div id="radar-map-modal" class="radar-map-modal" style="display:none">
+    <div class="radar-map-card">
+      <div class="radar-map-head">
+        <h3>Карта камер</h3>
+        <span class="radar-db-status" id="radar-map-db-status"></span>
+        <button class="radar-db-refresh" id="radar-map-db-refresh" data-action="radar-refresh-db" title="Обновить базу камер">↻</button>
+        <button class="icon-btn" data-action="close-radar-map">✕</button>
+      </div>
+      <div id="radar-map" class="radar-map"></div>
+    </div>
+  </div>
+</template>
 <template id="tpl-auth">
   <div class="screen screen-auth">
     <div id="auth-box"></div>
@@ -120,6 +162,11 @@
         <span>Мои клиенты</span>
         <span class="btn-sub">Постоянные адреса — добавить в тур</span>
       </button>
+      <button class="btn btn-secondary btn-large" data-action="open-radar">
+        <span class="btn-icon">🚨</span>
+        <span>Радар-детектор</span>
+        <span class="btn-sub">Камеры, аварии, дорожные работы</span>
+      </button>
       <button class="btn btn-secondary btn-large" data-action="open-settings">
         <span class="btn-icon">⚙️</span>
         <span>Настройки</span>
@@ -131,7 +178,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v8.1</footer>
+    <footer class="home-footer">RouteMaster PWA · v9.2</footer>
   </div>
 </template>
 
@@ -281,6 +328,8 @@
 <script src="js/client-match.js"></script>
 <script src="js/place-picker.js"></script>
 <script src="js/cam-scanner.js"></script>
+<script src="js/audio-manager.js"></script>
+<script src="js/radar-module.js"></script>
 <script src="js/testdata.js"></script>
 <script src="js/ui-home.js"></script>
 <script src="js/ui-paste.js"></script>
@@ -294,6 +343,7 @@
 <script src="js/ui-clients.js"></script>
 <script src="js/ui-manual.js"></script>
 <script src="js/ui-settings.js"></script>
+<script src="js/ui-radar.js"></script>
 <script src="js/router.js"></script>
 <script src="js/app.js"></script>
 </body>

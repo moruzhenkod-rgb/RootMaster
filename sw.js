@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v79';
+const CACHE_NAME = 'routemaster-v81';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,9 +8,13 @@ const APP_SHELL = [
   './js/api.js',
   './js/storage.js',
   './js/geocode.js',
+  './js/client-match.js',
   './js/testdata.js',
   './js/place-picker.js',
   './js/cam-scanner.js',
+  './js/audio-manager.js',
+  './js/radar-module.js',
+  './js/ui-radar.js',
   './js/ui-home.js',
   './js/ui-auth.js',
   './js/ui-clients.js',
@@ -25,6 +29,24 @@ const APP_SHELL = [
   './js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './audio/radar/system_start.mp3',
+  './audio/radar/system_stop.mp3',
+  './audio/radar/system_gps_lost.mp3',
+  './audio/radar/system_gps_found.mp3',
+  './audio/radar/system_updated.mp3',
+  './audio/radar/cam_1000m.mp3',
+  './audio/radar/cam_500m.mp3',
+  './audio/radar/cam_500m_red.mp3',
+  './audio/radar/cam_500m_mobile.mp3',
+  './audio/radar/cam_200m.mp3',
+  './audio/radar/limit_30.mp3',
+  './audio/radar/limit_50.mp3',
+  './audio/radar/limit_60.mp3',
+  './audio/radar/limit_70.mp3',
+  './audio/radar/limit_80.mp3',
+  './audio/radar/limit_100.mp3',
+  './audio/radar/hazard_work_500m.mp3',
+  './audio/radar/hazard_accident_500m.mp3',
 ];
 
 self.addEventListener('message', (e) => {

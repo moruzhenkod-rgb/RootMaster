@@ -214,6 +214,8 @@ const UISettings = (() => {
     ['Распознавание (OCR)', async () => { if (typeof Tesseract === 'undefined') throw new Error('не загружен'); return 'загружен'; }],
     ['Карты (Leaflet)', async () => { if (typeof L === 'undefined') throw new Error('не загружен'); return 'загружен'; }],
     ['Геолокация', async () => { if (!navigator.geolocation) throw new Error('нет'); return 'доступна'; }],
+    ['Озвучка (speechSynthesis)', async () => { if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') throw new Error('не поддерживается'); return 'доступна'; }],
+    ['Радар-детектор (модуль)', async () => { if (typeof RadarModule === 'undefined') throw new Error('не загружен'); return 'загружен · пороги ' + RadarModule.THRESHOLDS.map((t) => t.dist).join('/') + 'м'; }],
     ['Экраны приложения', async () => { const need = ['home','clients','manual','paste','scan','validate','build','active','history','settings']; const miss = need.filter((n) => !document.getElementById('tpl-' + n)); if (miss.length) throw new Error('нет: ' + miss.join(',')); return need.length + ' экранов ок'; }],
   ];
 
@@ -224,7 +226,24 @@ const UISettings = (() => {
       <div class="set-note" style="margin-top:16px">Интерактивные проверки (потыкай руками):</div>
       <button class="btn btn-secondary btn-large" data-action="test-place">📍 Тест: поставить точку на карте</button>
       <button class="btn btn-secondary btn-large" data-action="test-nav">🧭 Тест: навигация в Google Maps</button>
-      <button class="btn btn-primary btn-large" data-action="demo-tour">🚚 Демо рабочего тура (адрес не найден и т.д.)</button>`;
+      <button class="btn btn-primary btn-large" data-action="demo-tour">🚚 Демо рабочего тура (адрес не найден и т.д.)</button>
+      <div class="set-note" style="margin-top:16px">🚨 Радар-детектор — прослушать озвучку каждого порога:</div>
+      <button class="btn btn-secondary btn-large" data-action="radar-voice-start">🔊 «Соединение установлено»</button>
+      <button class="btn btn-secondary btn-large" data-action="radar-voice-1000">🔊 1000м — «Через 1000 метров камера…»</button>
+      <button class="btn btn-secondary btn-large" data-action="radar-voice-500">🔊 500м — «Внимание, камера 500 метров»</button>
+      <button class="btn btn-secondary btn-large" data-action="radar-voice-200">🔊 200м — «Снизьте скорость»</button>
+      <button class="btn btn-primary btn-large" data-action="radar-voice-sequence">▶ Прогнать всю последовательность (1000→500→200)</button>`;
+  }
+
+  // прямая озвучка фразы для проверки голоса — без запуска геолокации/детектора целиком.
+  // RadarModule.speak сам проигрывает записанный mp3, если он есть, иначе — синтетический голос
+  function radarSpeak(text) {
+    if (typeof RadarModule === 'undefined') {
+      Utils.toast('Модуль радара не загружен', 'error');
+      return;
+    }
+    RadarModule.speak(text);
+    Utils.toast('🔊 ' + text, 'success');
   }
 
   async function runTest() {
@@ -348,6 +367,29 @@ const UISettings = (() => {
       const url = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent('Schnitterwiese 1, 19055 Schwerin') + '&travelmode=driving';
       const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
       document.body.appendChild(a); a.click(); a.remove();
+      return;
+    }
+    if (e.target.closest('[data-action="radar-voice-start"]')) { radarSpeak('Соединение установлено'); return; }
+    if (e.target.closest('[data-action="radar-voice-1000"]')) {
+      const text = typeof RadarModule !== 'undefined' ? RadarModule.THRESHOLDS[0].text('camera') : 'Через 1000 метров камера контроля скорости';
+      radarSpeak(text);
+      return;
+    }
+    if (e.target.closest('[data-action="radar-voice-500"]')) {
+      const text = typeof RadarModule !== 'undefined' ? RadarModule.THRESHOLDS[1].text('camera') : 'Внимание, камера контроля скорости 500 метров';
+      radarSpeak(text);
+      return;
+    }
+    if (e.target.closest('[data-action="radar-voice-200"]')) {
+      const text = typeof RadarModule !== 'undefined' ? RadarModule.THRESHOLDS[2].text('camera') : 'камера контроля скорости, 200 метров, снизьте скорость';
+      radarSpeak(text);
+      return;
+    }
+    if (e.target.closest('[data-action="radar-voice-sequence"]')) {
+      const steps = typeof RadarModule !== 'undefined'
+        ? [RadarModule.THRESHOLDS[0].text('camera'), RadarModule.THRESHOLDS[1].text('camera'), RadarModule.THRESHOLDS[2].text('camera')]
+        : ['Через 1000 метров камера контроля скорости', 'Внимание, камера контроля скорости 500 метров', 'камера контроля скорости, 200 метров, снизьте скорость'];
+      steps.forEach((text, i) => setTimeout(() => radarSpeak(text), i * 2500));
       return;
     }
     if (e.target.closest('[data-action="demo-tour"]')) { initDemo(); tab = 'demo'; render(); return; }

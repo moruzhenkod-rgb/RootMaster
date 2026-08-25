@@ -2,3 +2,6 @@
 Thumbs.db
 node_modules/
 *.log
+
+# черновой набор озвучки радара — перенесён в audio/radar/, здесь только дубликат
+/Voice/
