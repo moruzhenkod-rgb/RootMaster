@@ -542,13 +542,10 @@
       const triggered = [];
       hazards.forEach((h) => {
         const dist = haversineDistance(lat, lon, h.lat, h.lon);
-        const brng = bearing(lat, lon, h.lat, h.lon);
-        const ahead = isHazardAhead(heading, brng, headingMaxAngle);
         THRESHOLD_DISTS.forEach((thresholdDist) => {
           const key = h.id + ':' + thresholdDist;
           if (dist <= thresholdDist && !announced.has(key)) {
-            // дальние — только по курсу; близкую камеру (<=250м) предупреждаем всегда
-            if (!ahead && dist > 250) return;
+            // уведомляем о ЛЮБОЙ камере в радиусе — без учёта направления/полосы
             const camKey = audioKeyForThreshold(h, thresholdDist);
             // реагируем ТОЛЬКО на камеры (блиц): без лимитов скорости, аварий и дорожных работ
             if (!camKey || camKey.indexOf('cam_') !== 0) return;
