@@ -97,6 +97,7 @@
   function audioKeyForThreshold(hazard, thresholdDist) {
     const type = hazard.type;
     if (thresholdDist === 1000) {
+      if (type === 'roadworks' || type === 'accident') return null; // нет отдельного файла на 1000м
       return type === 'bus_stop' ? 'cam_1000m_bus' : 'cam_1000m';
     }
     if (thresholdDist === 500) {
@@ -176,6 +177,7 @@
     tags = tags || {};
     if (tags.highway === 'speed_camera') return 'camera';
     if (tags.enforcement === 'maxspeed') return 'camera';
+    if (tags.highway === 'construction') return 'roadworks';
     if (tags.man_made === 'surveillance') return 'camera';
     return 'camera';
   }
@@ -189,7 +191,9 @@
       'node["highway"="speed_camera"](' + bboxStr + ');' +
       'node["enforcement"="maxspeed"](' + bboxStr + ');' +
       'node["man_made"="surveillance"]["surveillance:type"="camera"]["surveillance:zone"="traffic"](' + bboxStr + ');' +
-      ');out body;'
+      'way["highway"="construction"](' + bboxStr + ');' +
+      'node["highway"="construction"](' + bboxStr + ');' +
+      ');out center;'
     );
   }
 
@@ -197,15 +201,17 @@
   function parseOverpassElements(json) {
     const elements = (json && json.elements) || [];
     return elements
-      .filter((el) => el && el.type === 'node' && typeof el.lat === 'number' && typeof el.lon === 'number')
+      .filter((el) => el && (typeof el.lat === 'number' || (el.center && typeof el.center.lat === 'number')))
       .map((el) => {
         const tags = el.tags || {};
+        const lat = typeof el.lat === 'number' ? el.lat : el.center.lat;
+        const lon = typeof el.lon === 'number' ? el.lon : el.center.lon;
         const maxspeedRaw = tags.maxspeed ? parseInt(tags.maxspeed, 10) : null;
         return {
-          id: 'osm-' + el.id,
+          id: 'osm-' + (el.type || 'n') + '-' + el.id,
           type: overpassHazardType(tags),
-          lat: el.lat,
-          lon: el.lon,
+          lat: lat,
+          lon: lon,
           maxspeed: Number.isFinite(maxspeedRaw) ? maxspeedRaw : null,
           mobile: tags['camera:type'] === 'mobile' || tags.enforcement === 'mobile' || null,
           redLight: tags['camera:type'] === 'red_light' || null,
@@ -519,7 +525,7 @@
           THRESHOLD_DISTS.forEach((td) => {
             if (td <= 200) return; // ближний порог не глушим — близкую камеру всегда озвучиваем
             const ck = audioKeyForThreshold(h, td);
-            if (ck && ck.indexOf('cam_') === 0 && haversineDistance(c.latitude, c.longitude, h.lat, h.lon) <= td) {
+            if (ck && haversineDistance(c.latitude, c.longitude, h.lat, h.lon) <= td) {
               announced.add(h.id + ':' + td);
             }
           });
