@@ -12,6 +12,8 @@ const UIRadar = (() => {
   function mount(container) {
     root = container;
     root.addEventListener('click', onClick);
+    root.addEventListener('input', onInput);
+    initVolume();
     const r = instance();
     unsubState = r.onStateChange(render);
     unsubHazards = r.onHazardsChange(renderHazardsOnMap);
@@ -28,6 +30,7 @@ const UIRadar = (() => {
 
   function unmount() {
     root.removeEventListener('click', onClick);
+    root.removeEventListener('input', onInput);
     if (unsubState) unsubState();
     if (unsubHazards) unsubHazards();
     if (unsubPos) unsubPos();
@@ -165,6 +168,39 @@ const UIRadar = (() => {
         html: `<div class="radar-map-chevron" style="transform: rotate(${heading}deg)">▲</div>`,
         iconSize: [28, 28],
       }));
+    }
+  }
+
+  function audioMgr() {
+    if (typeof AudioManager === 'undefined' || !AudioManager.getInstance) return null;
+    window.AudioManagerInstance = window.AudioManagerInstance || AudioManager.getInstance();
+    return window.AudioManagerInstance;
+  }
+
+  function initVolume() {
+    let v = parseFloat(localStorage.getItem('rm_radar_vol'));
+    if (!(v >= 0)) v = 7;
+    const slider = root.querySelector('#radar-volume');
+    const label = root.querySelector('#radar-vol-val');
+    if (slider) slider.value = v;
+    if (label) label.textContent = v;
+    const mgr = audioMgr();
+    if (mgr && mgr.setVolume) mgr.setVolume(v);
+  }
+
+  function onInput(e) {
+    if (!e.target || e.target.id !== 'radar-volume') return;
+    const v = parseFloat(e.target.value);
+    const label = root.querySelector('#radar-vol-val');
+    if (label) label.textContent = v;
+    localStorage.setItem('rm_radar_vol', String(v));
+    const mgr = audioMgr();
+    if (mgr) {
+      if (mgr.setVolume) mgr.setVolume(v);
+      // тест-сигнал на выбранной громкости (разблокирует и даёт услышать уровень)
+      if (mgr.unlock) mgr.unlock();
+      if (mgr.preload) { try { mgr.preload(); } catch (er) {} }
+      if (mgr.enqueue) mgr.enqueue(['cam_200m']);
     }
   }
 

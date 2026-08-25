@@ -112,6 +112,11 @@
         <span class="radar-db-status" id="radar-db-status">База камер: нет данных</span>
         <button class="radar-db-refresh" id="radar-db-refresh" data-action="radar-refresh-db" title="Обновить базу камер">↻ Обновить</button>
       </div>
+      <div class="radar-vol-row">
+        <span class="radar-vol-icon">🔊 Громкость</span>
+        <input type="range" id="radar-volume" min="0" max="12" step="0.5" value="7">
+        <span id="radar-vol-val" class="radar-vol-val">7</span>
+      </div>
       <button class="btn btn-secondary" data-action="open-radar-map">🗺 Карта камер</button>
     </div>
   </div>
@@ -178,7 +183,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v9.13</footer>
+    <footer class="home-footer">RouteMaster PWA · v9.14</footer>
   </div>
 </template>
 

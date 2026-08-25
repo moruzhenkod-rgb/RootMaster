@@ -31,7 +31,8 @@
         (typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null));
 
     let ctx = null;
-    let outNode = null; // усилитель+компрессор перед выходом
+    let outNode = null;
+    let volume = (opts.gain != null ? opts.gain : OUTPUT_GAIN); // усилитель+компрессор перед выходом
     const buffers = new Map(); // key -> AudioBuffer
     const available = new Set();
     let queue = [];
@@ -44,7 +45,7 @@
         ctx = new ACtor();
         // усиление + компрессор: громко и чётко, без клиппинга/хрипа
         const gain = ctx.createGain();
-        gain.gain.value = (opts.gain != null ? opts.gain : OUTPUT_GAIN);
+        gain.gain.value = volume;
         let tail = gain;
         if (typeof ctx.createDynamicsCompressor === 'function') {
           const comp = ctx.createDynamicsCompressor();
@@ -127,12 +128,14 @@
       });
     }
 
+    function setVolume(v) { v = Math.max(0, Math.min(12, Number(v) || 0)); volume = v; if (outNode) { try { outNode.gain.value = v; } catch (e) {} } }
+    function getVolume() { return volume; }
     function clear() { queue = []; playing = false; current = null; }
     function getQueue() { return queue.slice(); }
     function isPlaying() { return playing; }
     function getCurrent() { return current; }
 
-    return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent, unlock };
+    return { MANIFEST: manifest, preload, has, enqueue, playOne, clear, getQueue, isPlaying, getCurrent, unlock, setVolume, getVolume };
   }
 
   let singleton = null;

@@ -911,3 +911,9 @@ button {
 
 /* Статус координат в модалке редактирования точки */
 .ep-geo { font-size: 13px; color: #cfd2d6; margin: 6px 0 10px; }
+
+/* Регулятор громкости радара */
+.radar-vol-row { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 320px; margin: 10px auto 4px; }
+.radar-vol-row input[type="range"] { flex: 1; accent-color: #ef4444; }
+.radar-vol-icon { font-size: 13px; color: #9aa0a6; white-space: nowrap; }
+.radar-vol-val { font-size: 13px; font-weight: 700; width: 28px; text-align: right; }
