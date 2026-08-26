@@ -68,7 +68,9 @@ const UIRadar2 = (() => {
   }
 
   function carIcon() { return L.divIcon({ className: '', html: '<div class="r2-car">▲</div>', iconSize: [34, 34] }); }
-  function camIcon(cam) { return L.divIcon({ className: '', html: '<div class="r2-cam">' + (cam.speed || '📷') + '</div>', iconSize: [30, 30] }); }
+  function camIcon(cam) { return L.divIcon({ className: '', html: '<div class="r2-emoji">📷' + (cam.speed ? '<b>' + cam.speed + '</b>' : '') + '</div>', iconSize: [36, 36] }); }
+  function incEmoji(cat) { return cat === 9 ? '🚧' : cat === 8 ? '⛔' : cat === 7 ? '🚧' : cat === 1 ? '💥' : cat === 6 ? '🚗' : '⚠️'; }
+  function incIcon(cat) { return L.divIcon({ className: '', html: '<div class="r2-emoji">' + incEmoji(cat) + '</div>', iconSize: [36, 36] }); }
 
   // ── КАРТА по кнопке (ленивая инициализация) ──
   function openMap() {
@@ -112,9 +114,7 @@ const UIRadar2 = (() => {
     try { if (typeof RadarTraffic !== 'undefined') inc = await RadarTraffic.nearby(c.lat, c.lng, 6); } catch (e) {}
     incLayer.clearLayers();
     inc.forEach((i) => {
-      const col = i.category === 9 || i.category === 7 ? '#f59e0b' : i.category === 6 ? '#eab308' : '#ef4444';
-      L.circle([i.lat, i.lon], { radius: 130, color: col, weight: 1, fillColor: col, fillOpacity: 0.28 })
-        .addTo(incLayer).bindTooltip(RadarTraffic.label(i.category));
+      L.marker([i.lat, i.lon], { icon: incIcon(i.category) }).addTo(incLayer).bindTooltip(RadarTraffic.label(i.category));
     });
     // машина
     if (lastCar) {
