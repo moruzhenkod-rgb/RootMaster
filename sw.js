@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v100';
+const CACHE_NAME = 'routemaster-v101';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,6 +11,10 @@ const APP_SHELL = [
   './js/client-match.js',
   './js/testdata.js',
   './js/place-picker.js',
+  './js/radar/ui-radar-v2.js',
+  './js/radar/radar-engine.js',
+  './js/radar/traffic.js',
+  './js/radar/db.js',
   './js/cam-scanner.js',
   './js/audio-manager.js',
   './js/radar-module.js',

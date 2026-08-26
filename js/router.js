@@ -6,6 +6,7 @@ const Router = (() => {
     clients: UIClients,
     manual: UIManual,
     settings: UISettings,
+    radar2: UIRadar2,
     radar: UIRadar,
     paste: UIPaste,
     scan: UIScan,
@@ -20,7 +21,7 @@ const Router = (() => {
   const container = () => document.getElementById('app');
 
   function show(name, params) {
-    if ((name === 'settings' || name === 'radar') && typeof Api !== 'undefined' && !Api.isAdmin()) { name = 'home'; }
+    if ((name === 'settings' || name === 'radar' || name === 'radar2') && typeof Api !== 'undefined' && !Api.isAdmin()) { name = 'home'; }
     if (current && current.module.unmount) {
       current.module.unmount();
     }

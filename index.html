@@ -132,6 +132,23 @@
     </div>
   </div>
 </template>
+<template id="tpl-radar2">
+  <div class="screen screen-radar2">
+    <div id="r2-map" class="r2-map"></div>
+    <div class="r2-top">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <span id="r2-status" class="r2-status">База камер: …</span>
+    </div>
+    <div class="r2-hud">
+      <div id="r2-speed-box" class="r2-speed-box"><div id="r2-speed" class="r2-speed">0</div><small>км/ч</small></div>
+      <div id="r2-limit-box" class="r2-limit-box"><div id="r2-limit" class="r2-limit">—</div><small id="r2-dist"></small></div>
+    </div>
+    <div class="r2-bottom">
+      <input type="range" id="r2-vol" min="0" max="30" step="0.5" value="7" class="r2-vol">
+      <button id="r2-btn" class="r2-btn" data-action="r2-toggle">СТАРТ</button>
+    </div>
+  </div>
+</template>
 <template id="tpl-auth">
   <div class="screen screen-auth">
     <div id="auth-box"></div>
@@ -172,6 +189,11 @@
         <span>Радар-детектор</span>
         <span class="btn-sub">Камеры, аварии, дорожные работы</span>
       </button>
+      <button class="btn btn-secondary btn-large" data-action="open-radar2">
+        <span class="btn-icon">🛰</span>
+        <span>Радар 2.0</span>
+        <span class="btn-sub">Офлайн-база камер + ремонты TomTom (тест)</span>
+      </button>
       <button class="btn btn-secondary btn-large" data-action="open-settings">
         <span class="btn-icon">⚙️</span>
         <span>Настройки</span>
@@ -183,7 +205,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v9.21</footer>
+    <footer class="home-footer">RouteMaster PWA · v9.22</footer>
   </div>
 </template>
 
@@ -332,6 +354,10 @@
 <script src="js/geocode.js"></script>
 <script src="js/client-match.js"></script>
 <script src="js/place-picker.js"></script>
+<script src="js/radar/db.js"></script>
+<script src="js/radar/traffic.js"></script>
+<script src="js/radar/radar-engine.js"></script>
+<script src="js/radar/ui-radar-v2.js"></script>
 <script src="js/cam-scanner.js"></script>
 <script src="js/audio-manager.js"></script>
 <script src="js/radar-module.js"></script>

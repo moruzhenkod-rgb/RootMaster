@@ -917,3 +917,23 @@ button {
 .radar-vol-row input[type="range"] { flex: 1; accent-color: #ef4444; }
 .radar-vol-icon { font-size: 13px; color: #9aa0a6; white-space: nowrap; }
 .radar-vol-val { font-size: 13px; font-weight: 700; width: 28px; text-align: right; }
+
+/* Радар 2.0 */
+.screen-radar2 { position: absolute; inset: 0; }
+.r2-map { position: absolute; inset: 0; }
+.r2-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: 10px 14px; z-index: 500; }
+.r2-status { background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
+.r2-hud { position: absolute; top: 58px; left: 14px; right: 14px; display: flex; justify-content: space-between; z-index: 500; pointer-events: none; }
+.r2-speed-box { background: rgba(0,0,0,0.65); border-radius: 16px; padding: 8px 16px; text-align: center; color: #fff; }
+.r2-speed-box.over { background: rgba(239,68,68,0.9); }
+.r2-speed { font-size: 34px; font-weight: 800; line-height: 1; }
+.r2-speed-box small { opacity: .7; font-size: 11px; }
+.r2-limit-box { background: #fff; border: 5px solid #e11; border-radius: 50%; width: 74px; height: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #111; }
+.r2-limit { font-size: 24px; font-weight: 800; line-height: 1; }
+.r2-limit-box small { color: #c00; font-size: 10px; }
+.r2-bottom { position: absolute; bottom: 24px; left: 14px; right: 14px; display: flex; align-items: center; gap: 12px; z-index: 500; }
+.r2-vol { flex: 1; accent-color: #ef4444; }
+.r2-btn { background: #22c55e; color: #063; border: none; border-radius: 30px; padding: 15px 26px; font-size: 18px; font-weight: 800; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+.r2-btn.on { background: #ef4444; color: #fff; }
+.r2-car { color: #3b82f6; font-size: 26px; text-shadow: 0 0 6px #000; }
+.r2-cam { background: #111; color: #ffd400; border: 2px solid #ffd400; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
