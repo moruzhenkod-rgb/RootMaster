@@ -975,3 +975,7 @@ button {
 /* Радар: маркеры-смайлики на карте */
 .r2-emoji { font-size: 26px; line-height: 1; text-align: center; position: relative; filter: drop-shadow(0 1px 3px #000); }
 .r2-emoji b { position: absolute; bottom: -5px; right: -8px; background: #111; color: #ffd400; font-size: 10px; font-weight: 800; padding: 0 3px; border-radius: 6px; border: 1px solid #ffd400; }
+
+/* Радар: кнопка возврата с карты — поверх контролов Leaflet */
+.r2-map-close { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; width: auto; height: auto; border-radius: 24px; padding: 10px 16px; background: rgba(20,20,25,0.92); color: #fff; border: 1px solid #3a4256; font-size: 15px; font-weight: 700; z-index: 1300 !important; box-shadow: 0 3px 12px rgba(0,0,0,0.5); }
+.r2-recenter { z-index: 1300 !important; }

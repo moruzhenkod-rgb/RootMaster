@@ -83,7 +83,7 @@ const UIRadar2 = (() => {
     root.querySelector('.r2-recenter').style.display = 'flex';
     mapOpen = true;
     if (!map) {
-      map = L.map(el, { zoomControl: true, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 13);
+      map = L.map(el, { zoomControl: false, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
       el.classList.add('r2-dark');
       camLayer = L.layerGroup().addTo(map);
