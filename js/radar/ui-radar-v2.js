@@ -1,6 +1,8 @@
-// RadarUI v2: тёмная карта Leaflet + HUD + машина-стрелка + конус + камеры/ремонты + движок + звук.
+// RadarUI v2: простой вид (треугольник + HUD) по умолчанию; карта открывается по кнопке.
+// Радар работает в фоне, индикатор — маленькая точка. Камеры/ремонты видны на карте с зумом.
 const UIRadar2 = (() => {
-  let root, map, engine, carMarker, coneLayer, camLayer, incLayer, started = false, wakeLock = null;
+  let root, map = null, mapOpen = false, mounted = false, started = false, engine, wakeLock = null;
+  let carMarker, camLayer, incLayer, lastCar = null;
 
   function audio() {
     if (typeof AudioManager === 'undefined' || !AudioManager.getInstance) return null;
@@ -8,113 +10,119 @@ const UIRadar2 = (() => {
     return window.AudioManagerInstance;
   }
 
-  let mounted = false;
   function mount(container) {
-    root = container;
-    mounted = true;
+    root = container; mounted = true;
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
-    initMap();
     if (typeof RadarDB !== 'undefined') RadarDB.ensureLoaded().then((n) => setStatus('База камер: ' + n)).catch(() => {});
-    // движок один на всё приложение — переживает уход с экрана (работает в фоне)
     if (!window.__rmEngine) {
       window.__rmEngine = RadarEngine.create({
         db: typeof RadarDB !== 'undefined' ? RadarDB : null,
         traffic: typeof RadarTraffic !== 'undefined' ? RadarTraffic : null,
-        onAlert: onAlert,
-        onTick: onTickWrap,
+        onAlert: onAlert, onTick: onTickWrap,
       });
     }
     engine = window.__rmEngine;
     started = !!window.__rmRadarOn;
-    setBtn(started);
-    updateIndicator(started);
+    setBtn(started); updateIndicator(started);
     const v = parseFloat(localStorage.getItem('rm_radar_vol')); const a = audio();
     if (a && a.setVolume && v >= 0) a.setVolume(v);
     const sl = root.querySelector('#r2-vol'); if (sl && v >= 0) sl.value = v;
   }
 
-  // тик от движка: индикатор — всегда; отрисовка карты — только когда экран открыт
-  function onTickWrap(t) { updateIndicator(!!window.__rmRadarOn); if (mounted && map) onTick(t); }
-
-  function updateIndicator(on) {
-    const el = document.getElementById('rm-radar-active');
-    if (el) el.style.display = on ? 'flex' : 'none';
-  }
-
   function unmount() {
-    mounted = false;
+    mounted = false; mapOpen = false;
     root.removeEventListener('click', onClick);
     root.removeEventListener('input', onInput);
-    if (map) { map.remove(); map = null; }
-    // движок НЕ останавливаем — радар продолжает работать в фоне (индикатор виден)
+    if (map) { map.remove(); map = null; carMarker = null; }
+    // движок продолжает работать в фоне
   }
 
-  function initMap() {
-    const el = root.querySelector('#r2-map');
-    if (!el || typeof L === 'undefined') return;
-    map = L.map(el, { zoomControl: false, attributionControl: false }).setView([53.63, 11.41], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    el.classList.add('r2-dark');
-    camLayer = L.layerGroup().addTo(map);
-    incLayer = L.layerGroup().addTo(map);
-    coneLayer = L.layerGroup().addTo(map);
+  function setStatus(t) { const el = root && root.querySelector('#r2-status'); if (el) el.textContent = t; }
+  function updateIndicator(on) { const el = document.getElementById('rm-radar-active'); if (el) el.style.display = on ? 'block' : 'none'; }
+
+  // ── тик движка: индикатор всегда; HUD/карта — когда экран открыт ──
+  function onTickWrap(t) {
+    lastCar = t;
+    updateIndicator(!!window.__rmRadarOn);
+    if (!mounted) return;
+    updateHud(t);
+    if (mapOpen && carMarker) carMarker.setLatLng([t.lat, t.lon]);
   }
 
-  function setStatus(t) { const el = root.querySelector('#r2-status'); if (el) el.textContent = t; }
-  function setHud(speed, limit, dist) {
-    const s = root.querySelector('#r2-speed'); if (s) s.textContent = Math.round(speed);
-    const l = root.querySelector('#r2-limit'); if (l) l.textContent = limit ? limit : '—';
-    const d = root.querySelector('#r2-dist'); if (d) d.textContent = dist != null ? (dist + ' м') : '';
-    const lb = root.querySelector('#r2-limit-box'); if (lb) lb.style.opacity = limit ? '1' : '0.3';
-    const over = limit && speed > limit + 3;
-    const sp = root.querySelector('#r2-speed-box'); if (sp) sp.classList.toggle('over', !!over);
-  }
-
-  function carIcon() {
-    return L.divIcon({ className: '', html: '<div class="r2-car">▲</div>', iconSize: [34, 34] });
-  }
-
-  function onTick(t) {
-    if (!map) return;
-    if (!carMarker) carMarker = L.marker([t.lat, t.lon], { icon: carIcon(), zIndexOffset: 1000 }).addTo(map);
-    else carMarker.setLatLng([t.lat, t.lon]);
-    if (started) map.setView([t.lat, t.lon], map.getZoom() < 13 ? 15 : map.getZoom(), { animate: false });
-
-    // конус упреждения
-    coneLayer.clearLayers();
-    if (t.heading != null) {
-      const pts = conePolygon(t.lat, t.lon, t.heading, t.lookahead, 35);
-      L.polygon(pts, { color: '#3b82f6', weight: 1, fillColor: '#3b82f6', fillOpacity: 0.12 }).addTo(coneLayer);
-    }
-    // камеры
-    camLayer.clearLayers();
-    (t.cameras || []).forEach((h) => {
-      L.marker([h.cam.lat, h.cam.lon], { icon: L.divIcon({ className: '', html: '<div class="r2-cam">' + (h.cam.speed || '📷') + '</div>', iconSize: [30, 30] }) }).addTo(camLayer);
-    });
-    // ремонты
-    incLayer.clearLayers();
-    (t.incidents || []).forEach((h) => {
-      L.circle([h.inc.lat, h.inc.lon], { radius: 120, color: '#ef4444', weight: 1, fillColor: '#ef4444', fillOpacity: 0.25 }).addTo(incLayer);
-    });
-    // HUD
+  function updateHud(t) {
     const near = (t.cameras || [])[0];
-    setHud(t.speedKmh, near ? near.cam.speed : 0, near ? Math.round(near.dist) : null);
+    const inc = (t.incidents || [])[0];
+    const s = root.querySelector('#r2-speed'); if (s) s.textContent = Math.round(t.speedKmh || 0);
+    const l = root.querySelector('#r2-limit'); if (l) l.textContent = near && near.cam.speed ? near.cam.speed : '—';
+    const d = root.querySelector('#r2-dist'); if (d) d.textContent = near ? Math.round(near.dist) + ' м' : '';
+    const lb = root.querySelector('#r2-limit-box'); if (lb) lb.style.opacity = near ? '1' : '0.3';
+    const over = near && near.cam.speed && t.speedKmh > near.cam.speed + 3;
+    const sp = root.querySelector('#r2-speed-box'); if (sp) sp.classList.toggle('over', !!over);
+    const al = root.querySelector('#r2-alert');
+    if (al) {
+      if (near) al.textContent = '📷 Камера ' + (near.cam.speed || '') + ' · ' + Math.round(near.dist) + ' м';
+      else if (inc) al.textContent = '🚧 ' + (RadarTraffic.label(inc.inc.category)) + ' · ' + Math.round(inc.dist) + ' м';
+      else al.textContent = started ? 'Слежу за дорогой…' : 'Нажми СТАРТ';
+    }
   }
 
-  function conePolygon(lat, lon, heading, distM, halfAngle) {
-    const pts = [[lat, lon]];
-    for (let a = -halfAngle; a <= halfAngle; a += 10) pts.push(project(lat, lon, heading + a, distM));
-    return pts;
+  function carIcon() { return L.divIcon({ className: '', html: '<div class="r2-car">▲</div>', iconSize: [34, 34] }); }
+  function camIcon(cam) { return L.divIcon({ className: '', html: '<div class="r2-cam">' + (cam.speed || '📷') + '</div>', iconSize: [30, 30] }); }
+
+  // ── КАРТА по кнопке (ленивая инициализация) ──
+  function openMap() {
+    const el = root.querySelector('#r2-map');
+    const simple = root.querySelector('#r2-simple');
+    if (!el) return;
+    el.style.display = 'block';
+    if (simple) simple.style.display = 'none';
+    root.querySelector('.r2-map-close').style.display = 'flex';
+    root.querySelector('.r2-recenter').style.display = 'flex';
+    mapOpen = true;
+    if (!map) {
+      map = L.map(el, { zoomControl: true, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      el.classList.add('r2-dark');
+      camLayer = L.layerGroup().addTo(map);
+      incLayer = L.layerGroup().addTo(map);
+      map.on('moveend', refreshMapData);
+    }
+    setTimeout(() => { map.invalidateSize(); if (lastCar) map.setView([lastCar.lat, lastCar.lon], 14); refreshMapData(); }, 80);
   }
-  function project(lat, lon, brng, distM) {
-    const R = 6371000, br = brng * Math.PI / 180, la = lat * Math.PI / 180, lo = lon * Math.PI / 180;
-    const la2 = Math.asin(Math.sin(la) * Math.cos(distM / R) + Math.cos(la) * Math.sin(distM / R) * Math.cos(br));
-    const lo2 = lo + Math.atan2(Math.sin(br) * Math.sin(distM / R) * Math.cos(la), Math.cos(distM / R) - Math.sin(la) * Math.sin(la2));
-    return [la2 * 180 / Math.PI, lo2 * 180 / Math.PI];
+  function closeMap() {
+    mapOpen = false;
+    const el = root.querySelector('#r2-map'); if (el) el.style.display = 'none';
+    const simple = root.querySelector('#r2-simple'); if (simple) simple.style.display = 'flex';
+    root.querySelector('.r2-map-close').style.display = 'none';
+    root.querySelector('.r2-recenter').style.display = 'none';
+  }
+  function recenter() { if (map && lastCar) map.setView([lastCar.lat, lastCar.lon], 15); }
+
+  async function refreshMapData() {
+    if (!map || !mapOpen) return;
+    const c = map.getCenter();
+    // камеры в области карты
+    let cams = [];
+    try { if (typeof RadarDB !== 'undefined') cams = await RadarDB.nearby(c.lat, c.lng, 4000); } catch (e) {}
+    camLayer.clearLayers();
+    cams.forEach((cam) => L.marker([cam.lat, cam.lon], { icon: camIcon(cam) }).addTo(camLayer));
+    // ремонты/помехи вокруг центра (видны независимо от движения)
+    let inc = [];
+    try { if (typeof RadarTraffic !== 'undefined') inc = await RadarTraffic.nearby(c.lat, c.lng, 6); } catch (e) {}
+    incLayer.clearLayers();
+    inc.forEach((i) => {
+      const col = i.category === 9 || i.category === 7 ? '#f59e0b' : i.category === 6 ? '#eab308' : '#ef4444';
+      L.circle([i.lat, i.lon], { radius: 130, color: col, weight: 1, fillColor: col, fillOpacity: 0.28 })
+        .addTo(incLayer).bindTooltip(RadarTraffic.label(i.category));
+    });
+    // машина
+    if (lastCar) {
+      if (!carMarker) carMarker = L.marker([lastCar.lat, lastCar.lon], { icon: carIcon(), zIndexOffset: 1000 }).addTo(map);
+      else carMarker.setLatLng([lastCar.lat, lastCar.lon]);
+    }
   }
 
-  // приоритеты -> реальные звуки (переиспользуем существующие mp3)
   function onAlert(al) {
     const a = audio(); if (!a) return;
     let keys = [];
@@ -138,6 +146,9 @@ const UIRadar2 = (() => {
 
   function onClick(e) {
     if (e.target.closest('[data-action="back-home"]')) { Router.show('home'); return; }
+    if (e.target.closest('[data-action="r2-openmap"]')) { openMap(); return; }
+    if (e.target.closest('[data-action="r2-closemap"]')) { closeMap(); return; }
+    if (e.target.closest('[data-action="r2-recenter"]')) { recenter(); return; }
     if (e.target.closest('[data-action="r2-toggle"]')) {
       const a = audio();
       if (a) { if (a.preload) a.preload(); if (a.unlock) a.unlock(); }
@@ -146,9 +157,7 @@ const UIRadar2 = (() => {
       return;
     }
   }
-  function setBtn(on) {
-    const b = root.querySelector('#r2-btn'); if (b) { b.textContent = on ? 'СТОП' : 'СТАРТ'; b.classList.toggle('on', on); }
-  }
+  function setBtn(on) { const b = root && root.querySelector('#r2-btn'); if (b) { b.textContent = on ? 'СТОП' : 'СТАРТ'; b.classList.toggle('on', on); } }
 
   return { mount, unmount };
 })();

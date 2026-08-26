@@ -14,7 +14,7 @@
 </head>
 <body>
 <div id="app"></div>
-<div id="rm-radar-active" class="rm-radar-active" style="display:none"><span class="rm-radar-dot"></span> Радар</div>
+<div id="rm-radar-active" class="rm-radar-active" style="display:none"></div>
 <template id="tpl-clients">
   <div class="screen screen-clients">
     <header class="app-header with-back">
@@ -125,20 +125,26 @@
 </template>
 <template id="tpl-radar2">
   <div class="screen screen-radar2">
-    <div id="r2-map" class="r2-map"></div>
-    <div class="r2-top">
-      <button class="icon-btn" data-action="back-home">←</button>
-      <span id="r2-status" class="r2-status">База камер: …</span>
+    <div id="r2-simple" class="r2-simple">
+      <header class="app-header with-back">
+        <button class="icon-btn" data-action="back-home">←</button>
+        <span id="r2-status" class="r2-status2">База камер: …</span>
+      </header>
+      <div class="r2-hud2">
+        <div id="r2-speed-box" class="r2-speed-box"><div id="r2-speed" class="r2-speed">0</div><small>км/ч</small></div>
+        <div id="r2-limit-box" class="r2-limit-box"><div id="r2-limit" class="r2-limit">—</div><small id="r2-dist"></small></div>
+      </div>
+      <div class="r2-tri-wrap"><div class="r2-triangle">▲</div></div>
+      <div id="r2-alert" class="r2-alert2">Нажми СТАРТ</div>
+      <div class="r2-volrow"><span class="r2-volicon">🔊</span><input type="range" id="r2-vol" min="0" max="30" step="0.5" value="7" class="r2-vol"></div>
+      <div class="r2-actions2">
+        <button id="r2-btn" class="r2-startbtn" data-action="r2-toggle">СТАРТ</button>
+        <button class="r2-mapbtn" data-action="r2-openmap">🗺 Карта</button>
+      </div>
     </div>
-    <div class="r2-hud">
-      <div id="r2-speed-box" class="r2-speed-box"><div id="r2-speed" class="r2-speed">0</div><small>км/ч</small></div>
-      <div id="r2-limit-box" class="r2-limit-box"><div id="r2-limit" class="r2-limit">—</div><small id="r2-dist"></small></div>
-    </div>
-    <div class="r2-volrow">
-      <span class="r2-volicon">🔊</span>
-      <input type="range" id="r2-vol" min="0" max="30" step="0.5" value="7" class="r2-vol">
-    </div>
-    <button id="r2-btn" class="r2-startbtn" data-action="r2-toggle">СТАРТ</button>
+    <div id="r2-map" class="r2-map" style="display:none"></div>
+    <button class="r2-map-close" data-action="r2-closemap" style="display:none">✕</button>
+    <button class="r2-recenter" data-action="r2-recenter" style="display:none">🎯</button>
   </div>
 </template>
 <template id="tpl-auth">
@@ -192,7 +198,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v10</footer>
+    <footer class="home-footer">RouteMaster PWA · v11</footer>
   </div>
 </template>
 
