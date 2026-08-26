@@ -39,7 +39,8 @@ const UIRadar2 = (() => {
     const el = root.querySelector('#r2-map');
     if (!el || typeof L === 'undefined') return;
     map = L.map(el, { zoomControl: false, attributionControl: false }).setView([53.63, 11.41], 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    el.classList.add('r2-dark');
     camLayer = L.layerGroup().addTo(map);
     incLayer = L.layerGroup().addTo(map);
     coneLayer = L.layerGroup().addTo(map);
@@ -55,14 +56,14 @@ const UIRadar2 = (() => {
     const sp = root.querySelector('#r2-speed-box'); if (sp) sp.classList.toggle('over', !!over);
   }
 
-  function carIcon(heading) {
-    return L.divIcon({ className: '', html: '<div class="r2-car" style="transform:rotate(' + (heading || 0) + 'deg)">▲</div>', iconSize: [30, 30] });
+  function carIcon() {
+    return L.divIcon({ className: '', html: '<div class="r2-car">▲</div>', iconSize: [34, 34] });
   }
 
   function onTick(t) {
     if (!map) return;
-    if (!carMarker) carMarker = L.marker([t.lat, t.lon], { icon: carIcon(t.heading), zIndexOffset: 1000 }).addTo(map);
-    else { carMarker.setLatLng([t.lat, t.lon]); carMarker.setIcon(carIcon(t.heading)); }
+    if (!carMarker) carMarker = L.marker([t.lat, t.lon], { icon: carIcon(), zIndexOffset: 1000 }).addTo(map);
+    else carMarker.setLatLng([t.lat, t.lon]);
     if (started) map.setView([t.lat, t.lon], map.getZoom() < 13 ? 15 : map.getZoom(), { animate: false });
 
     // конус упреждения
@@ -125,7 +126,7 @@ const UIRadar2 = (() => {
     if (e.target.closest('[data-action="r2-toggle"]')) {
       const a = audio();
       if (a) { if (a.preload) a.preload(); if (a.unlock) a.unlock(); }
-      if (!started) { engine.start(); started = true; requestWake(); setBtn(true); }
+      if (!started) { engine.start(); started = true; requestWake(); setBtn(true); if (a && a.enqueue) a.enqueue(['system_start']); }
       else { engine.stop(); started = false; releaseWake(); setBtn(false); }
       return;
     }

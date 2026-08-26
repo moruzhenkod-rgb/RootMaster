@@ -937,3 +937,12 @@ button {
 .r2-btn.on { background: #ef4444; color: #fff; }
 .r2-car { color: #3b82f6; font-size: 26px; text-shadow: 0 0 6px #000; }
 .r2-cam { background: #111; color: #ffd400; border: 2px solid #ffd400; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+
+/* Радар 2.0 — тёмная карта из OSM без ключа */
+.r2-map.r2-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.6); }
+.r2-volrow { position: absolute; top: 150px; left: 14px; right: 14px; display: flex; align-items: center; gap: 8px; z-index: 500; background: rgba(0,0,0,0.45); border-radius: 20px; padding: 6px 12px; }
+.r2-volrow .r2-vol { flex: 1; accent-color: #ef4444; }
+.r2-volicon { font-size: 14px; }
+.r2-startbtn { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); width: 116px; height: 116px; border-radius: 50%; background: #22c55e; color: #fff; border: 6px solid rgba(255,255,255,0.22); font-size: 22px; font-weight: 800; z-index: 600; box-shadow: 0 8px 28px rgba(0,0,0,0.6); }
+.r2-startbtn.on { background: #ef4444; }
+.r2-startbtn:active { transform: translateX(-50%) scale(0.96); }

@@ -103,10 +103,11 @@
       <div id="r2-speed-box" class="r2-speed-box"><div id="r2-speed" class="r2-speed">0</div><small>км/ч</small></div>
       <div id="r2-limit-box" class="r2-limit-box"><div id="r2-limit" class="r2-limit">—</div><small id="r2-dist"></small></div>
     </div>
-    <div class="r2-bottom">
+    <div class="r2-volrow">
+      <span class="r2-volicon">🔊</span>
       <input type="range" id="r2-vol" min="0" max="30" step="0.5" value="7" class="r2-vol">
-      <button id="r2-btn" class="r2-btn" data-action="r2-toggle">СТАРТ</button>
     </div>
+    <button id="r2-btn" class="r2-startbtn" data-action="r2-toggle">СТАРТ</button>
   </div>
 </template>
 <template id="tpl-auth">
@@ -160,7 +161,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v9.23</footer>
+    <footer class="home-footer">RouteMaster PWA · v9.24</footer>
   </div>
 </template>
 
