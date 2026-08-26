@@ -15,46 +15,6 @@
 <body>
 <div id="app"></div>
 
-<!-- Радар-детектор: компактный индикатор поверх всех экранов приложения -->
-<div id="radar-global-indicator" class="radar-indicator" data-state="idle" title="Радар-детектор">
-  <span class="radar-indicator-dot"></span>
-</div>
-
-<!-- Toast container -->
-<div id="toast-container"></div>
-
-<!-- Templates -->
-<template id="tpl-clients">
-  <div class="screen screen-clients">
-    <header class="app-header with-back">
-      <button class="icon-btn" data-action="back-home">←</button>
-      <h2>Мои клиенты</h2>
-      <button class="icon-btn" data-action="select-all" title="Выбрать все">☑</button>
-    </header>
-    <input id="clients-search" class="clients-search" placeholder="🔍 Поиск по фирме или адресу" />
-    <div id="clients-list" class="clients-list"></div>
-    <footer class="sticky-footer">
-      <button class="btn btn-primary btn-large" id="btn-add-clients" data-action="add-clients" disabled>Добавить в тур (0)</button>
-    </footer>
-  </div>
-</template>
-<template id="tpl-manual">
-  <div class="screen screen-clients">
-    <header class="app-header with-back">
-      <button class="icon-btn" data-action="back-home">←</button>
-      <h2>Ручная загрузка тура</h2>
-    </header>
-    <div class="clients-list">
-      <div class="manual-add-box">
-        <button class="btn btn-primary" data-action="cam-open" style="width:100%;margin-bottom:12px">📷 Сканировать этикетку (сканер)</button>
-        <div class="manual-add-title">➕ Или ввести вручную</div>
-        <input id="m-company" placeholder="Фирма (необязательно)" />
-        <input id="m-address" placeholder="Адрес: улица дом, индекс город" />
-        <div class="edit-row">
-          <input id="m-key" placeholder="Ключ (необязательно)" />
-          <button class="btn btn-secondary" data-action="manual-add-point">Добавить</button>
-        </div>
-      </div>
       <div id="manual-new-list"></div>
       <div class="manual-sep">— или выбрать из базы —</div>
       <input id="manual-search" class="clients-search" placeholder="🔍 Поиск по фирме или адресу" />
@@ -189,11 +149,6 @@
         <span>Радар-детектор</span>
         <span class="btn-sub">Камеры, аварии, дорожные работы</span>
       </button>
-      <button class="btn btn-secondary btn-large" data-action="open-radar2">
-        <span class="btn-icon">🛰</span>
-        <span>Радар 2.0</span>
-        <span class="btn-sub">Офлайн-база камер + ремонты TomTom (тест)</span>
-      </button>
       <button class="btn btn-secondary btn-large" data-action="open-settings">
         <span class="btn-icon">⚙️</span>
         <span>Настройки</span>
@@ -205,7 +160,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v9.22</footer>
+    <footer class="home-footer">RouteMaster PWA · v9.23</footer>
   </div>
 </template>
 

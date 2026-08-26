@@ -23,7 +23,7 @@ const UIHome = (() => {
 
     // доступ к настройкам/самотесту и радару — только админ (Dima)
     if (typeof Api !== 'undefined' && !Api.isAdmin()) {
-      ['open-settings', 'open-radar', 'open-radar2'].forEach((a) => { const b = root.querySelector('[data-action="' + a + '"]'); if (b) b.style.display = 'none'; });
+      ['open-settings', 'open-radar'].forEach((a) => { const b = root.querySelector('[data-action="' + a + '"]'); if (b) b.style.display = 'none'; });
     }
 
     const historyBtn = root.querySelector('[data-action="open-history"]');
@@ -53,7 +53,7 @@ const UIHome = (() => {
       return;
     } else if (action === 'open-radar') {
       if (typeof Api !== 'undefined' && !Api.isAdmin()) return;
-      Router.show('radar');
+      Router.show('radar2');
       return;
     } else if (action === 'open-tour') {
       Router.show('active');
