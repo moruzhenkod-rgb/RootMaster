@@ -129,4 +129,5 @@ const App = (() => {
   };
 })();
 
+document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#rm-radar-active')) { if (typeof Router !== 'undefined') Router.show('radar2'); } }); // goto-radar-indicator
 document.addEventListener('DOMContentLoaded', App.init);

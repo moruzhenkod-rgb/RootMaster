@@ -8,31 +8,46 @@ const UIRadar2 = (() => {
     return window.AudioManagerInstance;
   }
 
+  let mounted = false;
   function mount(container) {
     root = container;
+    mounted = true;
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
     initMap();
-    // база камер: предзагрузка дефолтного CSV
     if (typeof RadarDB !== 'undefined') RadarDB.ensureLoaded().then((n) => setStatus('База камер: ' + n)).catch(() => {});
-    engine = RadarEngine.create({
-      db: typeof RadarDB !== 'undefined' ? RadarDB : null,
-      traffic: typeof RadarTraffic !== 'undefined' ? RadarTraffic : null,
-      onAlert: onAlert,
-      onTick: onTick,
-    });
+    // движок один на всё приложение — переживает уход с экрана (работает в фоне)
+    if (!window.__rmEngine) {
+      window.__rmEngine = RadarEngine.create({
+        db: typeof RadarDB !== 'undefined' ? RadarDB : null,
+        traffic: typeof RadarTraffic !== 'undefined' ? RadarTraffic : null,
+        onAlert: onAlert,
+        onTick: onTickWrap,
+      });
+    }
+    engine = window.__rmEngine;
+    started = !!window.__rmRadarOn;
+    setBtn(started);
+    updateIndicator(started);
     const v = parseFloat(localStorage.getItem('rm_radar_vol')); const a = audio();
     if (a && a.setVolume && v >= 0) a.setVolume(v);
     const sl = root.querySelector('#r2-vol'); if (sl && v >= 0) sl.value = v;
   }
 
+  // тик от движка: индикатор — всегда; отрисовка карты — только когда экран открыт
+  function onTickWrap(t) { updateIndicator(!!window.__rmRadarOn); if (mounted && map) onTick(t); }
+
+  function updateIndicator(on) {
+    const el = document.getElementById('rm-radar-active');
+    if (el) el.style.display = on ? 'flex' : 'none';
+  }
+
   function unmount() {
+    mounted = false;
     root.removeEventListener('click', onClick);
     root.removeEventListener('input', onInput);
-    if (engine) engine.stop();
-    releaseWake();
     if (map) { map.remove(); map = null; }
-    started = false;
+    // движок НЕ останавливаем — радар продолжает работать в фоне (индикатор виден)
   }
 
   function initMap() {
@@ -126,8 +141,8 @@ const UIRadar2 = (() => {
     if (e.target.closest('[data-action="r2-toggle"]')) {
       const a = audio();
       if (a) { if (a.preload) a.preload(); if (a.unlock) a.unlock(); }
-      if (!started) { engine.start(); started = true; requestWake(); setBtn(true); if (a && a.enqueue) a.enqueue(['system_start']); }
-      else { engine.stop(); started = false; releaseWake(); setBtn(false); }
+      if (!started) { engine.start(); started = true; window.__rmRadarOn = true; requestWake(); setBtn(true); updateIndicator(true); if (a && a.enqueue) a.enqueue(['system_start']); }
+      else { engine.stop(); started = false; window.__rmRadarOn = false; releaseWake(); setBtn(false); updateIndicator(false); }
       return;
     }
   }
