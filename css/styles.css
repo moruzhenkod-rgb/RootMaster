@@ -987,3 +987,7 @@ button {
 .paste-photo-row { display: flex; gap: 10px; margin-bottom: 10px; }
 .paste-photo-row .btn { flex: 1; }
 .paste-ocr-status { color: #ffb84d; font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+
+/* Срочные клиенты (по времени) */
+.stop-card.critical { border: 2px solid #ef4444; box-shadow: 0 0 0 1px rgba(239,68,68,0.3); }
+.stop-deadline { color: #ff6b6b; font-weight: 700; font-size: 13px; margin: 2px 0; }

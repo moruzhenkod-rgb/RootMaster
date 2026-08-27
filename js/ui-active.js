@@ -114,10 +114,11 @@ const UIActive = (() => {
 
   function stopCardHtml(p) {
     return `
-      <div class="stop-card ${p.tourStatus === 'done' ? 'done' : ''} ${p.order == null ? 'off-route' : ''}" data-id="${p.id}">
+      <div class="stop-card ${p.tourStatus === 'done' ? 'done' : ''} ${p.order == null ? 'off-route' : ''} ${p.timeCritical ? 'critical' : ''}" data-id="${p.id}">
         <div class="stop-num">${p.order != null ? p.order : '⚠'}</div>
         <div class="stop-body">
           ${p.company ? `<div class="stop-company">${Utils.escapeHtml(p.company)}</div>` : ''}
+          ${p.deadline ? `<div class="stop-deadline">⏰ Закрыть до ${Utils.escapeHtml(p.deadline)}</div>` : ''}
           <div class="stop-addr">${Utils.escapeHtml(p.editedText)}</div>
           ${p.key || p.cell ? `<div class="stop-key">${p.key ? `🔑 ${Utils.escapeHtml(p.key)}` : ''}${p.key && p.cell ? ' · ' : ''}${p.cell ? `🗄 ${Utils.escapeHtml(p.cell)}` : ''}</div>` : ''}
           ${p.parcels || p.weight ? `<div class="stop-meta">${p.parcels ? `📦 ${Utils.escapeHtml(p.parcels)} шт` : ''}${p.parcels && p.weight ? ' · ' : ''}${p.weight ? `⚖ ${Utils.escapeHtml(p.weight)}` : ''}</div>` : ''}

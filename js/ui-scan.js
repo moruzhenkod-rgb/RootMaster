@@ -94,7 +94,7 @@ const UIScan = (() => {
   // Поддерживается и короткий вид: «Адрес — Ключ».
   function parseLine(line) {
     const parts = line.split('—').map((s) => s.trim()).filter(Boolean);
-    const res = { company: '', address: '', key: '', parcels: '', weight: '' };
+    const res = { company: '', address: '', key: '', parcels: '', weight: '', time: '' };
     const rest = [];
     parts.forEach((part) => {
       if (/^(ключ|key)[\s:]/i.test(part)) {
@@ -103,6 +103,9 @@ const UIScan = (() => {
         res.parcels = (part.match(/\d+/) || [''])[0];
       } else if (/^(вес|weight|gewicht)/i.test(part)) {
         res.weight = part.replace(/^(вес|weight|gewicht)\s*:?\s*/i, '').trim();
+      } else if (/^(время|zeit|uhr|bis)[\s:]/i.test(part)) {
+        const tm = part.match(/([01]?\d|2[0-3]):[0-5]\d/);
+        res.time = tm ? tm[0] : '';
       } else {
         rest.push(part);
       }
@@ -144,6 +147,8 @@ const UIScan = (() => {
       key: parsed.key || '',
       parcels: parsed.parcels || '',
       weight: parsed.weight || '',
+      deadline: parsed.time || '',
+      timeCritical: !!(parsed.time && !/^0?8:00$/.test(parsed.time)),
       lat: geo ? geo.lat : null,
       lng: geo ? geo.lng : null,
       foundAddress: geo ? geo.displayName : null,

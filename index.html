@@ -199,7 +199,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v17</footer>
+    <footer class="home-footer">RouteMaster PWA · v18</footer>
   </div>
 </template>
 
@@ -210,14 +210,7 @@
       <h2>Вставить список адресов</h2>
     </header>
     <div class="paste-body">
-      <div class="paste-photo-row">
-        <button class="btn btn-secondary" data-action="paste-photo">📷 Сфотать список</button>
-        <button class="btn btn-secondary" data-action="paste-gallery">🖼 Галерея</button>
-      </div>
-      <div id="paste-ocr-status" class="paste-ocr-status"></div>
-      <input type="file" id="paste-photo" accept="image/*" capture="environment" hidden>
-      <input type="file" id="paste-gallery" accept="image/*" hidden>
-      <p class="paste-hint">Или впиши вручную — каждый адрес с новой строки.</p>
+      <p class="paste-hint">Вставь список (из Gemini или вручную) — каждый клиент с новой строки. Формат: Фирма — Улица дом, Индекс Город — Ключ: … — Посылок: … — Вес: … — Время: ЧЧ:ММ</p>
       <textarea id="paste-textarea" class="paste-textarea" placeholder="Фирма — Улица дом, индекс город — Ключ: ..."></textarea>
     </div>
     <footer class="sticky-footer">
