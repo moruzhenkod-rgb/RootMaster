@@ -987,6 +987,11 @@ button {
 .paste-photo-row { display: flex; gap: 10px; margin-bottom: 10px; }
 .paste-photo-row .btn { flex: 1; }
 .paste-ocr-status { color: #ffb84d; font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+.paste-progress { margin: 4px 0 12px; }
+.paste-progress-track { height: 12px; border-radius: 8px; background: rgba(255,255,255,0.08); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.4); }
+.paste-progress-fill { height: 100%; width: 0%; border-radius: 8px; background: linear-gradient(90deg,#ff9500,#ffb84d,#4ade80); background-size: 200% 100%; transition: width 0.35s cubic-bezier(0.4,0,0.2,1); animation: pasteShimmer 1.6s linear infinite; }
+.paste-progress-pct { text-align: center; font-size: 15px; font-weight: 700; color: #ffb84d; margin-top: 6px; font-variant-numeric: tabular-nums; }
+@keyframes pasteShimmer { 0% { background-position: 0% 0; } 100% { background-position: -200% 0; } }
 
 /* Срочные клиенты (по времени) */
 .stop-card.critical { border: 2px solid #ef4444; box-shadow: 0 0 0 1px rgba(239,68,68,0.3); }
