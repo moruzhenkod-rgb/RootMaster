@@ -102,7 +102,7 @@ const RadarEngine = (() => {
       // ── озвучка ПО ПОРОГАМ: каждый порог (1000/500/200) для точки — ровно один раз ──
       for (let i = 0; i < camHits.length; i++) {
         const cam = camHits[i].cam, dist = camHits[i].dist;
-        const band = dist <= 200 ? 200 : dist <= 500 ? 500 : dist <= 1000 ? 1000 : 0;
+        const band = dist <= 200 ? 200 : dist <= 500 ? 500 : 0; // только 500 и 200 (есть записи)
         if (!band) continue;
         const key = 'c' + cam.idx + '_' + band;
         if (spoken.has(key)) continue;
