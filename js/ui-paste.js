@@ -36,21 +36,39 @@ const UIPaste = (() => {
     });
   }
 
+  function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
   async function handleFile(file) {
     if (!file) return;
-    setStatus('📸 Распознаю список через Claude… (до минуты)');
+    setStatus('📸 Загружаю фото…');
+    let job;
     try {
       const blob = await downscale(file);
       const res = await fetch('/api/parse-list', { method: 'POST', body: blob, headers: { 'Content-Type': 'image/jpeg' } });
       const j = await res.json();
-      if (!res.ok || j.error) { setStatus('Ошибка распознавания: ' + (j.error || res.status)); return; }
-      const lines = j.lines || [];
-      if (!lines.length) { setStatus('Строк не найдено — сфоткай ровнее/светлее'); return; }
-      const ta = root.querySelector('#paste-textarea');
-      ta.value = (ta.value ? ta.value.trim() + '\n' : '') + lines.join('\n');
-      document.getElementById('btn-paste-submit').disabled = !ta.value.trim();
-      setStatus('✓ Распознано строк: ' + lines.length + ' — проверь и жми «Проверить»');
-    } catch (e) { setStatus('Ошибка сети/распознавания'); }
+      job = j.job;
+      if (!job) { setStatus('Ошибка загрузки: ' + (j.error || res.status)); return; }
+    } catch (e) { setStatus('Не удалось загрузить фото (сеть)'); return; }
+    // опрос результата короткими запросами (переживает мобильную сеть/блокировку экрана)
+    for (let i = 0; i < 90; i++) {
+      setStatus('🔍 Распознаю через Claude… ' + (i * 4) + 'с (не закрывай экран)');
+      await sleep(4000);
+      try {
+        const r = await fetch('/api/parse-list-result?job=' + encodeURIComponent(job));
+        const jr = await r.json();
+        if (jr.status === 'done') {
+          const lines = jr.lines || [];
+          if (!lines.length) { setStatus('Строк не найдено — сфоткай ровнее/светлее'); return; }
+          const ta = root.querySelector('#paste-textarea');
+          ta.value = (ta.value ? ta.value.trim() + '\n' : '') + lines.join('\n');
+          document.getElementById('btn-paste-submit').disabled = !ta.value.trim();
+          setStatus('✓ Распознано строк: ' + lines.length + ' — проверь и жми «Проверить»');
+          return;
+        }
+        if (jr.status === 'error') { setStatus('Ошибка распознавания: ' + (jr.error || '')); return; }
+      } catch (e) { /* сеть моргнула — продолжаем опрос */ }
+    }
+    setStatus('Слишком долго — попробуй ещё раз с более чётким фото');
   }
 
   function onChange(e) {
