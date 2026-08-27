@@ -96,8 +96,8 @@ const UIScan = (() => {
     const res = { company: '', address: '', key: '', parcels: '', weight: '', time: '' };
     const rest = [];
     parts.forEach((part) => {
-      if (/^(ключ|key)[\s:]/i.test(part)) {
-        res.key = part.replace(/^(ключ|key)\s*:?\s*/i, '').trim();
+      if (/^([kк]люч|key)[\s:]/i.test(part)) {
+        res.key = part.replace(/^([kк]люч|key)\s*:?\s*/i, '').trim();
       } else if (/^(посыл|пакет|packages?|parcels?)/i.test(part)) {
         res.parcels = (part.match(/\d+/) || [''])[0];
       } else if (/^(вес|weight|gewicht)/i.test(part)) {
