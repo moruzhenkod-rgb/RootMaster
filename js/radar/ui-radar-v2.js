@@ -2,7 +2,7 @@
 // Радар работает в фоне, индикатор — маленькая точка. Камеры/ремонты видны на карте с зумом.
 const UIRadar2 = (() => {
   let root, map = null, mapOpen = false, mounted = false, started = false, engine, wakeLock = null;
-  let camLayer, incLayer, lastCar = null, following = true, refollowTimer = null;
+  let camLayer, incLayer, carMarker = null, lastCar = null, following = true, refollowTimer = null;
 
   function audio() {
     if (typeof AudioManager === 'undefined' || !AudioManager.getInstance) return null;
@@ -34,7 +34,7 @@ const UIRadar2 = (() => {
     mounted = false; mapOpen = false;
     root.removeEventListener('click', onClick);
     root.removeEventListener('input', onInput);
-    if (map) { map.remove(); map = null; }
+    if (map) { map.remove(); map = null; carMarker = null; }
     // движок продолжает работать в фоне
   }
 
@@ -47,13 +47,23 @@ const UIRadar2 = (() => {
     updateIndicator(!!window.__rmRadarOn);
     if (!mounted) return;
     updateHud(t);
-    if (mapOpen && map && following) map.setView([t.lat, t.lon], map.getZoom(), { animate: false });
-    if (t.heading != null && mapOpen) {
+    if (mapOpen && map) {
+      // стрелка — НАСТОЯЩИЙ маркер на GPS: отдалишь карту — останется на реальном месте
+      if (!carMarker) carMarker = L.marker([t.lat, t.lon], { icon: carIcon(t.heading), zIndexOffset: 1000, interactive: false }).addTo(map);
+      else { carMarker.setLatLng([t.lat, t.lon]); carMarker.setIcon(carIcon(t.heading)); }
       const mapEl = root && root.querySelector('#r2-map');
-      if (mapEl) mapEl.style.transform = 'rotate(' + (-t.heading) + 'deg)';
-      // иконки камер/помех держим вертикально (контр-поворот)
-      const marks = root.querySelectorAll('#r2-map .r2-emoji');
-      for (let i = 0; i < marks.length; i++) marks[i].style.transform = 'rotate(' + t.heading + 'deg)';
+      if (following) {
+        map.setView([t.lat, t.lon], map.getZoom(), { animate: false });
+        // режим езды: карта поворачивается по ходу (heading-up), стрелка смотрит вверх
+        if (mapEl) mapEl.style.transform = (t.heading != null) ? 'rotate(' + (-t.heading) + 'deg)' : 'none';
+        const marks = root.querySelectorAll('#r2-map .r2-emoji');
+        for (let i = 0; i < marks.length; i++) marks[i].style.transform = 'rotate(' + (t.heading || 0) + 'deg)';
+      } else {
+        // режим осмотра (отдалил/сдвинул): карта север-вверх, стрелка на реальном GPS
+        if (mapEl) mapEl.style.transform = 'none';
+        const marks = root.querySelectorAll('#r2-map .r2-emoji');
+        for (let i = 0; i < marks.length; i++) marks[i].style.transform = 'none';
+      }
     }
   }
 
@@ -74,7 +84,7 @@ const UIRadar2 = (() => {
     }
   }
 
-  function carIcon() { return L.divIcon({ className: '', html: '<div class="r2-car">▲</div>', iconSize: [34, 34] }); }
+  function carIcon(heading) { const h = (heading != null) ? heading : 0; return L.divIcon({ className: '', html: '<div class="r2-car" style="transform:rotate(' + h + 'deg)">▲</div>', iconSize: [34, 34], iconAnchor: [17, 17] }); }
   function camIcon(cam) { return L.divIcon({ className: '', html: '<div class="r2-emoji">📷' + (cam.speed ? '<b>' + cam.speed + '</b>' : '') + '</div>', iconSize: [36, 36] }); }
   function incEmoji(cat) { return cat === 9 ? '🚧' : cat === 8 ? '⛔' : cat === 7 ? '🚧' : cat === 1 ? '💥' : cat === 6 ? '🚗' : '⚠️'; }
   function incIcon(cat) { return L.divIcon({ className: '', html: '<div class="r2-emoji">' + incEmoji(cat) + '</div>', iconSize: [36, 36] }); }
@@ -89,7 +99,6 @@ const UIRadar2 = (() => {
     if (simple) simple.style.display = 'none';
     root.querySelector('.r2-map-close').style.display = 'flex';
     root.querySelector('.r2-recenter').style.display = 'flex';
-    const carEl = root.querySelector('#r2-mapcar'); if (carEl) carEl.style.display = 'block';
     mapOpen = true; following = true;
     if (!map) {
       map = L.map(el, { zoomControl: false, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 15);
@@ -109,7 +118,7 @@ const UIRadar2 = (() => {
   function closeMap() {
     mapOpen = false;
     const wrap = root.querySelector('#r2-map-wrap'); if (wrap) wrap.style.display = 'none';
-    const carEl = root.querySelector('#r2-mapcar'); if (carEl) carEl.style.display = 'none';
+    if (map && carMarker) { map.removeLayer(carMarker); carMarker = null; }
     const simple = root.querySelector('#r2-simple'); if (simple) simple.style.display = 'flex';
     root.querySelector('.r2-map-close').style.display = 'none';
     root.querySelector('.r2-recenter').style.display = 'none';
