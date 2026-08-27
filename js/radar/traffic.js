@@ -1,6 +1,7 @@
 // Traffic: ремонты/пробки через наш прокси /api/traffic (TomTom). Кеш 5 мин в sessionStorage.
 const RadarTraffic = (() => {
-  const TTL = 5 * 60 * 1000;
+  const TTL = 10 * 60 * 1000;
+  const GRID = 0.02; // ~2.2 км: снапим bbox к сетке, чтобы кеш попадал на ходу (иначе TomTom-квота сгорает)
   function key(bbox) { return 'rm_traffic_' + bbox; }
 
   async function fetchBBox(minLon, minLat, maxLon, maxLat) {
@@ -21,9 +22,11 @@ const RadarTraffic = (() => {
 
   // ремонты/перекрытия вокруг точки в радиусе (км), с дистанцией
   async function nearby(lat, lon, radiusKm) {
-    const d = radiusKm / 111;
-    const dLon = d / (Math.cos(lat * Math.PI / 180) || 1);
-    const inc = await fetchBBox(lon - dLon, lat - d, lon + dLon, lat + d);
+    // снапим к сетке: пока едешь в пределах тайла — тот же bbox → кеш попадает, TomTom не дёргаем
+    const tLat = Math.floor(lat / GRID) * GRID;
+    const tLon = Math.floor(lon / GRID) * GRID;
+    // берём 3×3 тайла (~6 км) вокруг — покрывает упреждение, но bbox стабилен внутри тайла
+    const inc = await fetchBBox(tLon - GRID, tLat - GRID, tLon + 2 * GRID, tLat + 2 * GRID);
     // категории TomTom: 9=ремонт, 8=перекрыто, 7=полоса закрыта, 1=авария, 6=пробка
     return inc.filter((i) => [1, 6, 7, 8, 9].indexOf(i.category) !== -1);
   }

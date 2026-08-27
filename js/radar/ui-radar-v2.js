@@ -101,8 +101,8 @@ const UIRadar2 = (() => {
       const refollow = function () { clearTimeout(refollowTimer); refollowTimer = setTimeout(function () { following = true; if (map && lastCar) map.setView([lastCar.lat, lastCar.lon], map.getZoom(), { animate: true }); }, 8000); };
       map.on('dragstart', function () { following = false; });
       map.on('dragend', refollow);
-      map.on('zoomstart', function (e) { if (e && e.hard !== false) following = false; });
-      map.on('zoomend', refollow);
+      // зум НЕ выключает слежение — держим машину в центре при уменьшении/увеличении
+      map.on('zoomend', function () { if (following && map && lastCar) map.setView([lastCar.lat, lastCar.lon], map.getZoom(), { animate: false }); else refollow(); });
     }
     setTimeout(() => { map.invalidateSize(); if (lastCar) map.setView([lastCar.lat, lastCar.lon], 15); refreshMapData(); }, 80);
   }
