@@ -2,7 +2,7 @@
 // Радар работает в фоне, индикатор — маленькая точка. Камеры/ремонты видны на карте с зумом.
 const UIRadar2 = (() => {
   let root, map = null, mapOpen = false, mounted = false, started = false, engine, wakeLock = null;
-  let carMarker, camLayer, incLayer, lastCar = null;
+  let camLayer, incLayer, lastCar = null, following = true;
 
   function audio() {
     if (typeof AudioManager === 'undefined' || !AudioManager.getInstance) return null;
@@ -34,7 +34,7 @@ const UIRadar2 = (() => {
     mounted = false; mapOpen = false;
     root.removeEventListener('click', onClick);
     root.removeEventListener('input', onInput);
-    if (map) { map.remove(); map = null; carMarker = null; }
+    if (map) { map.remove(); map = null; }
     // движок продолжает работать в фоне
   }
 
@@ -47,7 +47,7 @@ const UIRadar2 = (() => {
     updateIndicator(!!window.__rmRadarOn);
     if (!mounted) return;
     updateHud(t);
-    if (mapOpen && carMarker) carMarker.setLatLng([t.lat, t.lon]);
+    if (mapOpen && map && following) map.setView([t.lat, t.lon], map.getZoom(), { animate: false });
   }
 
   function updateHud(t) {
@@ -81,25 +81,30 @@ const UIRadar2 = (() => {
     if (simple) simple.style.display = 'none';
     root.querySelector('.r2-map-close').style.display = 'flex';
     root.querySelector('.r2-recenter').style.display = 'flex';
-    mapOpen = true;
+    const carEl = root.querySelector('#r2-mapcar'); if (carEl) carEl.style.display = 'block';
+    mapOpen = true; following = true;
     if (!map) {
-      map = L.map(el, { zoomControl: false, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 13);
+      map = L.map(el, { zoomControl: false, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
       el.classList.add('r2-dark');
       camLayer = L.layerGroup().addTo(map);
       incLayer = L.layerGroup().addTo(map);
       map.on('moveend', refreshMapData);
+      // ручной жест — выключаем слежение (как Re-center в навигаторе)
+      map.on('dragstart', function () { following = false; });
+      map.on('zoomstart', function (e) { if (e && e.hard !== false) following = false; });
     }
-    setTimeout(() => { map.invalidateSize(); if (lastCar) map.setView([lastCar.lat, lastCar.lon], 14); refreshMapData(); }, 80);
+    setTimeout(() => { map.invalidateSize(); if (lastCar) map.setView([lastCar.lat, lastCar.lon], 15); refreshMapData(); }, 80);
   }
   function closeMap() {
     mapOpen = false;
     const el = root.querySelector('#r2-map'); if (el) el.style.display = 'none';
+    const carEl = root.querySelector('#r2-mapcar'); if (carEl) carEl.style.display = 'none';
     const simple = root.querySelector('#r2-simple'); if (simple) simple.style.display = 'flex';
     root.querySelector('.r2-map-close').style.display = 'none';
     root.querySelector('.r2-recenter').style.display = 'none';
   }
-  function recenter() { if (map && lastCar) map.setView([lastCar.lat, lastCar.lon], 15); }
+  function recenter() { following = true; if (map && lastCar) map.setView([lastCar.lat, lastCar.lon], 16); }
 
   async function refreshMapData() {
     if (!map || !mapOpen) return;
@@ -116,11 +121,7 @@ const UIRadar2 = (() => {
     inc.forEach((i) => {
       L.marker([i.lat, i.lon], { icon: incIcon(i.category) }).addTo(incLayer).bindTooltip(RadarTraffic.label(i.category));
     });
-    // машина
-    if (lastCar) {
-      if (!carMarker) carMarker = L.marker([lastCar.lat, lastCar.lon], { icon: carIcon(), zIndexOffset: 1000 }).addTo(map);
-      else carMarker.setLatLng([lastCar.lat, lastCar.lon]);
-    }
+
   }
 
   function onAlert(al) {

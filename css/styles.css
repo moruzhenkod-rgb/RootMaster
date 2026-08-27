@@ -979,3 +979,6 @@ button {
 /* Радар: кнопка возврата с карты — поверх контролов Leaflet */
 .r2-map-close { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; width: auto; height: auto; border-radius: 24px; padding: 10px 16px; background: rgba(20,20,25,0.92); color: #fff; border: 1px solid #3a4256; font-size: 15px; font-weight: 700; z-index: 1300 !important; box-shadow: 0 3px 12px rgba(0,0,0,0.5); }
 .r2-recenter { z-index: 1300 !important; }
+
+/* Радар: фиксированный треугольник по центру карты (как навигатор) */
+.r2-mapcar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 46px; color: #12b5ff; line-height: 1; text-shadow: 0 0 12px rgba(0,0,0,0.85); z-index: 650; pointer-events: none; }
