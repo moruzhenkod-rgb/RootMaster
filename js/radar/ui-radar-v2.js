@@ -85,8 +85,7 @@ const UIRadar2 = (() => {
     mapOpen = true; following = true;
     if (!map) {
       map = L.map(el, { zoomControl: false, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-      el.classList.add('r2-dark');
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd', detectRetina: true }).addTo(map);
       camLayer = L.layerGroup().addTo(map);
       incLayer = L.layerGroup().addTo(map);
       map.on('moveend', refreshMapData);

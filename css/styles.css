@@ -935,7 +935,7 @@ button {
 .r2-vol { flex: 1; accent-color: #ef4444; }
 .r2-btn { background: #22c55e; color: #063; border: none; border-radius: 30px; padding: 15px 26px; font-size: 18px; font-weight: 800; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
 .r2-btn.on { background: #ef4444; color: #fff; }
-.r2-car { color: #3b82f6; font-size: 26px; text-shadow: 0 0 6px #000; }
+.r2-car { width: 34px; height: 34px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 19px; }
 .r2-cam { background: #111; color: #ffd400; border: 2px solid #ffd400; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
 
 /* Радар 2.0 — тёмная карта из OSM без ключа */
