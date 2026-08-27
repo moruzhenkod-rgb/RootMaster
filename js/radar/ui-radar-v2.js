@@ -49,8 +49,7 @@ const UIRadar2 = (() => {
     updateHud(t);
     if (mapOpen && map) {
       // стрелка — НАСТОЯЩИЙ маркер на GPS: отдалишь карту — останется на реальном месте
-      if (!carMarker) carMarker = L.marker([t.lat, t.lon], { icon: carIcon(t.heading), zIndexOffset: 1000, interactive: false }).addTo(map);
-      else { carMarker.setLatLng([t.lat, t.lon]); carMarker.setIcon(carIcon(t.heading)); }
+      placeCar(t);
       const mapEl = root && root.querySelector('#r2-map');
       if (following) {
         map.setView([t.lat, t.lon], map.getZoom(), { animate: false });
@@ -113,7 +112,26 @@ const UIRadar2 = (() => {
       // зум НЕ выключает слежение — держим машину в центре при уменьшении/увеличении
       map.on('zoomend', function () { if (following && map && lastCar) map.setView([lastCar.lat, lastCar.lon], map.getZoom(), { animate: false }); else refollow(); });
     }
-    setTimeout(() => { map.invalidateSize(); if (lastCar) map.setView([lastCar.lat, lastCar.lon], 15); refreshMapData(); }, 80);
+    setTimeout(() => {
+      map.invalidateSize();
+      if (lastCar) { placeCar(lastCar); map.setView([lastCar.lat, lastCar.lon], 15); }
+      else if (navigator.geolocation) {
+        // радар не запущен — покажем стрелку по разовому GPS
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          const t = { lat: pos.coords.latitude, lon: pos.coords.longitude, heading: pos.coords.heading };
+          lastCar = lastCar || t;
+          if (mapOpen && map) { placeCar(t); map.setView([t.lat, t.lon], 15); }
+        }, function () {}, { enableHighAccuracy: true, timeout: 8000 });
+      }
+      refreshMapData();
+    }, 80);
+  }
+
+  // поставить/обновить маркер-стрелку на реальном GPS
+  function placeCar(t) {
+    if (!map || t == null || t.lat == null) return;
+    if (!carMarker) carMarker = L.marker([t.lat, t.lon], { icon: carIcon(t.heading), zIndexOffset: 1000, interactive: false }).addTo(map);
+    else { carMarker.setLatLng([t.lat, t.lon]); carMarker.setIcon(carIcon(t.heading)); }
   }
   function closeMap() {
     mapOpen = false;
