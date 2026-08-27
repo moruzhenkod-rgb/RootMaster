@@ -82,10 +82,10 @@ const UIScan = (() => {
     setProgress(`Проверено ${lines.length} из ${lines.length} адресов`, 1);
     await Utils.sleep(200);
 
+    // всегда показываем экран проверки (Дима сверяет список и может добавить клиента вручную)
     const tour = { points, stage: 'validate' };
-    const needsValidation = points.some((p) => p.geoStatus !== 'ok');
-    App.setTour(tour, needsValidation ? 'validate' : 'build');
-    Router.show(needsValidation ? 'validate' : 'build');
+    App.setTour(tour, 'validate');
+    Router.show('validate');
   }
 
   // Формат (части через « — »), порядок полей свободный, распознаём по меткам:
