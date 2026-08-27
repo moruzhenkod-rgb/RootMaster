@@ -982,3 +982,8 @@ button {
 
 /* Радар: фиксированный треугольник по центру карты (как навигатор) */
 .r2-mapcar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 46px; color: #12b5ff; line-height: 1; text-shadow: 0 0 12px rgba(0,0,0,0.85); z-index: 650; pointer-events: none; }
+
+/* Фото-импорт списка в «Вставить список» */
+.paste-photo-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.paste-photo-row .btn { flex: 1; }
+.paste-ocr-status { color: #ffb84d; font-size: 13px; min-height: 18px; margin-bottom: 8px; }

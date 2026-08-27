@@ -199,7 +199,7 @@
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v16</footer>
+    <footer class="home-footer">RouteMaster PWA · v17</footer>
   </div>
 </template>
 
@@ -210,8 +210,15 @@
       <h2>Вставить список адресов</h2>
     </header>
     <div class="paste-body">
-      <p class="paste-hint">Каждый адрес — с новой строки. Можно вставить весь список сразу.</p>
-      <textarea id="paste-textarea" class="paste-textarea" placeholder="Москва, ул. Ленина, д. 12&#10;Москва, пр. Мира, д. 45, кв. 3&#10;..."></textarea>
+      <div class="paste-photo-row">
+        <button class="btn btn-secondary" data-action="paste-photo">📷 Сфотать список</button>
+        <button class="btn btn-secondary" data-action="paste-gallery">🖼 Галерея</button>
+      </div>
+      <div id="paste-ocr-status" class="paste-ocr-status"></div>
+      <input type="file" id="paste-photo" accept="image/*" capture="environment" hidden>
+      <input type="file" id="paste-gallery" accept="image/*" hidden>
+      <p class="paste-hint">Или впиши вручную — каждый адрес с новой строки.</p>
+      <textarea id="paste-textarea" class="paste-textarea" placeholder="Фирма — Улица дом, индекс город — Ключ: ..."></textarea>
     </div>
     <footer class="sticky-footer">
       <button class="btn btn-primary btn-large" id="btn-paste-submit" data-action="paste-submit" disabled>
