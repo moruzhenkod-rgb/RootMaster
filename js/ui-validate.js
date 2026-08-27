@@ -106,6 +106,7 @@ const UIValidate = (() => {
       confirm();
       return;
     }
+    if (e.target.closest('[data-action="add-client"]')) { openAddClient(); return; }
 
     const card = e.target.closest('.addr-card');
     if (!card) return;
@@ -199,6 +200,111 @@ const UIValidate = (() => {
     App.tour.stage = 'build';
     App.saveTour();
     Router.show('build');
+  }
+
+  // --- Добавить клиента прямо в список проверки (поиск по базе / вручную) ---
+  let vcResults = [];
+  function openAddClient() {
+    let ov = document.getElementById('vc-overlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'vc-overlay';
+      ov.className = 'addp-overlay';
+      ov.innerHTML = `
+        <div class="addp-card">
+          <h3>➕ Добавить клиента</h3>
+          <input id="vc-search" placeholder="🔍 Поиск в базе клиентов">
+          <div id="vc-results" class="ap-results"></div>
+          <input id="vc-company" placeholder="Фирма (необязательно)">
+          <input id="vc-address" placeholder="Адрес: улица дом, индекс город">
+          <div class="edit-row">
+            <input id="vc-key" placeholder="Ключ">
+            <input id="vc-cell" placeholder="Ячейка">
+          </div>
+          <div class="addp-hint">Найди в базе или впиши вручную. Проверю адрес на карте и добавлю в список.</div>
+          <div class="addp-actions">
+            <button class="btn btn-ghost" data-action="vc-cancel">Отмена</button>
+            <button class="btn btn-primary" id="vc-save-btn" data-action="vc-save">Добавить</button>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      ov.addEventListener('click', onAddClientClick);
+      ov.addEventListener('input', (e) => { if (e.target && e.target.id === 'vc-search') renderVcResults(e.target.value.toLowerCase().trim()); });
+    }
+    ov.style.display = 'flex';
+    vcResults = [];
+    const r = document.getElementById('vc-results'); if (r) r.innerHTML = '';
+    const c = document.getElementById('vc-company'); if (c) c.focus();
+  }
+
+  function closeAddClient() {
+    const ov = document.getElementById('vc-overlay');
+    if (ov) {
+      ov.style.display = 'none';
+      ['vc-company','vc-address','vc-key','vc-cell','vc-search'].forEach((i) => { const el = document.getElementById(i); if (el) el.value = ''; });
+      const r = document.getElementById('vc-results'); if (r) r.innerHTML = '';
+    }
+    vcResults = [];
+  }
+
+  function renderVcResults(q) {
+    const box = document.getElementById('vc-results');
+    if (!box) return;
+    if (!q) { box.innerHTML = ''; vcResults = []; return; }
+    const clients = ClientMatch.loadClients();
+    const nq = ClientMatch.normAddr(q);
+    vcResults = clients.filter((c) => ClientMatch.normAddr(c.company).includes(nq) || ClientMatch.normAddr(c.address).includes(nq)).slice(0, 8);
+    box.innerHTML = vcResults.length
+      ? vcResults.map((c, i) => `<div class="ap-item" data-action="vc-pick" data-idx="${i}">${c.company ? `<div class="ap-firm">${Utils.escapeHtml(c.company)}</div>` : ''}<div class="ap-addr">${Utils.escapeHtml(c.address)}</div></div>`).join('')
+      : '<div class="ap-empty">Ничего не найдено</div>';
+  }
+
+  async function onAddClientClick(e) {
+    if (e.target.closest('[data-action="vc-cancel"]')) { closeAddClient(); return; }
+    if (e.target.closest('[data-action="vc-save"]')) { saveAddClient(); return; }
+    const pick = e.target.closest('[data-action="vc-pick"]');
+    if (pick) {
+      const c = vcResults[+pick.dataset.idx]; if (!c) return;
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      set('vc-company', c.company); set('vc-address', c.address); set('vc-key', c.key); set('vc-cell', c.cell);
+      const box = document.getElementById('vc-results'); if (box) box.innerHTML = '';
+      const srch = document.getElementById('vc-search'); if (srch) srch.value = '';
+      vcResults = [];
+    }
+  }
+
+  async function saveAddClient() {
+    const v = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    let company = v('vc-company'), address = v('vc-address'), key = v('vc-key'), cell = v('vc-cell');
+    if (!address) { Utils.toast('Введите адрес', 'error'); return; }
+    const btn = document.getElementById('vc-save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Добавляю…'; }
+    const clients = ClientMatch.loadClients();
+    const known = ClientMatch.matchClient(address, company, clients);
+    let lat = null, lng = null, manual = false, matchedHouse = false, foundAddress = null;
+    if (known) {
+      if (known.address) address = known.address;
+      if (!company && known.company) company = known.company;
+      if (!cell && known.cell) cell = known.cell;
+      if (known.lat != null && known.lng != null) { lat = known.lat; lng = known.lng; manual = !!known.manual; matchedHouse = true; foundAddress = known.address; }
+    }
+    if (lat == null) {
+      try { const geo = await Geocode.lookup(address); if (geo) { lat = geo.lat; lng = geo.lng; matchedHouse = !!geo.matchedHouse; foundAddress = geo.displayName; } } catch (e) {}
+    }
+    const pt = {
+      id: Utils.uid(), rawText: address, editedText: address,
+      company: company || '', key: key || '', cell: cell || '', parcels: '', weight: '',
+      deadline: '', timeCritical: false,
+      lat: lat, lng: lng, foundAddress: foundAddress, matchedHouse: matchedHouse,
+      manualCoords: manual, geoStatus: lat != null ? 'ok' : 'error',
+      order: null, tourStatus: 'pending',
+    };
+    App.tour.points.push(pt);
+    App.saveTour();
+    if (btn) { btn.disabled = false; btn.textContent = 'Добавить'; }
+    closeAddClient();
+    render();
+    Utils.toast(lat != null ? 'Клиент добавлен ✓' : 'Добавлено — адрес не найден, исправь в списке', lat != null ? 'success' : 'error');
   }
 
   return { mount, unmount };
