@@ -17,36 +17,46 @@ const UIPaste = (() => {
 
   function setStatus(t) { const el = root.querySelector('#paste-ocr-status'); if (el) el.textContent = t || ''; }
 
-  let _progTimer = null, _prog = 0, _progTarget = 0;
+  // ── прогресс с сегментами (по одному на лист) ──
+  let _progTimer = null, _prog = 0, _progTarget = 0, _segBase = 0, _segCap = 92, _segT0 = 0;
   function showProgress(on) {
     const box = root.querySelector('#paste-progress');
     if (box) box.hidden = !on;
     if (!on && _progTimer) { clearInterval(_progTimer); _progTimer = null; }
   }
-  function renderProgress() {
-    // плавно тянемся к цели (не даём скакать)
-    _prog += (_progTarget - _prog) * 0.25;
+  function paint() {
     const shown = Math.min(100, Math.round(_prog));
     const fill = root.querySelector('#paste-progress-fill');
     const pct = root.querySelector('#paste-progress-pct');
     if (fill) fill.style.width = shown + '%';
     if (pct) pct.textContent = shown + '%';
   }
+  function tick() {
+    const el = (Date.now() - _segT0) / 1000;
+    _progTarget = _segBase + (_segCap - _segBase) * (1 - Math.exp(-el / 22));
+    _prog += (_progTarget - _prog) * 0.25;
+    paint();
+  }
   function startProgress() {
-    _prog = 0; _progTarget = 8;
-    showProgress(true); renderProgress();
-    const t0 = Date.now();
+    _prog = 0; _segBase = 0; _segCap = 8; _segT0 = Date.now();
+    showProgress(true); paint();
     if (_progTimer) clearInterval(_progTimer);
-    _progTimer = setInterval(() => {
-      // асимптотика к 92% за ~45с — живо, но не упирается в 100 раньше времени
-      const el = (Date.now() - t0) / 1000;
-      _progTarget = Math.min(92, 92 * (1 - Math.exp(-el / 22)));
-      renderProgress();
-    }, 120);
+    _progTimer = setInterval(tick, 120);
+  }
+  // сегмент для листа i из n (0-based): плавно ползём в своей доле шкалы
+  function segment(i, n) {
+    const span = 92 / Math.max(1, n);
+    _segBase = Math.max(_prog, i * span);
+    _segCap = (i + 1) * span;
+    _segT0 = Date.now();
+  }
+  function segmentDone(i, n) {
+    const span = 92 / Math.max(1, n);
+    _prog = Math.max(_prog, (i + 1) * span); paint();
   }
   function finishProgress() {
-    _progTarget = 100; _prog = Math.max(_prog, 96); renderProgress();
-    setTimeout(() => renderProgress(), 130);
+    _segBase = 100; _segCap = 100; _progTarget = 100; _prog = Math.max(_prog, 96);
+    setTimeout(() => { _prog = 100; paint(); }, 60);
     setTimeout(() => showProgress(false), 700);
   }
 
@@ -71,46 +81,62 @@ const UIPaste = (() => {
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  async function handleFile(file) {
-    if (!file) return;
-    setStatus('📸 Готовлю фото…');
-    startProgress();
-    let job;
-    try {
-      const blob = await downscale(file);
-      const res = await fetch('/api/parse-list', { method: 'POST', body: blob, headers: { 'Content-Type': 'image/jpeg' } });
-      const j = await res.json();
-      job = j.job;
-      if (!job) { showProgress(false); setStatus('Ошибка загрузки: ' + (j.error || res.status)); return; }
-    } catch (e) { showProgress(false); setStatus('Не удалось загрузить фото (сеть)'); return; }
-    // опрос результата короткими запросами (переживает мобильную сеть/блокировку экрана)
+  // распознать ОДИН лист → массив строк (throw при ошибке)
+  async function processOne(file) {
+    const blob = await downscale(file);
+    const res = await fetch('/api/parse-list', { method: 'POST', body: blob, headers: { 'Content-Type': 'image/jpeg' } });
+    const j = await res.json();
+    const job = j.job;
+    if (!job) throw new Error('Ошибка загрузки: ' + (j.error || res.status));
     for (let i = 0; i < 90; i++) {
-      setStatus('🔍 Распознаю список… не закрывай экран');
       await sleep(4000);
       try {
         const r = await fetch('/api/parse-list-result?job=' + encodeURIComponent(job));
         const jr = await r.json();
-        if (jr.status === 'done') {
-          const lines = jr.lines || [];
-          if (!lines.length) { showProgress(false); setStatus('Строк не найдено — сфоткай ровнее/светлее'); return; }
-          const ta = root.querySelector('#paste-textarea');
-          ta.value = (ta.value ? ta.value.trim() + '\n' : '') + lines.join('\n');
-          document.getElementById('btn-paste-submit').disabled = !ta.value.trim();
-          finishProgress();
-          setStatus('✓ Распознано строк: ' + lines.length + ' — проверь и жми «Проверить»');
-          return;
-        }
-        if (jr.status === 'error') { showProgress(false); setStatus('Ошибка распознавания: ' + (jr.error || '')); return; }
-      } catch (e) { /* сеть моргнула — продолжаем опрос */ }
+        if (jr.status === 'done') return jr.lines || [];
+        if (jr.status === 'error') throw new Error('Распознавание: ' + (jr.error || ''));
+      } catch (e) { if (e && e.message && e.message.indexOf('Распознавание') === 0) throw e; /* сеть моргнула — опрос дальше */ }
     }
-    showProgress(false);
-    setStatus('Слишком долго — попробуй ещё раз с более чётким фото');
+    throw new Error('Слишком долго — фото почётче');
+  }
+
+  // распознать НЕСКОЛЬКО листов по очереди и склеить
+  async function handleFiles(files) {
+    if (!files || !files.length) return;
+    const n = files.length;
+    setStatus(n > 1 ? ('📸 Готовлю ' + n + ' листа…') : '📸 Готовлю фото…');
+    startProgress();
+    const all = [];
+    for (let i = 0; i < n; i++) {
+      segment(i, n);
+      setStatus(n > 1 ? ('🔍 Лист ' + (i + 1) + ' из ' + n + '… не закрывай экран') : '🔍 Распознаю список… не закрывай экран');
+      try {
+        const lines = await processOne(files[i]);
+        all.push(...lines);
+        segmentDone(i, n);
+      } catch (e) {
+        showProgress(false);
+        setStatus('❌ Лист ' + (i + 1) + ': ' + (e.message || 'ошибка') + (all.length ? ' (что распозналось — вставил)' : ''));
+        if (all.length) fillTextarea(all);
+        return;
+      }
+    }
+    if (!all.length) { showProgress(false); setStatus('Строк не найдено — сфоткай ровнее/светлее'); return; }
+    fillTextarea(all);
+    finishProgress();
+    setStatus('✓ Распознано строк: ' + all.length + (n > 1 ? (' с ' + n + ' листов') : '') + ' — проверь и жми «Проверить»');
+  }
+
+  function fillTextarea(lines) {
+    const ta = root.querySelector('#paste-textarea');
+    ta.value = (ta.value ? ta.value.trim() + '\n' : '') + lines.join('\n');
+    document.getElementById('btn-paste-submit').disabled = !ta.value.trim();
   }
 
   function onChange(e) {
     if (e.target && (e.target.id === 'paste-photo' || e.target.id === 'paste-gallery')) {
-      const f = e.target.files && e.target.files[0];
-      if (f) handleFile(f);
+      const files = Array.from(e.target.files || []);
+      if (files.length) handleFiles(files);
       e.target.value = '';
     }
   }
