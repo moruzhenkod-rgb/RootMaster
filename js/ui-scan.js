@@ -66,7 +66,6 @@ const UIScan = (() => {
         // адрес узнан по базе клиентов — подставляем сохранённые данные
         parsed.address = known.address;
         if (!parsed.company && known.company) parsed.company = known.company;
-        if (!parsed.key && known.key) parsed.key = known.key;
         geo = (known.lat != null && known.lng != null)
           ? { lat: known.lat, lng: known.lng, displayName: known.address, matchedHouse: true, confidence: 'high' }
           : await Geocode.lookup(parsed.address);
@@ -75,7 +74,7 @@ const UIScan = (() => {
       }
       const pt = buildPoint(parsed, geo);
       if (known && known.manual) pt.manualCoords = true; // закреплённая позиция клиента
-      if (known && known.cell) pt.cell = known.cell; // ячейка, где лежит ключ
+      if (known && /^([1-9]|1[0-9]|2[0-4])$/.test(String(known.cell || '').trim())) pt.cell = known.cell; // только номер ячейки 1-24
       points.push(pt);
     }
     if (cancelled) return;

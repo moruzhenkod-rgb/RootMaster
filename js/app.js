@@ -48,8 +48,7 @@ const App = (() => {
       const c = (typeof ClientMatch !== 'undefined')
         ? ClientMatch.matchClient(p.editedText, p.company, clients) : null;
       if (!c) return;
-      if ((c.cell || '') !== (p.cell || '')) { p.cell = c.cell || ''; changed = true; }
-      if (!p.key && c.key) { p.key = c.key; changed = true; }
+      if (/^([1-9]|1[0-9]|2[0-4])$/.test(String(c.cell || '').trim()) && (c.cell || '') !== (p.cell || '')) { p.cell = c.cell; changed = true; }
       if (!p.company && c.company) { p.company = c.company; changed = true; }
       // подтягиваем координаты клиента, если у точки их нет или она «не на карте»
       let noCoords = (p.lat == null || p.lng == null || p.geoStatus === 'error');
