@@ -48,9 +48,12 @@ const UIRadar2 = (() => {
     if (!mounted) return;
     updateHud(t);
     if (mapOpen && map && following) map.setView([t.lat, t.lon], map.getZoom(), { animate: false });
-    if (t.heading != null) {
-      const carEl = root && root.querySelector('#r2-mapcar');
-      if (carEl) carEl.style.transform = 'translate(-50%, -50%) rotate(' + t.heading + 'deg)';
+    if (t.heading != null && mapOpen) {
+      const mapEl = root && root.querySelector('#r2-map');
+      if (mapEl) mapEl.style.transform = 'rotate(' + (-t.heading) + 'deg)';
+      // иконки камер/помех держим вертикально (контр-поворот)
+      const marks = root.querySelectorAll('#r2-map .r2-emoji');
+      for (let i = 0; i < marks.length; i++) marks[i].style.transform = 'rotate(' + t.heading + 'deg)';
     }
   }
 
@@ -79,9 +82,10 @@ const UIRadar2 = (() => {
   // ── КАРТА по кнопке (ленивая инициализация) ──
   function openMap() {
     const el = root.querySelector('#r2-map');
+    const wrap = root.querySelector('#r2-map-wrap');
     const simple = root.querySelector('#r2-simple');
-    if (!el) return;
-    el.style.display = 'block';
+    if (!el || !wrap) return;
+    wrap.style.display = 'block';
     if (simple) simple.style.display = 'none';
     root.querySelector('.r2-map-close').style.display = 'flex';
     root.querySelector('.r2-recenter').style.display = 'flex';
@@ -104,7 +108,7 @@ const UIRadar2 = (() => {
   }
   function closeMap() {
     mapOpen = false;
-    const el = root.querySelector('#r2-map'); if (el) el.style.display = 'none';
+    const wrap = root.querySelector('#r2-map-wrap'); if (wrap) wrap.style.display = 'none';
     const carEl = root.querySelector('#r2-mapcar'); if (carEl) carEl.style.display = 'none';
     const simple = root.querySelector('#r2-simple'); if (simple) simple.style.display = 'flex';
     root.querySelector('.r2-map-close').style.display = 'none';
