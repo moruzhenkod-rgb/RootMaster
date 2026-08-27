@@ -2,7 +2,7 @@
 // Радар работает в фоне, индикатор — маленькая точка. Камеры/ремонты видны на карте с зумом.
 const UIRadar2 = (() => {
   let root, map = null, mapOpen = false, mounted = false, started = false, engine, wakeLock = null;
-  let camLayer, incLayer, lastCar = null, following = true;
+  let camLayer, incLayer, lastCar = null, following = true, refollowTimer = null;
 
   function audio() {
     if (typeof AudioManager === 'undefined' || !AudioManager.getInstance) return null;
@@ -48,6 +48,10 @@ const UIRadar2 = (() => {
     if (!mounted) return;
     updateHud(t);
     if (mapOpen && map && following) map.setView([t.lat, t.lon], map.getZoom(), { animate: false });
+    if (t.heading != null) {
+      const carEl = root && root.querySelector('#r2-mapcar');
+      if (carEl) carEl.style.transform = 'translate(-50%, -50%) rotate(' + t.heading + 'deg)';
+    }
   }
 
   function updateHud(t) {
@@ -85,13 +89,16 @@ const UIRadar2 = (() => {
     mapOpen = true; following = true;
     if (!map) {
       map = L.map(el, { zoomControl: false, attributionControl: false }).setView(lastCar ? [lastCar.lat, lastCar.lon] : [53.63, 11.41], 15);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd', detectRetina: true }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
       camLayer = L.layerGroup().addTo(map);
       incLayer = L.layerGroup().addTo(map);
       map.on('moveend', refreshMapData);
-      // ручной жест — выключаем слежение (как Re-center в навигаторе)
+      // ручной жест — выключаем слежение, но авто-возврат через 8с (чтобы карта не «отцеплялась» навсегда)
+      const refollow = function () { clearTimeout(refollowTimer); refollowTimer = setTimeout(function () { following = true; if (map && lastCar) map.setView([lastCar.lat, lastCar.lon], map.getZoom(), { animate: true }); }, 8000); };
       map.on('dragstart', function () { following = false; });
+      map.on('dragend', refollow);
       map.on('zoomstart', function (e) { if (e && e.hard !== false) following = false; });
+      map.on('zoomend', refollow);
     }
     setTimeout(() => { map.invalidateSize(); if (lastCar) map.setView([lastCar.lat, lastCar.lon], 15); refreshMapData(); }, 80);
   }
