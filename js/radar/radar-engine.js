@@ -99,24 +99,28 @@ const RadarEngine = (() => {
       }
       incHits.sort((a, b) => a.dist - b.dist);
 
-      // ── приоритеты и озвучка (debounce 20с на точку) ──
-      const nearest = camHits[0];
-      if (nearest) {
-        const over = nearest.cam.speed && speedKmh > nearest.cam.speed + 3;
-        emit(over ? 'DANGER' : 'CAMERA', 'cam-' + nearest.cam.idx, nearest.dist, nearest.cam.speed, nearest.cam);
+      // ── озвучка ПО ПОРОГАМ: каждый порог (1000/500/200) для точки — ровно один раз ──
+      for (let i = 0; i < camHits.length; i++) {
+        const cam = camHits[i].cam, dist = camHits[i].dist;
+        const band = dist <= 200 ? 200 : dist <= 500 ? 500 : dist <= 1000 ? 1000 : 0;
+        if (!band) continue;
+        const key = 'c' + cam.idx + '_' + band;
+        if (spoken.has(key)) continue;
+        spoken.set(key, now);
+        const over = cam.speed && speedKmh > cam.speed + 3 && band <= 200;
+        onAlert({ priority: over ? 'DANGER' : 'CAMERA', band: band, distance: Math.round(dist), speed: cam.speed, object: cam });
       }
-      const ni = incHits[0];
-      if (ni) emit('CONSTRUCTION', 'inc-' + (ni.inc.lat.toFixed(4) + ni.inc.lon.toFixed(4)), ni.dist, 0, ni.inc);
+      for (let i = 0; i < incHits.length; i++) {
+        const inc = incHits[i].inc, dist = incHits[i].dist;
+        const band = dist <= 200 ? 200 : dist <= 500 ? 500 : 0; // стройки: только 500 и 200
+        if (!band) continue;
+        const key = 'i' + inc.lat.toFixed(4) + inc.lon.toFixed(4) + '_' + band;
+        if (spoken.has(key)) continue;
+        spoken.set(key, now);
+        onAlert({ priority: 'CONSTRUCTION', band: band, distance: Math.round(dist), speed: 0, object: inc });
+      }
 
       onTick({ lat, lon, heading, speedKmh, lookahead, cameras: camHits, incidents: incHits });
-    }
-
-    function emit(priority, id, dist, speed, obj) {
-      const now = Date.now();
-      const last = spoken.get(id) || 0;
-      if (now - last < DEBOUNCE) return;
-      spoken.set(id, now);
-      onAlert({ priority, id, distance: Math.round(dist), speed, object: obj });
     }
 
     function start() {

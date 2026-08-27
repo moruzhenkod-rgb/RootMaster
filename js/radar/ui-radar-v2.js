@@ -127,8 +127,8 @@ const UIRadar2 = (() => {
     const a = audio(); if (!a) return;
     let keys = [];
     if (al.priority === 'DANGER') keys = ['cam_200m'];
-    else if (al.priority === 'CAMERA') keys = [al.distance > 600 ? 'cam_1000m' : al.distance > 300 ? 'cam_500m' : 'cam_200m'];
-    else if (al.priority === 'CONSTRUCTION') keys = [al.distance > 300 ? 'hazard_work_500m' : 'hazard_work_200m'];
+    else if (al.priority === 'CAMERA') keys = ['cam_' + al.band + 'm'];
+    else if (al.priority === 'CONSTRUCTION') keys = ['hazard_work_' + al.band + 'm'];
     if (a.resume) a.resume();
     if (a.enqueue && keys.length) a.enqueue(keys);
   }
