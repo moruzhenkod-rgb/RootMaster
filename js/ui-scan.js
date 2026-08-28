@@ -70,7 +70,9 @@ const UIScan = (() => {
           ? { lat: known.lat, lng: known.lng, displayName: known.address, matchedHouse: true, confidence: 'high' }
           : await Geocode.lookup(parsed.address);
       } else {
-        geo = await Geocode.lookup(parsed.address);
+        const r = await smartGeo(parsed.address);
+        geo = r.geo;
+        parsed.address = r.addr; // сохраняем чистый вариант с одним городом
       }
       const pt = buildPoint(parsed, geo);
       if (known && known.manual) pt.manualCoords = true; // закреплённая позиция клиента
@@ -86,6 +88,24 @@ const UIScan = (() => {
     const tour = { points, stage: 'validate' };
     App.setTour(tour, 'validate');
     Router.show('validate');
+  }
+
+  // «..., 19075 Schwerin / Pampow» → два варианта города; берём тот, где дом реально нашёлся
+  function cityVariants(address) {
+    const m = String(address || '').match(/^(.*\b\d{5}\s+)(.+?)\s*\/\s*(.+)$/);
+    if (!m) return [address];
+    return [m[1] + m[2].trim(), m[1] + m[3].trim()];
+  }
+  async function smartGeo(address) {
+    const vars = cityVariants(address);
+    if (vars.length === 1) return { geo: await Geocode.lookup(address), addr: address };
+    let firstAny = null;
+    for (const v of vars) {
+      const g = await Geocode.lookup(v);
+      if (g && g.matchedHouse) return { geo: g, addr: v }; // точное попадание в дом — это правильный город
+      if (g && !firstAny) firstAny = { geo: g, addr: v };
+    }
+    return firstAny || { geo: null, addr: vars[0] };
   }
 
   // Формат (части через « — »), порядок полей свободный, распознаём по меткам:
