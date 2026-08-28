@@ -34,6 +34,24 @@ const ClientMatch = (() => {
   // совместимы, если у одного нет номера или номера совпадают
   function houseCompat(a, b) { return !a || !b || a === b; }
 
+  // значимые слова улицы (до индекса, без «strasse»/номера) — чтобы не путать разные улицы с одинаковым домом+индексом
+  function streetName(s) {
+    const toks = String(s || '').split(' ');
+    const words = [];
+    for (const t of toks) {
+      if (/^\d{5}$/.test(t)) break; // дошли до индекса — дальше город
+      if (/[a-zа-яё]/i.test(t) && t !== 'strasse' && t !== 'str') words.push(t);
+    }
+    return words;
+  }
+  // одна и та же улица? достаточно совпадения одного значимого слова (>=4 букв)
+  function sameStreet(a, b) {
+    const sa = streetName(a), sb = streetName(b);
+    if (!sa.length || !sb.length) return true; // нет данных об улице — не блокируем
+    const setB = new Set(sb);
+    return sa.some((w) => w.length >= 4 && setB.has(w));
+  }
+
   // расстояние Левенштейна — для распознавания адреса с опечаткой
   function levenshtein(a, b) {
     const m = a.length, n = b.length;
@@ -88,7 +106,7 @@ const ClientMatch = (() => {
       }));
       // если фирма совпала ТОЧНО — берём запись с координатами даже при слабом адресе;
       // иначе требуем достаточную похожесть адреса
-      const good = scored.filter((s) => (s.sim >= 0.5 || (exactFirm && s.coord)) && houseCompat(qNum, houseNum(normAddr(s.c.address))));
+      const good = scored.filter((s) => (s.sim >= 0.5 || (exactFirm && s.coord)) && houseCompat(qNum, houseNum(normAddr(s.c.address))) && sameStreet(key, normAddr(s.c.address)));
       if (good.length) {
         good.sort((a, b) => (b.coord - a.coord) || (b.manual - a.manual) || (b.sim - a.sim));
         return good[0].c;
@@ -109,6 +127,7 @@ const ClientMatch = (() => {
       const ck = normAddr(c.address);
       if (!ck) continue;
       if (!houseCompat(qNum, houseNum(ck))) continue;
+      if (!sameStreet(key, ck)) continue;
       const keyTokens = tokenize(key), ckTokens = tokenize(ck);
       const [shortTokens, longTokens] = keyTokens.length <= ckTokens.length ? [keyTokens, ckTokens] : [ckTokens, keyTokens];
       let hit = false;
