@@ -150,7 +150,13 @@ const UIRadar2 = (() => {
     let cams = [];
     try { if (typeof RadarDB !== 'undefined') cams = await RadarDB.nearby(c.lat, c.lng, 4000); } catch (e) {}
     camLayer.clearLayers();
-    cams.forEach((cam) => L.marker([cam.lat, cam.lon], { icon: camIcon(cam) }).addTo(camLayer));
+    // схлопываем со-локационные камеры (одна точка в разных направлениях) в один маркер ~40м
+    const camSeen = [];
+    cams.forEach((cam) => {
+      if (camSeen.some((s) => Math.abs(s.lat - cam.lat) < 0.0004 && Math.abs(s.lon - cam.lon) < 0.0004)) return;
+      camSeen.push({ lat: cam.lat, lon: cam.lon });
+      L.marker([cam.lat, cam.lon], { icon: camIcon(cam) }).addTo(camLayer);
+    });
     // ремонты/помехи вокруг центра (видны независимо от движения)
     let inc = [];
     try { if (typeof RadarTraffic !== 'undefined') inc = await RadarTraffic.nearby(c.lat, c.lng, 6); } catch (e) {}

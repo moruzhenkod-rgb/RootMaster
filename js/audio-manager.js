@@ -117,14 +117,21 @@
     function playOne(key) {
       return new Promise(function (resolve) {
         if (!ctx || !available.has(key)) { onFallback(key); resolve(); return; }
-        if (ctx.state === 'suspended' && typeof ctx.resume === 'function') ctx.resume().catch(function () {});
-        try {
-          const src = ctx.createBufferSource();
-          src.buffer = buffers.get(key);
-          src.connect(outNode || ctx.destination);
-          src.onended = function () { resolve(); };
-          src.start(0);
-        } catch (e) { resolve(); }
+        const doPlay = function () {
+          try {
+            const src = ctx.createBufferSource();
+            src.buffer = buffers.get(key);
+            src.connect(outNode || ctx.destination);
+            src.onended = function () { resolve(); };
+            src.start(0);
+          } catch (e) { resolve(); }
+        };
+        // iOS усыпляет AudioContext — ДОЖДАТЬСЯ resume перед проигрыванием, иначе тишина при живом экране
+        if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+          ctx.resume().then(doPlay).catch(doPlay);
+        } else {
+          doPlay();
+        }
       });
     }
 

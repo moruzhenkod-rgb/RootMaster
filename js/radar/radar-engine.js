@@ -83,6 +83,12 @@ const RadarEngine = (() => {
         camHits.push({ cam, dist });
       }
       camHits.sort((a, b) => a.dist - b.dist);
+      // одна физическая камера может быть 2-3 записями (разные направления) — оставляем ближайшую из группы ~40м
+      const camDedup = [];
+      for (const h of camHits) {
+        if (camDedup.some((d) => haversine(d.cam.lat, d.cam.lon, h.cam.lat, h.cam.lon) < 40)) continue;
+        camDedup.push(h);
+      }
 
       // ── ремонты/пробки из TomTom (раз в 60с подгрузка, кеш 5 мин на прокси) ──
       if (traffic && (now - lastTrafficAt > 60000 || !incidents.length)) {
@@ -100,11 +106,12 @@ const RadarEngine = (() => {
       incHits.sort((a, b) => a.dist - b.dist);
 
       // ── озвучка ПО ПОРОГАМ: каждый порог (1000/500/200) для точки — ровно один раз ──
-      for (let i = 0; i < camHits.length; i++) {
-        const cam = camHits[i].cam, dist = camHits[i].dist;
+      for (let i = 0; i < camDedup.length; i++) {
+        const cam = camDedup[i].cam, dist = camDedup[i].dist;
         const band = dist <= 200 ? 200 : dist <= 500 ? 500 : 0; // только 500 и 200 (есть записи)
         if (!band) continue;
-        const key = 'c' + cam.idx + '_' + band;
+        // ключ по координатам: 3 записи одной камеры делят ключ → объявляется один раз
+        const key = 'c' + cam.lat.toFixed(4) + '_' + cam.lon.toFixed(4) + '_' + band;
         if (spoken.has(key)) continue;
         spoken.set(key, now);
         const over = cam.speed && speedKmh > cam.speed + 3 && band <= 200;
@@ -120,7 +127,7 @@ const RadarEngine = (() => {
         onAlert({ priority: 'CONSTRUCTION', band: band, distance: Math.round(dist), speed: 0, object: inc });
       }
 
-      onTick({ lat, lon, heading, speedKmh, lookahead, cameras: camHits, incidents: incHits });
+      onTick({ lat, lon, heading, speedKmh, lookahead, cameras: camDedup, incidents: incHits });
     }
 
     function start() {
