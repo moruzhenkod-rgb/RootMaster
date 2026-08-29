@@ -1,9 +1,11 @@
-const CACHE_NAME = 'routemaster-v130';
+const CACHE_NAME = 'routemaster-v131';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './css/styles.css',
+  './vendor/cropper.min.css',
+  './vendor/cropper.min.js',
   './js/utils.js',
   './js/api.js',
   './js/storage.js',

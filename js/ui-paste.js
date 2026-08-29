@@ -100,10 +100,60 @@ const UIPaste = (() => {
     throw new Error('Слишком долго — фото почётче');
   }
 
+  // редактор фото: поворот + обрезка. Возвращает Blob (готовое фото) или null (пропустить)
+  function openEditor(file) {
+    return new Promise((resolve) => {
+      const ov = document.getElementById('photo-editor');
+      const img = document.getElementById('pe-image');
+      if (!ov || !img || typeof Cropper === 'undefined') { resolve(file); return; } // либа не загрузилась — без редактора
+      const url = URL.createObjectURL(file);
+      let cropper = null;
+      function cleanup() {
+        ov.removeEventListener('click', onTool);
+        if (cropper) { try { cropper.destroy(); } catch (e) {} cropper = null; }
+        img.onload = null; img.src = ''; ov.hidden = true;
+        try { URL.revokeObjectURL(url); } catch (e) {}
+      }
+      function onTool(e) {
+        const b = e.target.closest('[data-pe]'); if (!b) return;
+        const act = b.dataset.pe;
+        if (act === 'rot-left') { if (cropper) cropper.rotate(-90); }
+        else if (act === 'rot-right') { if (cropper) cropper.rotate(90); }
+        else if (act === 'reset') { if (cropper) cropper.reset(); }
+        else if (act === 'cancel') { cleanup(); resolve(null); }
+        else if (act === 'done') {
+          if (!cropper) { cleanup(); resolve(file); return; }
+          const canvas = cropper.getCroppedCanvas({ maxWidth: 2600, maxHeight: 2600, imageSmoothingQuality: 'high' });
+          cleanup();
+          if (!canvas) { resolve(file); return; }
+          canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', 0.92);
+        }
+      }
+      ov.hidden = false;
+      ov.addEventListener('click', onTool);
+      img.onload = () => {
+        cropper = new Cropper(img, {
+          viewMode: 1, autoCropArea: 1, background: false,
+          movable: true, zoomable: true, rotatable: true,
+          responsive: true, checkOrientation: true, dragMode: 'crop',
+        });
+      };
+      img.src = url;
+    });
+  }
+
   // распознать НЕСКОЛЬКО листов по очереди и склеить
   async function handleFiles(files) {
     if (!files || !files.length) return;
-    const n = files.length;
+    // сначала редактор (поворот/обрезка) для каждого фото
+    const edited = [];
+    for (let k = 0; k < files.length; k++) {
+      setStatus(files.length > 1 ? ('✏️ Обрезка листа ' + (k + 1) + ' из ' + files.length) : '✏️ Обрежь/поверни лист');
+      const blob = await openEditor(files[k]);
+      if (blob) edited.push(blob); // null = пропустить это фото
+    }
+    if (!edited.length) { setStatus(''); return; }
+    const n = edited.length;
     setStatus(n > 1 ? ('📸 Готовлю ' + n + ' листа…') : '📸 Готовлю фото…');
     startProgress();
     const all = [];
@@ -111,7 +161,7 @@ const UIPaste = (() => {
       segment(i, n);
       setStatus(n > 1 ? ('🔍 Лист ' + (i + 1) + ' из ' + n + '… не закрывай экран') : '🔍 Распознаю список… не закрывай экран');
       try {
-        const lines = await processOne(files[i]);
+        const lines = await processOne(edited[i]);
         all.push(...lines);
         segmentDone(i, n);
       } catch (e) {

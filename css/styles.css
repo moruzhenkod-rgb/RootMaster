@@ -997,3 +997,14 @@ button {
 /* Срочные клиенты (по времени) */
 .stop-card.critical { border: 2px solid #ef4444; box-shadow: 0 0 0 1px rgba(239,68,68,0.3); }
 .stop-deadline { color: #ff6b6b; font-weight: 700; font-size: 13px; margin: 2px 0; }
+
+/* Редактор фото (поворот/обрезка перед распознаванием) */
+.photo-editor { position: fixed; inset: 0; z-index: 3000; background: #0b0d12; display: flex; flex-direction: column; }
+.photo-editor[hidden] { display: none; }
+.pe-canvas-wrap { flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.pe-canvas-wrap img { max-width: 100%; max-height: 100%; display: block; }
+.pe-toolbar { display: flex; gap: 8px; padding: 10px 12px; justify-content: center; background: #12151d; }
+.pe-btn { flex: 1; max-width: 140px; background: #232838; color: #fff; border: 1px solid #3a4256; border-radius: 12px; padding: 12px 8px; font-size: 15px; font-weight: 700; }
+.pe-btn:active { filter: brightness(0.85); }
+.pe-actions { display: flex; gap: 10px; padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); background: #12151d; }
+.pe-actions .btn { flex: 1; }
