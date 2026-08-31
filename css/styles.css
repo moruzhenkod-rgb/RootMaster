@@ -1012,3 +1012,10 @@ button {
 /* Android: быстрый тап без задержки на кликабельных элементах (touch-action не наследуется от body) */
 .client-card, .addr-card, .stop-card, .ap-item, [data-action], button, .btn, .pe-btn { touch-action: manipulation; }
 .client-card:active, .addr-card:active, .ap-item:active { filter: brightness(1.15); }
+
+/* Сбор нескольких кадров с камеры */
+.cam-more { position: fixed; inset: 0; z-index: 2500; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.cam-more[hidden] { display: none; }
+.cam-more-card { background: #161a24; border: 1px solid #2c3346; border-radius: 18px; padding: 22px 18px; width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px; text-align: center; }
+.cam-more-count { font-size: 18px; font-weight: 800; color: #4ade80; }
+.cam-more-hint { font-size: 13px; color: #9aa4b8; margin: 0 0 4px; }

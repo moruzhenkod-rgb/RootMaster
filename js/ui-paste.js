@@ -1,5 +1,6 @@
 const UIPaste = (() => {
   let root;
+  let camShots = [];
 
   function mount(container) {
     root = container;
@@ -11,6 +12,7 @@ const UIPaste = (() => {
     });
   }
   function unmount() {
+    camShots = [];
     root.removeEventListener('click', onClick);
     root.removeEventListener('change', onChange);
   }
@@ -183,11 +185,28 @@ const UIPaste = (() => {
     document.getElementById('btn-paste-submit').disabled = !ta.value.trim();
   }
 
+  function showCamMore() {
+    const ov = root.querySelector('#cam-more');
+    const cnt = root.querySelector('#cam-more-count');
+    if (cnt) cnt.textContent = 'Снято листов: ' + camShots.length;
+    if (ov) ov.hidden = false;
+  }
+  function hideCamMore() { const ov = root.querySelector('#cam-more'); if (ov) ov.hidden = true; }
+
   function onChange(e) {
-    if (e.target && (e.target.id === 'paste-photo' || e.target.id === 'paste-gallery')) {
-      const files = Array.from(e.target.files || []);
-      if (files.length) handleFiles(files);
+    if (!e.target) return;
+    if (e.target.id === 'paste-photo') {
+      // камера снимает по одному кадру — копим, потом «Ещё лист / Распознать»
+      const f = e.target.files && e.target.files[0];
       e.target.value = '';
+      if (f) { camShots.push(f); showCamMore(); }
+      return;
+    }
+    if (e.target.id === 'paste-gallery') {
+      const files = Array.from(e.target.files || []);
+      e.target.value = '';
+      if (files.length) handleFiles(files);
+      return;
     }
   }
 
@@ -195,6 +214,9 @@ const UIPaste = (() => {
     if (e.target.closest('[data-action="back-home"]')) { Router.show('home'); return; }
     if (e.target.closest('[data-action="paste-photo"]')) { root.querySelector('#paste-photo').click(); return; }
     if (e.target.closest('[data-action="paste-gallery"]')) { root.querySelector('#paste-gallery').click(); return; }
+    if (e.target.closest('[data-action="cam-more"]')) { root.querySelector('#paste-photo').click(); return; }
+    if (e.target.closest('[data-action="cam-done"]')) { hideCamMore(); const shots = camShots.slice(); camShots = []; if (shots.length) handleFiles(shots); return; }
+    if (e.target.closest('[data-action="cam-cancel"]')) { hideCamMore(); camShots = []; return; }
     if (e.target.closest('[data-action="paste-submit"]')) {
       const text = root.querySelector('#paste-textarea').value.trim();
       if (!text) return;
