@@ -145,11 +145,12 @@ const UIPaste = (() => {
   }
 
   // распознать НЕСКОЛЬКО листов по очереди и склеить
-  async function handleFiles(files) {
+  async function handleFiles(files, skipEdit) {
     if (!files || !files.length) return;
-    // сначала редактор (поворот/обрезка) для каждого фото
+    // редактор (поворот/обрезка) для каждого фото — если ещё не редактировали (камера правит покадрово)
     const edited = [];
     for (let k = 0; k < files.length; k++) {
+      if (skipEdit) { edited.push(files[k]); continue; }
       setStatus(files.length > 1 ? ('✏️ Обрезка листа ' + (k + 1) + ' из ' + files.length) : '✏️ Обрежь/поверни лист');
       const blob = await openEditor(files[k]);
       if (blob) edited.push(blob); // null = пропустить это фото
@@ -196,10 +197,10 @@ const UIPaste = (() => {
   function onChange(e) {
     if (!e.target) return;
     if (e.target.id === 'paste-photo') {
-      // камера снимает по одному кадру — копим, потом «Ещё лист / Распознать»
+      // камера снимает по одному кадру: сразу редактор (поворот/обрезка), потом «Ещё лист / Распознать»
       const f = e.target.files && e.target.files[0];
       e.target.value = '';
-      if (f) { camShots.push(f); showCamMore(); }
+      if (f) { openEditor(f).then((blob) => { if (blob) camShots.push(blob); showCamMore(); }); }
       return;
     }
     if (e.target.id === 'paste-gallery') {
@@ -215,7 +216,7 @@ const UIPaste = (() => {
     if (e.target.closest('[data-action="paste-photo"]')) { root.querySelector('#paste-photo').click(); return; }
     if (e.target.closest('[data-action="paste-gallery"]')) { root.querySelector('#paste-gallery').click(); return; }
     if (e.target.closest('[data-action="cam-more"]')) { root.querySelector('#paste-photo').click(); return; }
-    if (e.target.closest('[data-action="cam-done"]')) { hideCamMore(); const shots = camShots.slice(); camShots = []; if (shots.length) handleFiles(shots); return; }
+    if (e.target.closest('[data-action="cam-done"]')) { hideCamMore(); const shots = camShots.slice(); camShots = []; if (shots.length) handleFiles(shots, true); return; }
     if (e.target.closest('[data-action="cam-cancel"]')) { hideCamMore(); camShots = []; return; }
     if (e.target.closest('[data-action="paste-submit"]')) {
       const text = root.querySelector('#paste-textarea').value.trim();
