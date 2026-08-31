@@ -1008,3 +1008,7 @@ button {
 .pe-btn:active { filter: brightness(0.85); }
 .pe-actions { display: flex; gap: 10px; padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); background: #12151d; }
 .pe-actions .btn { flex: 1; }
+
+/* Android: быстрый тап без задержки на кликабельных элементах (touch-action не наследуется от body) */
+.client-card, .addr-card, .stop-card, .ap-item, [data-action], button, .btn, .pe-btn { touch-action: manipulation; }
+.client-card:active, .addr-card:active, .ap-item:active { filter: brightness(1.15); }
