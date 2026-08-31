@@ -112,11 +112,21 @@ const UIActive = (() => {
     return 'В пути';
   }
 
+  // почему точка не на маршруте — понятная причина для курьера
+  function offReason(p) {
+    if (p.order != null) return null; // уже в маршруте
+    if (p.lat != null && p.lng != null) return { cls: 'reason-ok', text: '📍 Есть на карте — добавь в тур (тап → В маршрут)' };
+    const plz = (String(p.editedText || '').match(/\b\d{5}\b/g) || []).length;
+    if (plz >= 2) return { cls: 'reason-paired', text: '🔗 Спаренный: несколько адресов в одной строке — раздели вручную' };
+    return { cls: 'reason-notfound', text: '❌ Не найден на карте — проверь адрес или поставь точку' };
+  }
+
   function stopCardHtml(p) {
     return `
       <div class="stop-card ${p.tourStatus === 'done' ? 'done' : ''} ${p.order == null ? 'off-route' : ''} ${p.timeCritical ? 'critical' : ''}" data-id="${p.id}">
         <div class="stop-num">${p.order != null ? p.order : '⚠'}</div>
         <div class="stop-body">
+          ${(() => { const r = offReason(p); return r ? `<div class="stop-reason ${r.cls}">${r.text}</div>` : ''; })()}
           ${p.company ? `<div class="stop-company">${Utils.escapeHtml(p.company)}</div>` : ''}
           ${p.deadline ? `<div class="stop-deadline">⏰ Закрыть до ${Utils.escapeHtml(p.deadline)}</div>` : ''}
           <div class="stop-addr">${Utils.escapeHtml(p.editedText)}</div>
