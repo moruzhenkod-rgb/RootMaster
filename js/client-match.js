@@ -146,13 +146,16 @@ const ClientMatch = (() => {
   }
 
   // предложить наиболее похожего клиента даже при большем расхождении — требует подтверждения пользователем
-  function suggestClient(address, clients, minSimilarity = 0.55) {
+  function suggestClient(address, clients, minSimilarity = 0.6) {
     const key = normAddr(address);
     if (!key || !clients || !clients.length) return null;
+    const qNum = houseNum(key);
     let best = null, bestScore = 0;
     for (const c of clients) {
       const ck = normAddr(c.address);
       if (!ck) continue;
+      if (!sameStreet(key, ck)) continue;             // та же улица — не предлагаем чужую с похожим индексом/домом
+      if (!houseCompat(qNum, houseNum(ck))) continue;  // тот же номер дома (или неизвестен)
       const score = similarity(key, ck);
       if (score > bestScore) { bestScore = score; best = c; }
     }

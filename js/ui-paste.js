@@ -67,14 +67,14 @@ const UIPaste = (() => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        const max = 2000;
+        const max = 3400;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         if (scale === 1) { resolve(file); return; }
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * scale);
         c.height = Math.round(img.height * scale);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.9);
+        c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.95);
       };
       img.onerror = () => resolve(file);
       img.src = URL.createObjectURL(file);
@@ -125,17 +125,17 @@ const UIPaste = (() => {
         else if (act === 'cancel') { cleanup(); resolve(null); }
         else if (act === 'done') {
           if (!cropper) { cleanup(); resolve(file); return; }
-          const canvas = cropper.getCroppedCanvas({ maxWidth: 2600, maxHeight: 2600, imageSmoothingQuality: 'high' });
+          const canvas = cropper.getCroppedCanvas({ maxWidth: 3600, maxHeight: 3600, imageSmoothingQuality: 'high' });
           cleanup();
           if (!canvas) { resolve(file); return; }
-          canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', 0.92);
+          canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', 0.95);
         }
       }
       ov.hidden = false;
       ov.addEventListener('click', onTool);
       img.onload = () => {
         cropper = new Cropper(img, {
-          viewMode: 1, autoCropArea: 0.85, background: false,
+          viewMode: 1, autoCropArea: 1, background: false,
           movable: true, zoomable: true, rotatable: true, toggleDragModeOnDblclick: false,
           responsive: true, checkOrientation: true, dragMode: 'crop',
         });
@@ -200,13 +200,13 @@ const UIPaste = (() => {
       // камера снимает по одному кадру: сразу редактор (поворот/обрезка), потом «Ещё лист / Распознать»
       const f = e.target.files && e.target.files[0];
       e.target.value = '';
-      if (f) { openEditor(f).then((blob) => { if (blob) camShots.push(blob); showCamMore(); }); }
+      if (f) { camShots.push(f); showCamMore(); }
       return;
     }
     if (e.target.id === 'paste-gallery') {
       const files = Array.from(e.target.files || []);
       e.target.value = '';
-      if (files.length) handleFiles(files);
+      if (files.length) handleFiles(files, true);
       return;
     }
   }
@@ -216,6 +216,7 @@ const UIPaste = (() => {
     if (e.target.closest('[data-action="paste-photo"]')) { root.querySelector('#paste-photo').click(); return; }
     if (e.target.closest('[data-action="paste-gallery"]')) { root.querySelector('#paste-gallery').click(); return; }
     if (e.target.closest('[data-action="cam-more"]')) { root.querySelector('#paste-photo').click(); return; }
+    if (e.target.closest('[data-action="cam-edit"]')) { if (camShots.length) openEditor(camShots[camShots.length - 1]).then((b) => { if (b) camShots[camShots.length - 1] = b; }); return; }
     if (e.target.closest('[data-action="cam-done"]')) { hideCamMore(); const shots = camShots.slice(); camShots = []; if (shots.length) handleFiles(shots, true); return; }
     if (e.target.closest('[data-action="cam-cancel"]')) { hideCamMore(); camShots = []; return; }
     if (e.target.closest('[data-action="paste-submit"]')) {
