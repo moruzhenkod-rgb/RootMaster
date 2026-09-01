@@ -82,15 +82,8 @@ const UIActive = (() => {
       }
       let m = markers[p.id];
       if (!m) {
-        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: true }).addTo(map);
-        m.on('dragend', () => {
-          const ll = m.getLatLng();
-          p.lat = ll.lat;
-          p.lng = ll.lng;
-          p.manualCoords = true;
-          App.saveTour();
-          Utils.toast('Точка перемещена', 'success');
-        });
+        m = L.marker([p.lat, p.lng], { icon: markerIcon(p), draggable: false }).addTo(map);
+        // в загруженном маршруте точки НЕ двигаем — перемещение только на этапе сборки
         m.on('add', () => {
           const domEl = m.getElement();
           if (domEl) {

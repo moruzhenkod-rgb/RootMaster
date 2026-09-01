@@ -272,21 +272,24 @@ const UIBuild = (() => {
     if (el) el.classList.add('hidden');
   }
   function confirmMove() {
-    if (!pendingMove) return;
-    pendingMove.pt.manualCoords = true;
-    App.saveTour();
-    Utils.toast('Точка закреплена за клиентом', 'success');
+    // плашка прячется ВСЕГДА, даже если состояние сбилось
+    if (pendingMove) {
+      pendingMove.pt.manualCoords = true;
+      App.saveTour();
+      Utils.toast('Точка закреплена за клиентом', 'success');
+    }
     hideMoveConfirm();
   }
   function cancelMove() {
-    if (!pendingMove) return;
-    const { pt, m } = pendingMove;
-    pt.lat = pt._preLat;
-    pt.lng = pt._preLng;
-    m.setLatLng([pt.lat, pt.lng]);
-    updatePolyline();
-    App.saveTour();
-    Utils.toast('Возвращено на место', '');
+    if (pendingMove) {
+      const { pt, m } = pendingMove;
+      pt.lat = pt._preLat;
+      pt.lng = pt._preLng;
+      if (m) m.setLatLng([pt.lat, pt.lng]);
+      updatePolyline();
+      App.saveTour();
+      Utils.toast('Возвращено на место', '');
+    }
     hideMoveConfirm();
   }
 
