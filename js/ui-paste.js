@@ -135,8 +135,8 @@ const UIPaste = (() => {
       ov.addEventListener('click', onTool);
       img.onload = () => {
         cropper = new Cropper(img, {
-          viewMode: 1, autoCropArea: 1, background: false,
-          movable: true, zoomable: true, rotatable: true,
+          viewMode: 1, autoCropArea: 0.85, background: false,
+          movable: true, zoomable: true, rotatable: true, toggleDragModeOnDblclick: false,
           responsive: true, checkOrientation: true, dragMode: 'crop',
         });
       };
