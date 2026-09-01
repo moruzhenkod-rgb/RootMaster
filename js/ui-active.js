@@ -112,13 +112,28 @@ const UIActive = (() => {
     return 'В пути';
   }
 
+  // тот же клиент/адрес уже есть в туре (другая точка)?
+  function isDuplicate(p) {
+    const na = (typeof ClientMatch !== 'undefined') ? ClientMatch.normAddr(p.editedText) : String(p.editedText || '').toLowerCase();
+    if (!na) return false;
+    return App.tour.points.some((o) => {
+      if (o.id === p.id) return false;
+      const no = (typeof ClientMatch !== 'undefined') ? ClientMatch.normAddr(o.editedText) : String(o.editedText || '').toLowerCase();
+      return no === na;
+    });
+  }
+
   // почему точка не на маршруте — понятная причина для курьера
   function offReason(p) {
     if (p.order != null) return null; // уже в маршруте
-    if (p.lat != null && p.lng != null) return { cls: 'reason-ok', text: '📍 Есть на карте — добавь в тур (тап → В маршрут)' };
+    // главное, о чём просил Дима: этот клиент уже есть в туре — это норм, не ошибка
+    if (isDuplicate(p)) return { cls: 'reason-dup', text: '🔁 Уже в списке — этот клиент есть в туре (дубликат)' };
     const plz = (String(p.editedText || '').match(/\b\d{5}\b/g) || []).length;
-    if (plz >= 2) return { cls: 'reason-paired', text: '🔗 Спаренный: несколько адресов в одной строке — раздели вручную' };
-    return { cls: 'reason-notfound', text: '❌ Не найден на карте — проверь адрес или поставь точку' };
+    if (p.lat == null || p.lng == null) {
+      if (plz >= 2) return { cls: 'reason-paired', text: '🔗 Спаренный: несколько адресов в одной строке — раздели вручную' };
+      return { cls: 'reason-notfound', text: '❌ Не найден на карте — проверь адрес или поставь точку' };
+    }
+    return { cls: 'reason-ok', text: '📍 Есть координаты — добавь в маршрут' };
   }
 
   function stopCardHtml(p) {
