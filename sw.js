@@ -1,4 +1,4 @@
-const CACHE_NAME = 'routemaster-v139';
+const CACHE_NAME = 'routemaster-v140';
 const APP_SHELL = [
   './',
   './index.html',
@@ -60,8 +60,11 @@ self.addEventListener('message', (e) => {
 });
 
 self.addEventListener('install', (event) => {
+  // precache пофайлово: один недоступный файл не рушит всё обновление
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(APP_SHELL.map((u) => cache.add(u).catch(() => null)))
+    ).then(() => self.skipWaiting())
   );
 });
 
@@ -92,15 +95,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin — network-first: ВСЕГДА свежий код из сети, кеш только когда нет интернета.
-  // Так обновления доходят мгновенно, без застреваний.
+  // Same-origin — CACHE-FIRST из версионного кеша: все файлы ОДНОЙ версии (никакой мешанины
+  // свежее/старое на мобильной сети). Новая версия приходит целиком при обновлении SW.
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((res) => {
+        if (res && res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
+        }
         return res;
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || new Response('', { status: 504, statusText: 'offline' })))
+      }).catch(() => new Response('', { status: 504, statusText: 'offline' }));
+    })
   );
 });
