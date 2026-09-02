@@ -1,12 +1,14 @@
 const UIActive = (() => {
-  let root, map, markers = {}, meMarker, currentView = 'list', activePointId = null;
+  let root, map, markers = {}, meMarker, currentView = 'list', activePointId = null, searchQuery = '';
   let apResults = [];
   let editPointId = null, editCoords = null, editManual = false;
 
   function mount(container) {
     root = container;
     currentView = 'list';
+    searchQuery = '';
     root.addEventListener('click', onHeaderClick);
+    root.addEventListener('input', onSearchInput);
     initMap();
     renderMarkers();
     renderList();
@@ -18,6 +20,7 @@ const UIActive = (() => {
   }
 
   function unmount() {
+    if (root) root.removeEventListener('input', onSearchInput);
     root.removeEventListener('click', onHeaderClick);
     document.getElementById('bottom-sheet-overlay').removeEventListener('click', onSheetOverlayClick);
     document.getElementById('context-menu-overlay').removeEventListener('click', onContextOverlayClick);
@@ -160,6 +163,16 @@ const UIActive = (() => {
     });
   }
 
+  function onSearchInput(e) {
+    if (e.target && e.target.id === 'active-search') { searchQuery = e.target.value.toLowerCase().trim(); renderList(); }
+  }
+  // совпадение точки с запросом: индекс/улица/фирма/ключ/ячейка
+  function matchQ(p) {
+    if (!searchQuery) return true;
+    const hay = ((p.editedText || '') + ' ' + (p.company || '') + ' ' + (p.key || '') + ' ' + (p.cell || '')).toLowerCase();
+    return hay.indexOf(searchQuery) !== -1;
+  }
+
   function renderList() {
     const list = document.getElementById('active-list');
     const doneList = document.getElementById('active-done');
@@ -169,8 +182,8 @@ const UIActive = (() => {
     const pts = all.filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');
     const pending = pts.filter((p) => p.tourStatus !== 'done');
     const done = pts.filter((p) => p.tourStatus === 'done');
-    const offRoute = pending.filter((p) => p.order == null);
-    const onRoute = pending.filter((p) => p.order != null);
+    const offRoute = pending.filter((p) => p.order == null).filter(matchQ);
+    const onRoute = pending.filter((p) => p.order != null).filter(matchQ);
 
     // активные (невыполненные) точки
     let html = '';
@@ -179,13 +192,13 @@ const UIActive = (() => {
       html += offRoute.map(stopCardHtml).join('');
     }
     html += onRoute.map(stopCardHtml).join('');
-    if (!pending.length) html = '<div class="empty-hint">Все точки выполнены 🎉</div>';
+    if (!offRoute.length && !onRoute.length) html = searchQuery ? '<div class="empty-hint">По запросу ничего не найдено</div>' : '<div class="empty-hint">Все точки выполнены 🎉</div>';
     list.innerHTML = html;
     bindCards(list);
 
     // завершённые — отдельная вкладка
     if (doneList) {
-      const doneSorted = done.slice().sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+      const doneSorted = done.slice().filter(matchQ).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
       doneList.innerHTML = doneSorted.length
         ? doneSorted.map(stopCardHtml).join('')
         : '<div class="empty-hint">Пока нет завершённых точек</div>';
@@ -194,8 +207,9 @@ const UIActive = (() => {
 
     // счётчик на вкладке «Завершённые»
     if (cancelledList) {
-      cancelledList.innerHTML = cancelled.length
-        ? cancelled.map(stopCardHtml).join('')
+      const cancFiltered = cancelled.filter(matchQ);
+      cancelledList.innerHTML = cancFiltered.length
+        ? cancFiltered.map(stopCardHtml).join('')
         : '<div class="empty-hint">Нет отменённых точек</div>';
       bindCards(cancelledList);
     }
@@ -370,6 +384,7 @@ const UIActive = (() => {
       root.querySelectorAll('.switch-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === currentView));
       document.getElementById('active-map').classList.toggle('hidden', currentView !== 'map');
       document.getElementById('active-list').classList.toggle('hidden', currentView !== 'list');
+      const srch = document.getElementById('active-search'); if (srch) srch.classList.toggle('hidden', currentView === 'map');
       const doneEl = document.getElementById('active-done');
       if (doneEl) doneEl.classList.toggle('hidden', currentView !== 'done');
       const cancEl = document.getElementById('active-cancelled');

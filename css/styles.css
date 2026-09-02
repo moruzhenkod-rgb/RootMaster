@@ -1030,3 +1030,7 @@ button {
 .stop-reason.reason-paired { background: rgba(250,204,21,0.15); color: #facc15; }
 .stop-reason.reason-notfound { background: rgba(239,68,68,0.15); color: #f87171; }
 .stop-reason.reason-dup { background: rgba(96,165,250,0.15); color: #60a5fa; }
+
+.active-search { margin: 10px 12px 0; padding: 11px 14px; width: calc(100% - 24px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 15px; }
+.active-search::placeholder { color: var(--text-faint); }
+.active-search.hidden { display: none; }
