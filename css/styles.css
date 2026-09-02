@@ -1064,3 +1064,7 @@ button {
 .ud-stop-firm { font-weight: 700; font-size: 13.5px; color: #fde047; }
 .ud-stop-addr { font-size: 13px; }
 .ud-stop-status { font-size: 12px; color: var(--text-faint); margin-top: 2px; }
+
+.au-status { font-size: 12.5px; font-weight: 700; color: #38bdf8; margin-top: 5px; }
+.ud-current { margin: 10px 12px 0; padding: 10px 12px; background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); border-radius: 12px; color: #7dd3fc; font-size: 14px; }
+.ud-stop.current { box-shadow: 0 0 0 2px #38bdf8; }

@@ -266,7 +266,7 @@ const UIActive = (() => {
     const p = App.tour.points.find((pt) => pt.id === id);
     if (!p) return;
     if (p.tourStatus === 'done') { p.tourStatus = 'pending'; delete p.doneAt; }
-    else { p.tourStatus = 'done'; p.doneAt = Date.now(); }
+    else { p.tourStatus = 'done'; p.doneAt = Date.now(); if (App.tour.currentStopId === id) App.tour.currentStopId = null; }
     App.saveTour();
     renderMarkers();
     renderList();
@@ -276,6 +276,7 @@ const UIActive = (() => {
     activePointId = id;
     const p = App.tour.points.find((pt) => pt.id === id);
     if (!p) return;
+    if (p.tourStatus !== 'done' && App.tour.currentStopId !== id) { App.tour.currentStopId = id; App.saveTour(); }
     const done = p.tourStatus === 'done';
     // адрес для карты: координаты, если позиция закреплена вручную, иначе текст адреса
     const q = (p.manualCoords && p.lat != null && p.lng != null) ? `${p.lat},${p.lng}` : p.editedText;

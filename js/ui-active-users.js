@@ -21,6 +21,15 @@ const UIActiveUsers = (() => {
     if (m < 60) return m + ' мин назад';
     return Math.floor(m / 60) + ' ч назад';
   }
+  function statusLine(u) {
+    if (u.current) {
+      const num = u.current.order != null ? ('№' + u.current.order + ' ') : '';
+      return '🚗 В пути: ' + Utils.escapeHtml(num + (u.current.company ? u.current.company + ' — ' : '') + u.current.address);
+    }
+    if (u.pending === 0) return '✅ Тур завершён';
+    return '⏳ Выбирает остановку';
+  }
+
   async function load() {
     const list = document.getElementById('au-list');
     if (!list) return;
@@ -42,6 +51,7 @@ const UIActiveUsers = (() => {
           </div>
           <div class="au-bar"><div class="au-bar-fill" style="width:${pct}%"></div></div>
           <div class="au-nums">✓ ${u.done} · осталось ${u.pending} · ✕ ${u.cancelled} · всего ${u.total}</div>
+          <div class="au-status">${statusLine(u)}</div>
           <div class="au-seen">${u.lat != null ? '📍 виден ' + ago(u.presenceAt) : '📍 нет локации'}</div>
         </div>`;
       }).join('');
@@ -79,6 +89,10 @@ const UIUserDetail = (() => {
   async function load() {
     try {
       const d = await Api.getUserDetail(uid);
+      const cb = document.getElementById('ud-current');
+      if (cb) cb.innerHTML = d.current
+        ? '🚗 <b>В пути:</b> ' + (d.current.order != null ? '№' + d.current.order + ' ' : '') + (d.current.company ? Utils.escapeHtml(d.current.company) + ' — ' : '') + Utils.escapeHtml(d.current.address)
+        : (d.stats.pending === 0 ? '✅ Тур завершён' : '⏳ Выбирает остановку');
       const s = document.getElementById('ud-stats');
       if (s) s.innerHTML =
         '<div class="ud-stat"><b>' + d.stats.done + '</b><span>выполнено</span></div>' +
@@ -93,8 +107,9 @@ const UIUserDetail = (() => {
       const list = document.getElementById('ud-list');
       if (list) {
         const pts = (d.points || []).slice().sort((a, b) => (a.order == null ? 9999 : a.order) - (b.order == null ? 9999 : b.order));
+        const cur = d.current || {};
         list.innerHTML = pts.length ? pts.map((p) =>
-          '<div class="ud-stop ' + statusCls(p.tourStatus) + '">' +
+          '<div class="ud-stop ' + statusCls(p.tourStatus) + ((cur.address && p.address === cur.address && p.order === cur.order) ? ' current' : '') + '">' +
             '<div class="ud-stop-num">' + (p.order != null ? p.order : '•') + '</div>' +
             '<div class="ud-stop-body">' +
               (p.company ? '<div class="ud-stop-firm">' + Utils.escapeHtml(p.company) + '</div>' : '') +
