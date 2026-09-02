@@ -129,3 +129,67 @@ const UIUserDetail = (() => {
   }
   return { mount, unmount };
 })();
+
+// АДМИН: живая карта курьеров (перемещение на карте + трейл)
+const UITracking = (() => {
+  let root, map = null, timer = null, markers = {}, trails = {}, fitted = false;
+  function mount(container) {
+    root = container;
+    root.addEventListener('click', onClick);
+    initMap();
+    load();
+    timer = setInterval(load, 15000);
+  }
+  function unmount() {
+    if (timer) clearInterval(timer); timer = null;
+    if (map) { map.remove(); map = null; }
+    markers = {}; trails = {}; fitted = false;
+    if (root) root.removeEventListener('click', onClick);
+  }
+  function onClick(e) {
+    if (e.target.closest('[data-action="back-home"]')) { Router.show('home'); return; }
+    if (e.target.closest('[data-action="refresh-tracking"]')) { load(); return; }
+  }
+  function initMap() {
+    const el = document.getElementById('trk-map'); if (!el || typeof L === 'undefined') return;
+    map = L.map(el, { zoomControl: true, attributionControl: false }).setView([53.63, 11.41], 11);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    setTimeout(() => { if (map) map.invalidateSize(); }, 60);
+  }
+  function icon(u) {
+    const ini = (u.displayName || u.username || '?').slice(0, 2);
+    return L.divIcon({ className: '', html: '<div class="trk-marker' + (u.online ? ' on' : '') + '">' + Utils.escapeHtml(ini) + '</div>', iconSize: [36, 36], iconAnchor: [18, 18] });
+  }
+  async function load() {
+    try {
+      const data = await Api.getActiveUsers();
+      const users = (data.users || []).filter((u) => u.lat != null && u.lng != null);
+      const info = document.getElementById('trk-info');
+      if (info) info.textContent = users.length ? ('🛰 На карте: ' + users.length) : 'Нет активных курьеров с локацией';
+      const seen = new Set();
+      const bounds = [];
+      users.forEach((u) => {
+        const key = String(u.id); seen.add(key);
+        const ll = [u.lat, u.lng]; bounds.push(ll);
+        // трейл движения (пока экран открыт)
+        if (!trails[key]) trails[key] = L.polyline([], { color: '#38bdf8', weight: 3, opacity: 0.55 }).addTo(map);
+        const pts = trails[key].getLatLngs();
+        const last = pts[pts.length - 1];
+        if (!last || last.lat !== u.lat || last.lng !== u.lng) { pts.push(L.latLng(ll)); if (pts.length > 40) pts.shift(); trails[key].setLatLngs(pts); }
+        // маркер + попап
+        const pop = '<b>' + Utils.escapeHtml(u.displayName || u.username) + '</b><br>✓ ' + u.done + '/' + u.total + (u.current ? '<br>🚗 ' + Utils.escapeHtml(u.current.address) : '');
+        if (!markers[key]) markers[key] = L.marker(ll, { icon: icon(u) }).addTo(map).bindPopup(pop);
+        else markers[key].setLatLng(ll).setIcon(icon(u)).setPopupContent(pop);
+      });
+      // убрать тех, кто пропал (завершил тур)
+      Object.keys(markers).forEach((key) => {
+        if (!seen.has(key)) { map.removeLayer(markers[key]); delete markers[key]; if (trails[key]) { map.removeLayer(trails[key]); delete trails[key]; } }
+      });
+      if (bounds.length && !fitted) { map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 }); fitted = true; }
+    } catch (e) {
+      const info = document.getElementById('trk-info');
+      if (info) info.textContent = (e.status === 403 ? 'Только для админа' : 'Ошибка загрузки');
+    }
+  }
+  return { mount, unmount };
+})();

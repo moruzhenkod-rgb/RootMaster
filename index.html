@@ -184,26 +184,32 @@
         <span>Мои клиенты</span>
         <span class="btn-sub">Постоянные адреса — добавить в тур</span>
       </button>
-      <button class="btn btn-secondary btn-large" data-action="open-radar">
-        <span class="btn-icon">🚨</span>
-        <span>Радар-детектор</span>
-        <span class="btn-sub">Камеры, аварии, дорожные работы</span>
-      </button>
-      <button class="btn btn-secondary btn-large" data-action="open-settings">
-        <span class="btn-icon">⚙️</span>
-        <span>Настройки</span>
-        <span class="btn-sub">Дубликаты · без гео · ячейки · самотест</span>
-      </button>
-      <button class="btn btn-secondary btn-large" data-action="open-active-users">
-        👥 Активные пользователи
-      </button>
       <button class="btn btn-secondary btn-large" data-action="open-history">
         <span class="btn-icon">🕓</span>
         <span>Предыдущие туры</span>
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
+      <div class="home-admin" id="home-admin">
+        <div class="home-admin-label">👑 Админ-панель</div>
+        <button class="btn btn-secondary btn-large" data-action="open-active-users">
+          <span class="btn-icon">👥</span><span>Активные пользователи</span>
+          <span class="btn-sub">Прогресс, статус, локация курьеров</span>
+        </button>
+        <button class="btn btn-secondary btn-large" data-action="open-tracking">
+          <span class="btn-icon">🛰</span><span>Карта курьеров</span>
+          <span class="btn-sub">Живое перемещение на карте</span>
+        </button>
+        <button class="btn btn-secondary btn-large" data-action="open-radar">
+          <span class="btn-icon">🚨</span><span>Радар-детектор</span>
+          <span class="btn-sub">Камеры, аварии, дорожные работы</span>
+        </button>
+        <button class="btn btn-secondary btn-large" data-action="open-settings">
+          <span class="btn-icon">⚙️</span><span>Настройки</span>
+          <span class="btn-sub">Дубликаты · без гео · ячейки · самотест</span>
+        </button>
+      </div>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v52</footer>
+    <footer class="home-footer">RouteMaster PWA · v53</footer>
   </div>
 </template>
 
@@ -367,6 +373,18 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<template id="tpl-tracking">
+  <div class="screen">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Карта курьеров</h2>
+      <button class="icon-btn" data-action="refresh-tracking" title="Обновить">🔄</button>
+    </header>
+    <div id="trk-info" class="trk-info">Загрузка…</div>
+    <div id="trk-map" class="map-full"></div>
+  </div>
+</template>
+
 <template id="tpl-active-users">
   <div class="screen">
     <header class="app-header with-back">

@@ -23,7 +23,7 @@ const UIHome = (() => {
 
     // доступ к настройкам/самотесту и радару — только админ (Dima)
     if (typeof Api !== 'undefined' && !Api.isAdmin()) {
-      ['open-settings', 'open-radar', 'open-active-users'].forEach((a) => { const b = root.querySelector('[data-action="' + a + '"]'); if (b) b.style.display = 'none'; });
+      const adminBox = root.querySelector('#home-admin'); if (adminBox) adminBox.style.display = 'none';
     }
 
     const historyBtn = root.querySelector('[data-action="open-history"]');
@@ -71,6 +71,10 @@ const UIHome = (() => {
     } else if (action === 'open-active-users') {
       if (typeof Api !== 'undefined' && !Api.isAdmin()) return;
       Router.show('active-users');
+      return;
+    } else if (action === 'open-tracking') {
+      if (typeof Api !== 'undefined' && !Api.isAdmin()) return;
+      Router.show('tracking');
       return;
     } else if (action === 'open-history') {
       if (!Storage.hasHistory()) {
