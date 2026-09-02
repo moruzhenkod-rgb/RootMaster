@@ -215,7 +215,21 @@ const UITrackReplay = (() => {
         L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-stop ' + cls + '">' + label + '</div>', iconSize: [24, 24], iconAnchor: [12, 12] }) })
           .addTo(map).bindPopup((p.company ? '<b>' + Utils.escapeHtml(p.company) + '</b><br>' : '') + Utils.escapeHtml(p.address) + (p.doneAt ? '<br>✓ ' + fmtTime(p.doneAt) : ''));
       });
-      if (info) info.textContent = track.length ? ('🛰 Точек трека: ' + track.length + ' · остановок: ' + stops.length) : ('Трека нет (курьер был на старой версии) · остановок: ' + stops.length);
+      // маршрут ПО ДОРОГАМ через остановки (в порядке маршрута) — синяя линия по улицам
+      const ordered = stops.filter((p) => p.lat != null && p.lng != null)
+        .slice().sort((a, b) => (a.order == null ? 1e9 : a.order) - (b.order == null ? 1e9 : b.order));
+      if (ordered.length >= 2) {
+        const coords = ordered.map((p) => p.lng + ',' + p.lat).join(';');
+        fetch('https://router.project-osrm.org/route/v1/driving/' + coords + '?overview=full&geometries=geojson')
+          .then((r) => r.json())
+          .then((data) => {
+            if (map && data.code === 'Ok' && data.routes && data.routes[0]) {
+              const line = data.routes[0].geometry.coordinates.map((c) => [c[1], c[0]]);
+              L.polyline(line, { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
+            }
+          }).catch(() => {});
+      }
+      if (info) info.textContent = (track.length ? ('🛰 GPS-трек: ' + track.length + ' точек · ') : 'Синяя линия — маршрут по дорогам · ') + 'остановок: ' + stops.length;
       if (bounds.length && map) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     } catch (e) {
       if (info) info.textContent = (e.status === 403 ? 'Только для админа' : 'Не удалось загрузить трек');
