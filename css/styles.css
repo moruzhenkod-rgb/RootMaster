@@ -1034,3 +1034,33 @@ button {
 .active-search { margin: 10px 12px 0; padding: 11px 14px; width: calc(100% - 24px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 15px; }
 .active-search::placeholder { color: var(--text-faint); }
 .active-search.hidden { display: none; }
+
+/* Админ: активные пользователи */
+.au-list { padding: 12px; overflow-y: auto; flex: 1; }
+.au-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; touch-action: manipulation; }
+.au-card:active { filter: brightness(1.15); }
+.au-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.au-dot { width: 10px; height: 10px; border-radius: 50%; background: #6b7280; flex-shrink: 0; }
+.au-dot.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+.au-name { font-weight: 800; font-size: 15px; flex: 1; }
+.au-rate { font-size: 13px; font-weight: 800; color: #60a5fa; }
+.au-bar { height: 8px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 6px; }
+.au-bar-fill { height: 100%; background: linear-gradient(90deg,#22c55e,#4ade80); border-radius: 6px; transition: width .3s; }
+.au-nums { font-size: 12.5px; color: var(--text); }
+.au-seen { font-size: 12px; color: var(--text-faint); margin-top: 4px; }
+
+/* Админ: детали пользователя */
+.ud-map { height: 220px; width: 100%; }
+.ud-stats { display: flex; gap: 8px; padding: 12px; }
+.ud-stat { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.ud-stat b { display: block; font-size: 20px; font-weight: 800; color: var(--text); }
+.ud-stat span { font-size: 11px; color: var(--text-faint); }
+.ud-stop { display: flex; gap: 10px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid #6b7280; border-radius: 10px; padding: 10px 12px; margin: 0 12px 8px; }
+.ud-stop.done { border-left-color: #22c55e; opacity: 0.7; }
+.ud-stop.cancelled { border-left-color: #ef4444; opacity: 0.6; }
+.ud-stop.pending { border-left-color: #3b82f6; }
+.ud-stop-num { width: 26px; height: 26px; border-radius: 50%; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+.ud-stop-body { flex: 1; min-width: 0; }
+.ud-stop-firm { font-weight: 700; font-size: 13.5px; color: #fde047; }
+.ud-stop-addr { font-size: 13px; }
+.ud-stop-status { font-size: 12px; color: var(--text-faint); margin-top: 2px; }

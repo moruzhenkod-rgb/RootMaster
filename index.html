@@ -194,13 +194,16 @@
         <span>Настройки</span>
         <span class="btn-sub">Дубликаты · без гео · ячейки · самотест</span>
       </button>
+      <button class="btn btn-secondary btn-large" data-action="open-active-users">
+        👥 Активные пользователи
+      </button>
       <button class="btn btn-secondary btn-large" data-action="open-history">
         <span class="btn-icon">🕓</span>
         <span>Предыдущие туры</span>
         <span class="btn-sub">Посмотреть маршруты по датам</span>
       </button>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v46</footer>
+    <footer class="home-footer">RouteMaster PWA · v47</footer>
   </div>
 </template>
 
@@ -364,6 +367,30 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<template id="tpl-active-users">
+  <div class="screen">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-home">←</button>
+      <h2>Активные пользователи</h2>
+      <button class="icon-btn" data-action="refresh-active" title="Обновить">🔄</button>
+    </header>
+    <div class="au-list" id="au-list"><div class="empty-hint">Загрузка…</div></div>
+  </div>
+</template>
+
+<template id="tpl-user-detail">
+  <div class="screen">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-active">←</button>
+      <h2 id="ud-name">Пользователь</h2>
+      <button class="icon-btn" data-action="refresh-detail" title="Обновить">🔄</button>
+    </header>
+    <div id="ud-map" class="ud-map"></div>
+    <div id="ud-stats" class="ud-stats"></div>
+    <div class="active-list" id="ud-list"></div>
+  </div>
+</template>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 <script src="js/utils.js"></script>
@@ -394,6 +421,7 @@
 <script src="js/ui-manual.js"></script>
 <script src="js/ui-settings.js"></script>
 <script src="js/ui-radar.js"></script>
+<script src="js/ui-active-users.js"></script>
 <script src="js/router.js"></script>
 <script src="js/app.js"></script>
 <div id="photo-editor" class="photo-editor" hidden>

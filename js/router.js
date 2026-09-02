@@ -15,13 +15,15 @@ const Router = (() => {
     active: UIActive,
     history: UIHistory,
     'history-detail': UIHistoryDetail,
+    'active-users': UIActiveUsers,
+    'user-detail': UIUserDetail,
   };
 
   let current = null;
   const container = () => document.getElementById('app');
 
   function show(name, params) {
-    if ((name === 'settings' || name === 'radar' || name === 'radar2') && typeof Api !== 'undefined' && !Api.isAdmin()) { name = 'home'; }
+    if ((name === 'settings' || name === 'radar' || name === 'radar2' || name === 'active-users' || name === 'user-detail') && typeof Api !== 'undefined' && !Api.isAdmin()) { name = 'home'; }
     if (current && current.module.unmount) {
       current.module.unmount();
     }
