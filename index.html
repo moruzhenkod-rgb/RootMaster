@@ -199,7 +199,7 @@
         </div>
       </div>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v56</footer>
+    <footer class="home-footer">RouteMaster PWA · v57</footer>
   </div>
 </template>
 
@@ -381,7 +381,15 @@
       <h2 id="trkr-name">Трек</h2>
     </header>
     <div id="trkr-info" class="trk-info">Загрузка трека…</div>
-    <div id="trkr-map" class="map-full"></div>
+    <div class="trkr-wrap">
+      <div id="trkr-map" class="map-full"></div>
+      <div class="trkr-legend">
+        <span><i class="lg lg-route"></i> Маршрут</span>
+        <span><i class="lg lg-gps"></i> Факт GPS</span>
+        <span><i class="lg lg-done"></i> Выполнено</span>
+        <span><i class="lg lg-cancel"></i> Отменено</span>
+      </div>
+    </div>
   </div>
 </template>
 

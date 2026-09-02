@@ -194,11 +194,11 @@ const UITrackReplay = (() => {
       // GPS-след (хронология движения)
       if (track.length) {
         const line = track.map((t) => [t.lat, t.lng]);
-        L.polyline(line, { color: '#f97316', weight: 4, opacity: 0.85 }).addTo(map);
+        L.polyline(line, { color: '#f97316', weight: 3, opacity: 0.9, dashArray: '1,6', lineCap: 'round' }).addTo(map);
         line.forEach((ll) => bounds.push(ll));
         // точки «где всплывал в сети» — маленькие кружки с временем
         track.forEach((t) => {
-          L.circleMarker([t.lat, t.lng], { radius: 3, color: '#f97316', fillColor: '#f97316', fillOpacity: 0.9, weight: 0 })
+          L.circleMarker([t.lat, t.lng], { radius: 2.5, color: '#f97316', fillColor: '#f97316', fillOpacity: 0.7, weight: 0 })
             .addTo(map).bindTooltip(fmtTime(t.ts));
         });
         // старт/финиш
@@ -212,7 +212,7 @@ const UITrackReplay = (() => {
         bounds.push([p.lat, p.lng]);
         const cls = p.tourStatus === 'done' ? 'done' : (p.tourStatus === 'skip' || p.tourStatus === 'transferred') ? 'cancelled' : 'pending';
         const label = p.order != null ? p.order : '•';
-        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-stop ' + cls + '">' + label + '</div>', iconSize: [24, 24], iconAnchor: [12, 12] }) })
+        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-stop ' + cls + '">' + label + '</div>', iconSize: [28, 28], iconAnchor: [14, 14] }), zIndexOffset: 1000 })
           .addTo(map).bindPopup((p.company ? '<b>' + Utils.escapeHtml(p.company) + '</b><br>' : '') + Utils.escapeHtml(p.address) + (p.doneAt ? '<br>✓ ' + fmtTime(p.doneAt) : ''));
       });
       // маршрут ПО ДОРОГАМ через остановки (в порядке маршрута) — синяя линия по улицам
@@ -225,7 +225,12 @@ const UITrackReplay = (() => {
           .then((data) => {
             if (map && data.code === 'Ok' && data.routes && data.routes[0]) {
               const line = data.routes[0].geometry.coordinates.map((c) => [c[1], c[0]]);
-              L.polyline(line, { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
+              L.polyline(line, { color: '#0b1220', weight: 8, opacity: 0.35 }).addTo(map); // обводка для контраста
+              const poly = L.polyline(line, { color: '#3b82f6', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }).addTo(map);
+              // стрелки направления движения
+              if (L.polylineDecorator && L.Symbol && L.Symbol.arrowHead) {
+                L.polylineDecorator(poly, { patterns: [{ offset: 30, repeat: 90, symbol: L.Symbol.arrowHead({ pixelSize: 11, polygon: false, pathOptions: { stroke: true, color: '#1e3a8a', weight: 3, opacity: 0.95 } }) }] }).addTo(map);
+              }
             }
           }).catch(() => {});
       }
