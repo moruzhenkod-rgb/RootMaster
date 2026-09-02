@@ -1076,3 +1076,12 @@ button {
 .trk-info { padding: 8px 14px; font-size: 13px; font-weight: 700; color: #7dd3fc; background: #12151d; border-bottom: 1px solid var(--border); }
 .trk-marker { width: 36px; height: 36px; border-radius: 50%; background: #6b7280; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); text-transform: uppercase; }
 .trk-marker.on { background: #2563eb; box-shadow: 0 0 10px #3b82f6; }
+
+.trk-pin { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+.trk-pin span, .trk-pin { }
+.trk-pin.start { background: #22c55e; }
+.trk-pin.end { background: #ef4444; }
+.trk-stop { width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.trk-stop.done { background: #22c55e; }
+.trk-stop.cancelled { background: #ef4444; }
+.trk-stop.pending { background: #6b7280; }

@@ -4,6 +4,8 @@ const App = (() => {
 
   function setTour(newTour, stage) {
     tour = newTour;
+    if (!tour.id) tour.id = Utils.uid();
+    if (!tour.startedAt) tour.startedAt = Date.now();
     if (stage) tour.stage = stage;
     saveTour();
   }
@@ -71,7 +73,7 @@ const App = (() => {
   function reportPresence() {
     if (typeof Api === 'undefined' || !Api.isAuthed() || document.hidden || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (pos) => { Api.sendPresence(pos.coords.latitude, pos.coords.longitude).catch(() => {}); },
+      (pos) => { Api.sendPresence(pos.coords.latitude, pos.coords.longitude, (tour && tour.id) || null).catch(() => {}); },
       () => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
     );
   }

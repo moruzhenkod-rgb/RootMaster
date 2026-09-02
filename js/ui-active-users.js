@@ -130,65 +130,95 @@ const UIUserDetail = (() => {
   return { mount, unmount };
 })();
 
-// АДМИН: живая карта курьеров (перемещение на карте + трейл)
+// АДМИН: список завершённых туров для просмотра хронологии движения
 const UITracking = (() => {
-  let root, map = null, timer = null, markers = {}, trails = {}, fitted = false;
-  function mount(container) {
-    root = container;
-    root.addEventListener('click', onClick);
-    initMap();
-    load();
-    timer = setInterval(load, 15000);
-  }
-  function unmount() {
-    if (timer) clearInterval(timer); timer = null;
-    if (map) { map.remove(); map = null; }
-    markers = {}; trails = {}; fitted = false;
-    if (root) root.removeEventListener('click', onClick);
-  }
+  let root;
+  function mount(container) { root = container; root.addEventListener('click', onClick); load(); }
+  function unmount() { if (root) root.removeEventListener('click', onClick); }
   function onClick(e) {
     if (e.target.closest('[data-action="back-home"]')) { Router.show('home'); return; }
     if (e.target.closest('[data-action="refresh-tracking"]')) { load(); return; }
+    const card = e.target.closest('[data-tour]');
+    if (card) Router.show('track-replay', { userId: card.dataset.uid, tourId: card.dataset.tour, name: card.dataset.name });
   }
+  function fmtDate(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const p = (n) => (n < 10 ? '0' + n : '' + n);
+    return p(d.getDate()) + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  async function load() {
+    const list = document.getElementById('trk-list');
+    if (!list) return;
+    try {
+      const data = await Api.getFinishedTours();
+      const tours = data.tours || [];
+      if (!tours.length) { list.innerHTML = '<div class="empty-hint">Нет завершённых туров за 2 недели</div>'; return; }
+      list.innerHTML = tours.map((t) => `
+        <div class="au-card" data-tour="${Utils.escapeHtml(t.tourId)}" data-uid="${t.userId}" data-name="${Utils.escapeHtml(t.displayName)}">
+          <div class="au-top"><span class="au-name">${Utils.escapeHtml(t.displayName)}</span><span class="au-rate">${fmtDate(t.finishedAt)}</span></div>
+          <div class="au-nums">✓ ${t.done}/${t.total}${t.cancelled ? ' · ✕ ' + t.cancelled : ''} · 🛰 смотреть трек</div>
+        </div>`).join('');
+    } catch (e) {
+      list.innerHTML = '<div class="empty-hint">' + (e.status === 403 ? 'Только для админа' : 'Не удалось загрузить') + '</div>';
+    }
+  }
+  return { mount, unmount };
+})();
+
+// АДМИН: проигрывание трека одного тура (GPS-след между точками + остановки)
+const UITrackReplay = (() => {
+  let root, map = null;
+  function mount(container, params) {
+    root = container;
+    root.addEventListener('click', onClick);
+    const nm = document.getElementById('trkr-name'); if (nm && params.name) nm.textContent = params.name;
+    initMap();
+    load(params.userId, params.tourId);
+  }
+  function unmount() { if (map) { map.remove(); map = null; } if (root) root.removeEventListener('click', onClick); }
+  function onClick(e) { if (e.target.closest('[data-action="back-tracking"]')) Router.show('tracking'); }
   function initMap() {
-    const el = document.getElementById('trk-map'); if (!el || typeof L === 'undefined') return;
+    const el = document.getElementById('trkr-map'); if (!el || typeof L === 'undefined') return;
     map = L.map(el, { zoomControl: true, attributionControl: false }).setView([53.63, 11.41], 11);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     setTimeout(() => { if (map) map.invalidateSize(); }, 60);
   }
-  function icon(u) {
-    const ini = (u.displayName || u.username || '?').slice(0, 2);
-    return L.divIcon({ className: '', html: '<div class="trk-marker' + (u.online ? ' on' : '') + '">' + Utils.escapeHtml(ini) + '</div>', iconSize: [36, 36], iconAnchor: [18, 18] });
-  }
-  async function load() {
+  function fmtTime(ts) { const d = new Date(ts); const p = (n) => (n < 10 ? '0' + n : '' + n); return p(d.getHours()) + ':' + p(d.getMinutes()); }
+  async function load(userId, tourId) {
+    const info = document.getElementById('trkr-info');
     try {
-      const data = await Api.getActiveUsers();
-      const users = (data.users || []).filter((u) => u.lat != null && u.lng != null);
-      const info = document.getElementById('trk-info');
-      if (info) info.textContent = users.length ? ('🛰 На карте: ' + users.length) : 'Нет активных курьеров с локацией';
-      const seen = new Set();
+      const d = await Api.getTrack(userId, tourId);
+      const track = d.track || [], stops = d.stops || [];
       const bounds = [];
-      users.forEach((u) => {
-        const key = String(u.id); seen.add(key);
-        const ll = [u.lat, u.lng]; bounds.push(ll);
-        // трейл движения (пока экран открыт)
-        if (!trails[key]) trails[key] = L.polyline([], { color: '#38bdf8', weight: 3, opacity: 0.55 }).addTo(map);
-        const pts = trails[key].getLatLngs();
-        const last = pts[pts.length - 1];
-        if (!last || last.lat !== u.lat || last.lng !== u.lng) { pts.push(L.latLng(ll)); if (pts.length > 40) pts.shift(); trails[key].setLatLngs(pts); }
-        // маркер + попап
-        const pop = '<b>' + Utils.escapeHtml(u.displayName || u.username) + '</b><br>✓ ' + u.done + '/' + u.total + (u.current ? '<br>🚗 ' + Utils.escapeHtml(u.current.address) : '');
-        if (!markers[key]) markers[key] = L.marker(ll, { icon: icon(u) }).addTo(map).bindPopup(pop);
-        else markers[key].setLatLng(ll).setIcon(icon(u)).setPopupContent(pop);
+      // GPS-след (хронология движения)
+      if (track.length) {
+        const line = track.map((t) => [t.lat, t.lng]);
+        L.polyline(line, { color: '#f97316', weight: 4, opacity: 0.85 }).addTo(map);
+        line.forEach((ll) => bounds.push(ll));
+        // точки «где всплывал в сети» — маленькие кружки с временем
+        track.forEach((t) => {
+          L.circleMarker([t.lat, t.lng], { radius: 3, color: '#f97316', fillColor: '#f97316', fillOpacity: 0.9, weight: 0 })
+            .addTo(map).bindTooltip(fmtTime(t.ts));
+        });
+        // старт/финиш
+        L.marker([track[0].lat, track[0].lng], { icon: L.divIcon({ className: '', html: '<div class="trk-pin start">A</div>', iconSize: [26, 26], iconAnchor: [13, 26] }) }).addTo(map).bindPopup('Старт ' + fmtTime(track[0].ts));
+        const lastT = track[track.length - 1];
+        L.marker([lastT.lat, lastT.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-pin end">B</div>', iconSize: [26, 26], iconAnchor: [13, 26] }) }).addTo(map).bindPopup('Финиш ' + fmtTime(lastT.ts));
+      }
+      // остановки тура
+      stops.forEach((p) => {
+        if (p.lat == null || p.lng == null) return;
+        bounds.push([p.lat, p.lng]);
+        const cls = p.tourStatus === 'done' ? 'done' : (p.tourStatus === 'skip' || p.tourStatus === 'transferred') ? 'cancelled' : 'pending';
+        const label = p.order != null ? p.order : '•';
+        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-stop ' + cls + '">' + label + '</div>', iconSize: [24, 24], iconAnchor: [12, 12] }) })
+          .addTo(map).bindPopup((p.company ? '<b>' + Utils.escapeHtml(p.company) + '</b><br>' : '') + Utils.escapeHtml(p.address) + (p.doneAt ? '<br>✓ ' + fmtTime(p.doneAt) : ''));
       });
-      // убрать тех, кто пропал (завершил тур)
-      Object.keys(markers).forEach((key) => {
-        if (!seen.has(key)) { map.removeLayer(markers[key]); delete markers[key]; if (trails[key]) { map.removeLayer(trails[key]); delete trails[key]; } }
-      });
-      if (bounds.length && !fitted) { map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 }); fitted = true; }
+      if (info) info.textContent = track.length ? ('🛰 Точек трека: ' + track.length + ' · остановок: ' + stops.length) : ('Трека нет (курьер был на старой версии) · остановок: ' + stops.length);
+      if (bounds.length && map) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     } catch (e) {
-      const info = document.getElementById('trk-info');
-      if (info) info.textContent = (e.status === 403 ? 'Только для админа' : 'Ошибка загрузки');
+      if (info) info.textContent = (e.status === 403 ? 'Только для админа' : 'Не удалось загрузить трек');
     }
   }
   return { mount, unmount };

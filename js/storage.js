@@ -41,7 +41,8 @@ const Storage = (() => {
     try {
       const history = loadHistory();
       history.unshift({
-        id: Utils.uid(),
+        id: tour.id || Utils.uid(),
+        startedAt: tour.startedAt || null,
         finishedAt: Date.now(),
         points: tour.points,
       });

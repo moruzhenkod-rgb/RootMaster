@@ -51,9 +51,11 @@ const Api = (() => {
   const updateClient = (company, oldAddress, address, akey, cell, newCompany, lat, lng) => req('/client', { method: 'PUT', body: JSON.stringify({ company, oldAddress, address, akey, cell, newCompany, lat, lng }) });
   const deleteClient = (company, address) => req('/client', { method: 'DELETE', body: JSON.stringify({ company, address }) });
   const putTours = (current, history) => req('/tours', { method: 'PUT', body: JSON.stringify({ current, history }) });
-  const sendPresence = (lat, lng) => req('/presence', { method: 'POST', body: JSON.stringify({ lat, lng }) });
+  const sendPresence = (lat, lng, tourId) => req('/presence', { method: 'POST', body: JSON.stringify({ lat, lng, tourId }) });
   const getActiveUsers = () => req('/admin/active');
   const getUserDetail = (id) => req('/admin/user/' + encodeURIComponent(id));
+  const getFinishedTours = () => req('/admin/tours');
+  const getTrack = (userId, tourId) => req('/admin/track/' + encodeURIComponent(userId) + '/' + encodeURIComponent(tourId));
 
-  return { token, displayName, username, isAuthed, isAdmin, setSession, clearSession, register, login, getTours, putTours, getClients, updateClient, deleteClient, sendPresence, getActiveUsers, getUserDetail };
+  return { token, displayName, username, isAuthed, isAdmin, setSession, clearSession, register, login, getTours, putTours, getClients, updateClient, deleteClient, sendPresence, getActiveUsers, getUserDetail, getFinishedTours, getTrack };
 })();

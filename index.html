@@ -196,8 +196,8 @@
           <span class="btn-sub">Прогресс, статус, локация курьеров</span>
         </button>
         <button class="btn btn-secondary btn-large" data-action="open-tracking">
-          <span class="btn-icon">🛰</span><span>Карта курьеров</span>
-          <span class="btn-sub">Живое перемещение на карте</span>
+          <span class="btn-icon">🛰</span><span>История движения</span>
+          <span class="btn-sub">Как ехал курьер между точками (после тура)</span>
         </button>
         <button class="btn btn-secondary btn-large" data-action="open-radar">
           <span class="btn-icon">🚨</span><span>Радар-детектор</span>
@@ -209,7 +209,7 @@
         </button>
       </div>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v53</footer>
+    <footer class="home-footer">RouteMaster PWA · v54</footer>
   </div>
 </template>
 
@@ -377,11 +377,21 @@
   <div class="screen">
     <header class="app-header with-back">
       <button class="icon-btn" data-action="back-home">←</button>
-      <h2>Карта курьеров</h2>
+      <h2>История движения</h2>
       <button class="icon-btn" data-action="refresh-tracking" title="Обновить">🔄</button>
     </header>
-    <div id="trk-info" class="trk-info">Загрузка…</div>
-    <div id="trk-map" class="map-full"></div>
+    <div class="au-list" id="trk-list"><div class="empty-hint">Загрузка…</div></div>
+  </div>
+</template>
+
+<template id="tpl-track-replay">
+  <div class="screen">
+    <header class="app-header with-back">
+      <button class="icon-btn" data-action="back-tracking">←</button>
+      <h2 id="trkr-name">Трек</h2>
+    </header>
+    <div id="trkr-info" class="trk-info">Загрузка трека…</div>
+    <div id="trkr-map" class="map-full"></div>
   </div>
 </template>
 
