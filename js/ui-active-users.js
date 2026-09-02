@@ -278,7 +278,7 @@ const UITrackReplay = (() => {
             }
           }).catch(() => {});
       }
-      if (info) info.textContent = (track.length ? ('🛰 GPS-трек: ' + track.length + ' точек · ') : 'Синяя линия — маршрут по дорогам · ') + 'остановок: ' + stops.length;
+      if (info) info.textContent = track.length ? ('🛰 Реальный GPS-путь: ' + track.length + ' точек · остановок: ' + stops.length) : ('⚠️ GPS-путь не записан (тур до включения записи) — синяя линия это ПЛАН · остановок: ' + stops.length);
       if (bounds.length && map) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     } catch (e) {
       if (info) info.textContent = (e.status === 403 ? 'Только для админа' : 'Не удалось загрузить трек');

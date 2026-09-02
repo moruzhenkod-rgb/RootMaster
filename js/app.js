@@ -120,17 +120,19 @@ const App = (() => {
       localStorage.setItem('rm_clients', JSON.stringify(cl.clients || []));
     } catch (e) { /* не критично */ }
 
-    startPresenceHeartbeat(); // локация/last-seen обновляются с любого экрана
-
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {
+      if (!saved.id) saved.id = Utils.uid();
+      if (!saved.startedAt) saved.startedAt = Date.now();
       tour = saved;
+      Storage.saveCurrent(tour); // закрепить id, чтобы писался GPS-трек
       try { enrichFromClients(); } catch (e) { console.warn('enrich failed', e); }
       // тур загружен (в работе) → сразу список адресов; недозавершённый — в меню (данные не теряются)
       Router.show(saved.stage === 'active' ? 'active' : 'home');
     } else {
       Router.show('home');
     }
+    startPresenceHeartbeat(); // локация + GPS-трек (tour.id уже есть)
   }
 
   function logout() {
