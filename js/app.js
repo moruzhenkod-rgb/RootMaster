@@ -118,7 +118,14 @@ const App = (() => {
     try {
       const cl = await Api.getClients();
       localStorage.setItem('rm_clients', JSON.stringify(cl.clients || []));
-    } catch (e) { /* не критично */ }
+      localStorage.setItem('rm_clients_owner', (Api.username() || ''));
+    } catch (e) {
+      // пул не удался: если кэш принадлежит ДРУГОМУ пользователю — стереть, свой оставить
+      const owner = (localStorage.getItem('rm_clients_owner') || '').toLowerCase();
+      if (owner && owner !== (Api.username() || '').toLowerCase()) {
+        localStorage.removeItem('rm_clients'); localStorage.removeItem('rm_clients_owner');
+      }
+    }
 
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {

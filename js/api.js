@@ -14,9 +14,8 @@ const Api = (() => {
   function setSession(data) {
     const prev = (localStorage.getItem(USER_KEY) || '').toLowerCase();
     const next = String(data.username || '').toLowerCase();
-    // сменился аккаунт — стираем кэш прошлого пользователя (клиенты, тур, история)
+    // сменился аккаунт — тур/история чужие не нужны; клиентов НЕ стираем (init подтянет своих, чтобы автозаполнение не ломалось)
     if (prev && next && prev !== next) {
-      localStorage.removeItem('rm_clients');
       localStorage.removeItem('rm_current_tour');
       localStorage.removeItem('rm_tour_history');
     }

@@ -2,7 +2,12 @@
 // (доп./недостающий «дом», «строение» и т.п.) или близкое написание с опечаткой.
 const ClientMatch = (() => {
   function loadClients() {
-    try { return JSON.parse(localStorage.getItem('rm_clients') || '[]'); } catch (e) { return []; }
+    try {
+      const owner = (localStorage.getItem('rm_clients_owner') || '').toLowerCase();
+      const cur = (typeof Api !== 'undefined' && Api.username) ? (Api.username() || '').toLowerCase() : '';
+      if (cur && owner && owner !== cur) return []; // кэш чужого пользователя — не используем
+      return JSON.parse(localStorage.getItem('rm_clients') || '[]');
+    } catch (e) { return []; }
   }
 
   function normAddr(a) {
