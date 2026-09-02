@@ -137,6 +137,7 @@ const App = (() => {
     Api.clearSession();
     localStorage.removeItem('rm_current_tour');
     localStorage.removeItem('rm_tour_history');
+    localStorage.removeItem('rm_clients');
     tour = null;
     window.location.reload();
   }

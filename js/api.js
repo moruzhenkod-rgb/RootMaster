@@ -12,6 +12,14 @@ const Api = (() => {
   const isAdmin = () => ADMIN_USERS.indexOf((username() || '').toLowerCase()) !== -1 || (displayName() || '').toLowerCase() === 'dima';
 
   function setSession(data) {
+    const prev = (localStorage.getItem(USER_KEY) || '').toLowerCase();
+    const next = String(data.username || '').toLowerCase();
+    // сменился аккаунт — стираем кэш прошлого пользователя (клиенты, тур, история)
+    if (prev && next && prev !== next) {
+      localStorage.removeItem('rm_clients');
+      localStorage.removeItem('rm_current_tour');
+      localStorage.removeItem('rm_tour_history');
+    }
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(NAME_KEY, data.displayName || '');
     localStorage.setItem(USER_KEY, data.username || '');
