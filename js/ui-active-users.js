@@ -22,6 +22,7 @@ const UIActiveUsers = (() => {
     return Math.floor(m / 60) + ' ч назад';
   }
   function statusLine(u) {
+    if (u.finished) return '✅ Тур завершён' + (u.finishedAt ? ' · ' + ago(u.finishedAt) : '');
     if (u.current) {
       const num = u.current.order != null ? ('№' + u.current.order + ' ') : '';
       return '🚗 В пути: ' + Utils.escapeHtml(num + (u.current.company ? u.current.company + ' — ' : '') + u.current.address);
@@ -84,15 +85,18 @@ const UIUserDetail = (() => {
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     setTimeout(() => { if (map) map.invalidateSize(); }, 60);
   }
+  function ago(ts) { if (!ts) return ''; const m = Math.floor((Date.now() - ts) / 60000); if (m < 1) return 'только что'; if (m < 60) return m + ' мин назад'; return Math.floor(m / 60) + ' ч назад'; }
   function statusCls(st) { return st === 'done' ? 'done' : (st === 'skip' || st === 'transferred') ? 'cancelled' : 'pending'; }
   function statusLabel(st) { return st === 'done' ? '✓ Выполнено' : st === 'skip' ? '✕ Не еду' : st === 'transferred' ? '↪ Передано' : 'В пути'; }
   async function load() {
     try {
       const d = await Api.getUserDetail(uid);
       const cb = document.getElementById('ud-current');
-      if (cb) cb.innerHTML = d.current
-        ? '🚗 <b>В пути:</b> ' + (d.current.order != null ? '№' + d.current.order + ' ' : '') + (d.current.company ? Utils.escapeHtml(d.current.company) + ' — ' : '') + Utils.escapeHtml(d.current.address)
-        : (d.stats.pending === 0 ? '✅ Тур завершён' : '⏳ Выбирает остановку');
+      if (cb) cb.innerHTML = d.finished
+        ? '✅ <b>Тур завершён</b>' + (d.finishedAt ? ' · ' + ago(d.finishedAt) : '')
+        : (d.current
+          ? '🚗 <b>В пути:</b> ' + (d.current.order != null ? '№' + d.current.order + ' ' : '') + (d.current.company ? Utils.escapeHtml(d.current.company) + ' — ' : '') + Utils.escapeHtml(d.current.address)
+          : (d.stats.pending === 0 ? '✅ Тур завершён' : '⏳ Выбирает остановку'));
       const s = document.getElementById('ud-stats');
       if (s) s.innerHTML =
         '<div class="ud-stat"><b>' + d.stats.done + '</b><span>выполнено</span></div>' +
