@@ -196,6 +196,13 @@ const UITrackReplay = (() => {
       if (prev) rows.push({ from: prevLabel, to: lbl, mins: Math.max(0, Math.round((p.doneAt - prev) / 60000)) });
       prev = p.doneAt; prevLabel = lbl;
     });
+    // пробег по геолокации (GPS-трек)
+    let gpsKm = 0;
+    const tr = lastData.track || [];
+    for (let i = 1; i < tr.length; i++) {
+      if (typeof Utils !== 'undefined' && Utils.haversine) gpsKm += Utils.haversine(tr[i - 1].lat, tr[i - 1].lng, tr[i].lat, tr[i].lng);
+    }
+    gpsKm = gpsKm / 1000;
     const totalMin = (started && lastData.finishedAt) ? Math.round((lastData.finishedAt - started) / 60000) : null;
     const avg = rows.length ? Math.round(rows.reduce((a, r) => a + r.mins, 0) / rows.length) : null;
     let html = '<div class="ts-head">📊 Статистика тура <button class="ts-close" data-action="track-stats">✕</button></div>';
@@ -204,6 +211,7 @@ const UITrackReplay = (() => {
     html += '<div><b>' + stops.length + '</b><span>доставлено</span></div>';
     if (avg != null) html += '<div><b>~' + avg + ' мин</b><span>на точку</span></div>';
     html += '</div>';
+    html += '<div class="ts-km">🛰 Пробег по GPS: <b>' + (tr.length > 1 ? gpsKm.toFixed(1) + ' км' : 'нет данных (тур без GPS-трека)') + '</b></div>';
     if (rows.length) {
       html += '<div class="ts-list">' + rows.map((r) => '<div class="ts-row"><span class="ts-seg">' + Utils.escapeHtml(r.from) + ' → ' + Utils.escapeHtml(r.to) + '</span><span class="ts-min">~' + r.mins + ' мин</span></div>').join('') + '</div>';
     } else {
@@ -267,18 +275,6 @@ const UITrackReplay = (() => {
               if (L.polylineDecorator && L.Symbol && L.Symbol.arrowHead) {
                 L.polylineDecorator(poly, { patterns: [{ offset: 30, repeat: 90, symbol: L.Symbol.arrowHead({ pixelSize: 11, polygon: false, pathOptions: { stroke: true, color: '#1e3a8a', weight: 3, opacity: 0.95 } }) }] }).addTo(map);
               }
-              // км на каждом участке — подпись в середине между точками
-              if (route.legs) {
-                route.legs.forEach((leg, i) => {
-                  const a = ordered[i], b = ordered[i + 1];
-                  if (!a || !b) return;
-                  const mid = [(a.lat + b.lat) / 2, (a.lng + b.lng) / 2];
-                  L.marker(mid, { icon: L.divIcon({ className: '', html: '<div class="km-label">' + (leg.distance / 1000).toFixed(1) + ' км</div>', iconSize: [48, 18] }), interactive: false, keyboard: false }).addTo(map);
-                });
-              }
-              // общий километраж в инфо-строку
-              const infoEl = document.getElementById('trkr-info');
-              if (infoEl) infoEl.textContent = '🔵 Маршрут: ' + (route.distance / 1000).toFixed(1) + ' км · остановок: ' + stops.length + (track.length ? ' · 🛰 GPS ' + track.length : '');
             }
           }).catch(() => {});
       }
