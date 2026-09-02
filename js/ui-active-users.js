@@ -259,13 +259,26 @@ const UITrackReplay = (() => {
           .then((r) => r.json())
           .then((data) => {
             if (map && data.code === 'Ok' && data.routes && data.routes[0]) {
-              const line = data.routes[0].geometry.coordinates.map((c) => [c[1], c[0]]);
+              const route = data.routes[0];
+              const line = route.geometry.coordinates.map((c) => [c[1], c[0]]);
               L.polyline(line, { color: '#0b1220', weight: 8, opacity: 0.35 }).addTo(map); // обводка для контраста
               const poly = L.polyline(line, { color: '#3b82f6', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }).addTo(map);
               // стрелки направления движения
               if (L.polylineDecorator && L.Symbol && L.Symbol.arrowHead) {
                 L.polylineDecorator(poly, { patterns: [{ offset: 30, repeat: 90, symbol: L.Symbol.arrowHead({ pixelSize: 11, polygon: false, pathOptions: { stroke: true, color: '#1e3a8a', weight: 3, opacity: 0.95 } }) }] }).addTo(map);
               }
+              // км на каждом участке — подпись в середине между точками
+              if (route.legs) {
+                route.legs.forEach((leg, i) => {
+                  const a = ordered[i], b = ordered[i + 1];
+                  if (!a || !b) return;
+                  const mid = [(a.lat + b.lat) / 2, (a.lng + b.lng) / 2];
+                  L.marker(mid, { icon: L.divIcon({ className: '', html: '<div class="km-label">' + (leg.distance / 1000).toFixed(1) + ' км</div>', iconSize: [48, 18] }), interactive: false, keyboard: false }).addTo(map);
+                });
+              }
+              // общий километраж в инфо-строку
+              const infoEl = document.getElementById('trkr-info');
+              if (infoEl) infoEl.textContent = '🔵 Маршрут: ' + (route.distance / 1000).toFixed(1) + ' км · остановок: ' + stops.length + (track.length ? ' · 🛰 GPS ' + track.length : '');
             }
           }).catch(() => {});
       }
