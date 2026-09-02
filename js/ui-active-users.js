@@ -30,10 +30,13 @@ const UIActiveUsers = (() => {
       if (!users.length) { list.innerHTML = '<div class="empty-hint">Нет активных туров сейчас</div>'; return; }
       list.innerHTML = users.map((u) => {
         const pct = u.total ? Math.round(u.done / u.total * 100) : 0;
+        // онлайн и «X назад» считаем от ОДНОГО времени (клиента) — чтобы не противоречили
+        const mins = u.presenceAt ? (Date.now() - u.presenceAt) / 60000 : null;
+        const online = mins != null && mins < 5;
         return `
         <div class="au-card" data-uid="${u.id}" data-name="${Utils.escapeHtml(u.displayName || u.username)}">
           <div class="au-top">
-            <span class="au-dot ${u.online ? 'on' : ''}"></span>
+            <span class="au-dot ${online ? 'on' : ''}"></span>
             <span class="au-name">${Utils.escapeHtml(u.displayName || u.username)}</span>
             <span class="au-rate">${u.ratePerHour ? u.ratePerHour + '/ч' : '—'}</span>
           </div>
