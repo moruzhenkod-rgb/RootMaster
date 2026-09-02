@@ -168,7 +168,7 @@ const UITracking = (() => {
 
 // АДМИН: проигрывание трека одного тура (GPS-след между точками + остановки)
 const UITrackReplay = (() => {
-  let root, map = null;
+  let root, map = null, lastData = null;
   function mount(container, params) {
     root = container;
     root.addEventListener('click', onClick);
@@ -177,7 +177,41 @@ const UITrackReplay = (() => {
     load(params.userId, params.tourId);
   }
   function unmount() { if (map) { map.remove(); map = null; } if (root) root.removeEventListener('click', onClick); }
-  function onClick(e) { if (e.target.closest('[data-action="back-tracking"]')) Router.show('tracking'); }
+  function onClick(e) {
+    if (e.target.closest('[data-action="back-tracking"]')) { Router.show('tracking'); return; }
+    if (e.target.closest('[data-action="track-stats"]')) { renderStats(); return; }
+  }
+  function fmtDur(m) { if (m < 60) return m + ' мин'; return Math.floor(m / 60) + ' ч ' + (m % 60) + ' мин'; }
+  function renderStats() {
+    const el = document.getElementById('trkr-stats');
+    if (!el || !lastData) return;
+    if (!el.hidden) { el.hidden = true; return; } // повторный тап — закрыть
+    // только реальные таймстампы (мс, с v50+); старый формат отсекаем
+    const stops = (lastData.stops || []).filter((p) => p.doneAt && p.doneAt > 940000000000).slice().sort((a, b) => a.doneAt - b.doneAt);
+    const started = lastData.startedAt;
+    const rows = [];
+    let prev = started, prevLabel = 'Старт';
+    stops.forEach((p) => {
+      const lbl = (p.order != null ? '№' + p.order + ' ' : '') + (p.company || p.address || 'точка');
+      if (prev) rows.push({ from: prevLabel, to: lbl, mins: Math.max(0, Math.round((p.doneAt - prev) / 60000)) });
+      prev = p.doneAt; prevLabel = lbl;
+    });
+    const totalMin = (started && lastData.finishedAt) ? Math.round((lastData.finishedAt - started) / 60000) : null;
+    const avg = rows.length ? Math.round(rows.reduce((a, r) => a + r.mins, 0) / rows.length) : null;
+    let html = '<div class="ts-head">📊 Статистика тура <button class="ts-close" data-action="track-stats">✕</button></div>';
+    html += '<div class="ts-sum">';
+    if (totalMin != null) html += '<div><b>' + fmtDur(totalMin) + '</b><span>всего</span></div>';
+    html += '<div><b>' + stops.length + '</b><span>доставлено</span></div>';
+    if (avg != null) html += '<div><b>~' + avg + ' мин</b><span>на точку</span></div>';
+    html += '</div>';
+    if (rows.length) {
+      html += '<div class="ts-list">' + rows.map((r) => '<div class="ts-row"><span class="ts-seg">' + Utils.escapeHtml(r.from) + ' → ' + Utils.escapeHtml(r.to) + '</span><span class="ts-min">~' + r.mins + ' мин</span></div>').join('') + '</div>';
+    } else {
+      html += '<div class="ts-empty">Нет данных о времени (тур сделан до обновления или мало отметок)</div>';
+    }
+    el.innerHTML = html;
+    el.hidden = false;
+  }
   function initMap() {
     const el = document.getElementById('trkr-map'); if (!el || typeof L === 'undefined') return;
     map = L.map(el, { zoomControl: true, attributionControl: false }).setView([53.63, 11.41], 11);
@@ -189,6 +223,7 @@ const UITrackReplay = (() => {
     const info = document.getElementById('trkr-info');
     try {
       const d = await Api.getTrack(userId, tourId);
+      lastData = d;
       const track = d.track || [], stops = d.stops || [];
       const bounds = [];
       // GPS-след (хронология движения)
