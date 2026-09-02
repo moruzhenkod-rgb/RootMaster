@@ -1,5 +1,5 @@
 const UIActive = (() => {
-  let root, map, markers = {}, meMarker, currentView = 'list', activePointId = null, searchQuery = '', presenceTimer = null;
+  let root, map, markers = {}, meMarker, currentView = 'list', activePointId = null, searchQuery = '';
   let apResults = [];
   let editPointId = null, editCoords = null, editManual = false;
 
@@ -14,7 +14,6 @@ const UIActive = (() => {
     renderList();
     updateEndButton();
     locateMe();
-    startPresence();
 
     document.getElementById('bottom-sheet-overlay').addEventListener('click', onSheetOverlayClick);
     document.getElementById('context-menu-overlay').addEventListener('click', onContextOverlayClick);
@@ -32,25 +31,9 @@ const UIActive = (() => {
     if (apov) apov.remove();
     const epov = document.getElementById('editp-overlay');
     if (epov) epov.remove();
-    stopPresence();
     if (map) { map.remove(); map = null; }
     markers = {};
   }
-
-  // курьер шлёт локацию на сервер (для админ-мониторинга) пока открыт активный тур
-  function startPresence() {
-    stopPresence();
-    const tick = () => {
-      if (!navigator.geolocation || typeof Api === 'undefined' || !Api.isAuthed()) return;
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { Api.sendPresence(pos.coords.latitude, pos.coords.longitude).catch(() => {}); },
-        () => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
-      );
-    };
-    tick();
-    presenceTimer = setInterval(tick, 40000);
-  }
-  function stopPresence() { if (presenceTimer) { clearInterval(presenceTimer); presenceTimer = null; } }
 
   function activePoints() {
     return App.tour.points.filter((p) => p.tourStatus !== 'skip' && p.tourStatus !== 'transferred');

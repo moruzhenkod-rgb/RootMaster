@@ -66,6 +66,25 @@ const App = (() => {
     if (changed) saveTour();
   }
 
+  // презенс-heartbeat: шлём локацию с ЛЮБОГО экрана пока приложение открыто (для админ-мониторинга)
+  let presenceTimer = null, presenceVisBound = false;
+  function reportPresence() {
+    if (typeof Api === 'undefined' || !Api.isAuthed() || document.hidden || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { Api.sendPresence(pos.coords.latitude, pos.coords.longitude).catch(() => {}); },
+      () => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  }
+  function startPresenceHeartbeat() {
+    if (presenceTimer) return;
+    reportPresence();
+    presenceTimer = setInterval(reportPresence, 60000);
+    if (!presenceVisBound) {
+      presenceVisBound = true;
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reportPresence(); });
+    }
+  }
+
   async function init() {
     if (typeof Api !== 'undefined' && !Api.isAdmin()) { const ind = document.getElementById('radar-global-indicator'); if (ind) ind.style.display = 'none'; }
     registerSW();
@@ -98,6 +117,8 @@ const App = (() => {
       const cl = await Api.getClients();
       localStorage.setItem('rm_clients', JSON.stringify(cl.clients || []));
     } catch (e) { /* не критично */ }
+
+    startPresenceHeartbeat(); // локация/last-seen обновляются с любого экрана
 
     const saved = Storage.loadCurrent();
     if (saved && saved.points && saved.points.length) {
