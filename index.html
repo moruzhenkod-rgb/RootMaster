@@ -164,52 +164,42 @@
       </div>
     </header>
     <main class="home-main">
-      <button class="btn btn-primary btn-large" id="btn-my-tour" data-action="open-tour" style="display:none">
-        <span class="btn-icon">🚚</span>
-        <span>Мой тур</span>
-        <span class="btn-sub">Вернуться к загруженному маршруту</span>
-      </button>
-      <button class="btn btn-primary btn-large" data-action="paste-text">
-        <span class="btn-icon">📋</span>
-        <span>Вставить список</span>
-        <span class="btn-sub">Ввести адреса текстом вручную</span>
-      </button>
-      <button class="btn btn-primary btn-large" data-action="open-manual">
-        <span class="btn-icon">🧰</span>
-        <span>Ручная загрузка тура</span>
-        <span class="btn-sub">Выбрать из базы или ввести вручную</span>
-      </button>
-      <button class="btn btn-secondary btn-large" data-action="open-clients">
-        <span class="btn-icon">🗂</span>
-        <span>Мои клиенты</span>
-        <span class="btn-sub">Постоянные адреса — добавить в тур</span>
-      </button>
-      <button class="btn btn-secondary btn-large" data-action="open-history">
-        <span class="btn-icon">🕓</span>
-        <span>Предыдущие туры</span>
-        <span class="btn-sub">Посмотреть маршруты по датам</span>
-      </button>
-      <div class="home-admin" id="home-admin">
-        <div class="home-admin-label">👑 Админ-панель</div>
-        <button class="btn btn-secondary btn-large" data-action="open-active-users">
-          <span class="btn-icon">👥</span><span>Активные пользователи</span>
-          <span class="btn-sub">Прогресс, статус, локация курьеров</span>
+      <div class="home-grid">
+        <button class="home-tile primary" id="btn-my-tour" data-action="open-tour" style="display:none">
+          <span class="tile-icon">🚚</span><span class="tile-label">Мой тур</span>
         </button>
-        <button class="btn btn-secondary btn-large" data-action="open-tracking">
-          <span class="btn-icon">🛰</span><span>История движения</span>
-          <span class="btn-sub">Как ехал курьер между точками (после тура)</span>
+        <button class="home-tile primary" data-action="paste-text">
+          <span class="tile-icon">📋</span><span class="tile-label">Вставить список</span>
         </button>
-        <button class="btn btn-secondary btn-large" data-action="open-radar">
-          <span class="btn-icon">🚨</span><span>Радар-детектор</span>
-          <span class="btn-sub">Камеры, аварии, дорожные работы</span>
+        <button class="home-tile primary" data-action="open-manual">
+          <span class="tile-icon">🧰</span><span class="tile-label">Ручная загрузка</span>
         </button>
-        <button class="btn btn-secondary btn-large" data-action="open-settings">
-          <span class="btn-icon">⚙️</span><span>Настройки</span>
-          <span class="btn-sub">Дубликаты · без гео · ячейки · самотест</span>
+        <button class="home-tile" data-action="open-clients">
+          <span class="tile-icon">🗂</span><span class="tile-label">Мои клиенты</span>
+        </button>
+        <button class="home-tile" data-action="open-history">
+          <span class="tile-icon">🕓</span><span class="tile-label">Прошлые туры</span>
         </button>
       </div>
+      <div class="home-admin" id="home-admin">
+        <div class="home-admin-label">👑 Админ-панель</div>
+        <div class="home-grid">
+          <button class="home-tile" data-action="open-active-users">
+            <span class="tile-icon">👥</span><span class="tile-label">Активные</span>
+          </button>
+          <button class="home-tile" data-action="open-tracking">
+            <span class="tile-icon">🛰</span><span class="tile-label">История движения</span>
+          </button>
+          <button class="home-tile" data-action="open-radar">
+            <span class="tile-icon">🚨</span><span class="tile-label">Радар</span>
+          </button>
+          <button class="home-tile" data-action="open-settings">
+            <span class="tile-icon">⚙️</span><span class="tile-label">Настройки</span>
+          </button>
+        </div>
+      </div>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v54</footer>
+    <footer class="home-footer">RouteMaster PWA · v55</footer>
   </div>
 </template>
 

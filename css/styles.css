@@ -1085,3 +1085,12 @@ button {
 .trk-stop.done { background: #22c55e; }
 .trk-stop.cancelled { background: #ef4444; }
 .trk-stop.pending { background: #6b7280; }
+
+/* Плиточное меню на главном */
+.home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.home-tile { aspect-ratio: 1 / 0.92; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; color: var(--text); padding: 12px; text-align: center; touch-action: manipulation; cursor: pointer; }
+.home-tile:active { filter: brightness(1.15); transform: scale(0.98); }
+.home-tile.primary { background: linear-gradient(160deg, #1d4ed8, #2563eb); border-color: #3b82f6; }
+.home-tile .tile-icon { font-size: 36px; line-height: 1; }
+.home-tile .tile-label { font-size: 13px; font-weight: 700; line-height: 1.15; }
+.home-tile:disabled { opacity: 0.4; }
