@@ -212,7 +212,7 @@ const UITrackReplay = (() => {
         bounds.push([p.lat, p.lng]);
         const cls = p.tourStatus === 'done' ? 'done' : (p.tourStatus === 'skip' || p.tourStatus === 'transferred') ? 'cancelled' : 'pending';
         const label = p.order != null ? p.order : '•';
-        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-stop ' + cls + '">' + label + '</div>', iconSize: [28, 28], iconAnchor: [14, 14] }), zIndexOffset: 1000 })
+        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: '<div class="trk-stop ' + cls + '"><span>' + label + '</span></div>', iconSize: [30, 30], iconAnchor: [15, 30] }), zIndexOffset: 1000 })
           .addTo(map).bindPopup((p.company ? '<b>' + Utils.escapeHtml(p.company) + '</b><br>' : '') + Utils.escapeHtml(p.address) + (p.doneAt ? '<br>✓ ' + fmtTime(p.doneAt) : ''));
       });
       // маршрут ПО ДОРОГАМ через остановки (в порядке маршрута) — синяя линия по улицам
