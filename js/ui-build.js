@@ -339,6 +339,24 @@ const UIBuild = (() => {
     renderMarkers();
   }
 
+  // клиентский nearest-neighbour — гарантированный порядок без сети
+  function nnOrder() {
+    const pts = App.tour.points.filter((p) => p.lat != null && p.lng != null);
+    if (pts.length < 2) { pts.forEach((p, i) => { p.order = i + 1; }); return; }
+    const remaining = pts.slice();
+    let cur = remaining.shift();
+    const route = [cur];
+    while (remaining.length) {
+      let bi = 0, bd = Infinity;
+      for (let i = 0; i < remaining.length; i++) {
+        const d = Utils.haversine(cur.lat, cur.lng, remaining[i].lat, remaining[i].lng);
+        if (d < bd) { bd = d; bi = i; }
+      }
+      cur = remaining.splice(bi, 1)[0]; route.push(cur);
+    }
+    route.forEach((p, i) => { p.order = i + 1; });
+  }
+
   function onClick(e) {
     if (e.target.closest('[data-action="auto-route"]')) { autoRoute(); return; }
     if (e.target.closest('[data-action="confirm-move"]')) { confirmMove(); return; }
@@ -360,9 +378,21 @@ const UIBuild = (() => {
 
     const loadBtn = e.target.closest('[data-action="load-route"]');
     if (loadBtn) {
-      App.tour.stage = 'active';
-      App.saveTour();
-      Router.show('active');
+      const numbered = App.tour.points.filter((p) => p.order != null).length;
+      if (numbered === 0) {
+        // маршрут не собран — собираем сами: привычный порядок/OSRM, иначе по близости
+        (async () => {
+          try { await autoRoute(); } catch (e) {}
+          if (App.tour.points.filter((p) => p.order != null).length === 0) nnOrder();
+          App.tour.stage = 'active';
+          App.saveTour();
+          Router.show('active');
+        })();
+      } else {
+        App.tour.stage = 'active';
+        App.saveTour();
+        Router.show('active');
+      }
     }
   }
 
