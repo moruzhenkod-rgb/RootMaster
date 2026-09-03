@@ -67,14 +67,14 @@ const UIPaste = (() => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        const max = 2200;
+        const max = 3400;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         if (scale === 1) { resolve(file); return; }
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * scale);
         c.height = Math.round(img.height * scale);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.82);
+        c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.95);
       };
       img.onerror = () => resolve(file);
       img.src = URL.createObjectURL(file);
@@ -82,16 +82,6 @@ const UIPaste = (() => {
   }
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
-  // пауза, которая ПРЕРЫВАЕТСЯ при возврате в приложение — чтобы опрос сработал сразу, а не ждал таймер (фон замораживает таймеры)
-  function sleepOrVisible(ms) {
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = () => { if (done) return; done = true; document.removeEventListener('visibilitychange', onVis); resolve(); };
-      const onVis = () => { if (!document.hidden) finish(); };
-      document.addEventListener('visibilitychange', onVis);
-      setTimeout(finish, ms);
-    });
-  }
 
   // распознать ОДИН лист → массив строк (throw при ошибке)
   async function processOne(file) {
@@ -100,8 +90,8 @@ const UIPaste = (() => {
     const j = await res.json();
     const job = j.job;
     if (!job) throw new Error('Ошибка загрузки: ' + (j.error || res.status));
-    for (let i = 0; i < 120; i++) {
-      await sleepOrVisible(3000);
+    for (let i = 0; i < 90; i++) {
+      await sleep(4000);
       try {
         const r = await fetch('/api/parse-list-result?job=' + encodeURIComponent(job));
         const jr = await r.json();
