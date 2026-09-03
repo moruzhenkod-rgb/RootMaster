@@ -104,14 +104,16 @@ const App = (() => {
     }
 
     // подтягиваем туры профиля с сервера в локальную копию
+    let toursPulled = false;
     try {
       const data = await Api.getTours();
       if (data.current) localStorage.setItem('rm_current_tour', JSON.stringify(data.current));
       else localStorage.removeItem('rm_current_tour');
       localStorage.setItem('rm_tour_history', JSON.stringify(data.history || []));
+      toursPulled = true;
     } catch (e) {
       if (e.status === 401) { Api.clearSession(); Router.show('auth'); return; }
-      // сеть недоступна — продолжаем с локальной копией
+      // сеть недоступна — продолжаем с локальной копией, но НЕ пушим её (чтобы не затереть сервер)
     }
 
     // подтягиваем базу клиентов (для автозамены и предложений)
@@ -132,8 +134,14 @@ const App = (() => {
       if (!saved.id) saved.id = Utils.uid();
       if (!saved.startedAt) saved.startedAt = Date.now();
       tour = saved;
-      Storage.saveCurrent(tour); // закрепить id, чтобы писался GPS-трек
-      try { enrichFromClients(); } catch (e) { console.warn('enrich failed', e); }
+      if (toursPulled) {
+        // синхронизированы с сервером — безопасно закрепить id/обогатить/сохранить
+        Storage.saveCurrent(tour);
+        try { enrichFromClients(); } catch (e) { console.warn('enrich failed', e); }
+      } else {
+        // сервер не ответил — работаем с локальной копией, НЕ пушим (иначе затрём серверный тур)
+        try { localStorage.setItem('rm_current_tour', JSON.stringify(tour)); } catch (e) {}
+      }
       // возобновляем ровно на той стадии, где остановился (не теряем тур на validate/build)
       const st = saved.stage;
       Router.show(st === 'active' ? 'active' : st === 'validate' ? 'validate' : st === 'build' ? 'build' : 'home');
