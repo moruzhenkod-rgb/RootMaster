@@ -88,14 +88,8 @@ const App = (() => {
   }
 
   async function init() {
-    if (typeof Api !== 'undefined' && !Api.isAdmin()) { const ind = document.getElementById('radar-global-indicator'); if (ind) ind.style.display = 'none'; }
     registerSW();
 
-    // предзагружаем озвучку радар-детектора заранее, чтобы первая фраза не запаздывала
-    if (typeof AudioManager !== 'undefined') {
-      window.AudioManagerInstance = window.AudioManagerInstance || AudioManager.getInstance();
-      window.AudioManagerInstance.preload().catch(() => {});
-    }
 
     // не авторизован — показываем экран входа
     if (!Api.isAuthed()) {
@@ -170,5 +164,4 @@ const App = (() => {
   };
 })();
 
-document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#rm-radar-active')) { if (typeof Router !== 'undefined') Router.show('radar2'); } }); // goto-radar-indicator
 document.addEventListener('DOMContentLoaded', App.init);

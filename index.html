@@ -15,7 +15,6 @@
 </head>
 <body>
 <div id="app"></div>
-<div id="rm-radar-active" class="rm-radar-active" style="display:none"></div>
 <template id="tpl-clients">
   <div class="screen screen-clients">
     <header class="app-header with-back">
@@ -76,77 +75,9 @@
       <button class="set-tab active" data-tab="dupes">Дубликаты</button>
       <button class="set-tab" data-tab="nogeo">Без гео</button>
       <button class="set-tab" data-tab="cells">Ячейки/Фирмы</button>
-      <button class="set-tab" data-tab="test">Самотест</button>
     </div>
     <div id="set-content" class="clients-list"></div>
     <div id="set-modal" class="set-modal" style="display:none"></div>
-  </div>
-</template>
-<template id="tpl-radar">
-  <div class="screen screen-radar">
-    <header class="app-header with-back">
-      <button class="icon-btn" data-action="back-home">←</button>
-      <h2>Радар-детектор</h2>
-    </header>
-    <div class="radar-body">
-      <button id="radar-main-btn" class="radar-circle" data-action="radar-toggle" data-state="idle">
-        <span class="radar-circle-label">СТАРТ</span>
-        <span class="radar-circle-spinner"></span>
-        <svg class="radar-chevrons" viewBox="0 0 24 24" aria-hidden="true">
-          <polyline points="6 15 12 9 18 15"></polyline>
-          <polyline points="6 11 12 5 18 11"></polyline>
-          <polyline points="6 19 12 13 18 19"></polyline>
-        </svg>
-      </button>
-      <p class="radar-status-text" id="radar-status-text">Детектор выключен</p>
-      <p class="radar-hint">Камеры контроля скорости, аварии и дорожные работы по ходу движения</p>
-      <div class="radar-db-row">
-        <span class="radar-db-status" id="radar-db-status">База камер: нет данных</span>
-        <button class="radar-db-refresh" id="radar-db-refresh" data-action="radar-refresh-db" title="Обновить базу камер">↻ Обновить</button>
-      </div>
-      <div class="radar-vol-row">
-        <span class="radar-vol-icon">🔊 Громкость</span>
-        <input type="range" id="radar-volume" min="0" max="30" step="0.5" value="7">
-        <span id="radar-vol-val" class="radar-vol-val">7</span>
-      </div>
-      <button class="btn btn-secondary" data-action="open-radar-map">🗺 Карта камер</button>
-    </div>
-  </div>
-  <div id="radar-map-modal" class="radar-map-modal" style="display:none">
-    <div class="radar-map-card">
-      <div class="radar-map-head">
-        <h3>Карта камер</h3>
-        <span class="radar-db-status" id="radar-map-db-status"></span>
-        <button class="radar-db-refresh" id="radar-map-db-refresh" data-action="radar-refresh-db" title="Обновить базу камер">↻</button>
-        <button class="icon-btn" data-action="close-radar-map">✕</button>
-      </div>
-      <div id="radar-map" class="radar-map"></div>
-    </div>
-  </div>
-</template>
-<template id="tpl-radar2">
-  <div class="screen screen-radar2">
-    <div id="r2-simple" class="r2-simple">
-      <header class="app-header with-back">
-        <button class="icon-btn" data-action="back-home">←</button>
-        <span id="r2-status" class="r2-status2">База камер: …</span>
-      </header>
-      <div class="r2-hud2">
-        <div id="r2-speed-box" class="r2-speed-box"><div id="r2-speed" class="r2-speed">0</div><small>км/ч</small></div>
-        <div id="r2-limit-box" class="r2-limit-box"><div id="r2-limit" class="r2-limit">—</div><small id="r2-dist"></small></div>
-      </div>
-      <div class="r2-tri-wrap"><div class="r2-triangle">▲</div></div>
-      <div id="r2-alert" class="r2-alert2">Нажми СТАРТ</div>
-      <div class="r2-volrow"><span class="r2-volicon">🔊</span><input type="range" id="r2-vol" min="0" max="30" step="0.5" value="7" class="r2-vol"></div>
-      <div class="r2-actions2">
-        <button id="r2-btn" class="r2-startbtn" data-action="r2-toggle">СТАРТ</button>
-        <button class="r2-mapbtn" data-action="r2-openmap">🗺 Карта</button>
-      </div>
-    </div>
-    <div id="r2-map-wrap" class="r2-map-wrap" style="display:none"><div id="r2-map" class="r2-map"></div></div>
-    <div id="r2-mapcar" class="r2-mapcar" style="display:none">▲</div>
-    <button class="r2-map-close" data-action="r2-closemap" style="display:none">← Назад</button>
-    <button class="r2-recenter" data-action="r2-recenter" style="display:none">🎯</button>
   </div>
 </template>
 <template id="tpl-auth">
@@ -190,16 +121,13 @@
           <button class="home-tile" data-action="open-tracking">
             <span class="tile-icon">🛰</span><span class="tile-label">История движения</span>
           </button>
-          <button class="home-tile" data-action="open-radar">
-            <span class="tile-icon">🚨</span><span class="tile-label">Радар</span>
-          </button>
           <button class="home-tile" data-action="open-settings">
             <span class="tile-icon">⚙️</span><span class="tile-label">Настройки</span>
           </button>
         </div>
       </div>
     </main>
-    <footer class="home-footer">RouteMaster PWA · v71</footer>
+    <footer class="home-footer">RouteMaster PWA · v72</footer>
   </div>
 </template>
 
@@ -428,14 +356,7 @@
 <script src="js/geocode.js"></script>
 <script src="js/client-match.js"></script>
 <script src="js/place-picker.js"></script>
-<script src="js/radar/db.js"></script>
-<script src="js/radar/traffic.js"></script>
-<script src="js/radar/radar-engine.js"></script>
-<script src="js/radar/ui-radar-v2.js"></script>
 <script src="js/cam-scanner.js"></script>
-<script src="js/audio-manager.js"></script>
-<script src="js/radar-module.js"></script>
-<script src="js/testdata.js"></script>
 <script src="js/ui-home.js"></script>
 <script src="vendor/cropper.min.js"></script>
 <script src="js/ui-paste.js"></script>
@@ -449,7 +370,6 @@
 <script src="js/ui-clients.js"></script>
 <script src="js/ui-manual.js"></script>
 <script src="js/ui-settings.js"></script>
-<script src="js/ui-radar.js"></script>
 <script src="js/ui-active-users.js"></script>
 <script src="js/router.js"></script>
 <script src="js/app.js"></script>

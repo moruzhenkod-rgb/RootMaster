@@ -38,7 +38,7 @@ const UISettings = (() => {
     if (tab === 'dupes') renderDupes(el);
     else if (tab === 'nogeo') renderNoGeo(el);
     else if (tab === 'cells') renderCells(el);
-    else if (tab === 'test') renderTest(el);
+
     else if (tab === 'demo') renderDemo(el);
   }
 
