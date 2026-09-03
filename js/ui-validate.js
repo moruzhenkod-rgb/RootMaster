@@ -92,7 +92,7 @@ const UIValidate = (() => {
     const total = points().length;
     const resolved = points().filter(isResolved).length;
     document.getElementById('validate-counter').textContent = `${resolved}/${total}`;
-    document.getElementById('btn-confirm-validate').disabled = resolved < total;
+    document.getElementById('btn-confirm-validate').disabled = total === 0; // не блокируем из-за ненайденных — их можно доработать на карте
   }
 
   async function onClick(e) {
@@ -195,8 +195,7 @@ const UIValidate = (() => {
   }
 
   function confirm() {
-    const validPoints = points().filter((p) => p.lat != null && p.lng != null);
-    App.tour.points = validPoints;
+    // ненайденные НЕ выкидываем — они попадут в тур как «не на карте», доработаешь там
     App.tour.stage = 'build';
     App.saveTour();
     Router.show('build');
