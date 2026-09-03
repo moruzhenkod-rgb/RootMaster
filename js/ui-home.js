@@ -55,16 +55,12 @@ const UIHome = (() => {
     } else if (action === 'open-clients') {
       Router.show('clients');
       return;
-      Router.show('radar2');
-      return;
     } else if (action === 'open-tour') {
       const st = App.tour && App.tour.stage;
       Router.show(st === 'validate' ? 'validate' : st === 'build' ? 'build' : 'active');
       return;
     } else if (action === 'paste-text') {
       Router.show('paste');
-      Router.show('radar2');
-      return;
     } else if (action === 'open-settings') {
       if (typeof Api !== 'undefined' && !Api.isAdmin()) return;
       Router.show('settings');
