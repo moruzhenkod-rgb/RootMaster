@@ -380,14 +380,12 @@ const UIBuild = (() => {
     if (loadBtn) {
       const numbered = App.tour.points.filter((p) => p.order != null).length;
       if (numbered === 0) {
-        // маршрут не собран — собираем сами: привычный порядок/OSRM, иначе по близости
-        (async () => {
-          try { await autoRoute(); } catch (e) {}
-          if (App.tour.points.filter((p) => p.order != null).length === 0) nnOrder();
-          App.tour.stage = 'active';
-          App.saveTour();
-          Router.show('active');
-        })();
+        // порядок как в загруженном списке (бумага обычно уже в нужной последовательности)
+        let n = 0;
+        App.tour.points.forEach((p) => { if (p.lat != null && p.lng != null) p.order = ++n; });
+        App.tour.stage = 'active';
+        App.saveTour();
+        Router.show('active');
       } else {
         App.tour.stage = 'active';
         App.saveTour();
