@@ -67,14 +67,14 @@ const UIPaste = (() => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        const max = 3400;
+        const max = 2200;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         if (scale === 1) { resolve(file); return; }
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * scale);
         c.height = Math.round(img.height * scale);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.95);
+        c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.82);
       };
       img.onerror = () => resolve(file);
       img.src = URL.createObjectURL(file);
