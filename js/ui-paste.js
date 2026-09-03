@@ -82,6 +82,16 @@ const UIPaste = (() => {
   }
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+  // пауза, которая ПРЕРЫВАЕТСЯ при возврате в приложение — чтобы опрос сработал сразу, а не ждал таймер (фон замораживает таймеры)
+  function sleepOrVisible(ms) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => { if (done) return; done = true; document.removeEventListener('visibilitychange', onVis); resolve(); };
+      const onVis = () => { if (!document.hidden) finish(); };
+      document.addEventListener('visibilitychange', onVis);
+      setTimeout(finish, ms);
+    });
+  }
 
   // распознать ОДИН лист → массив строк (throw при ошибке)
   async function processOne(file) {
@@ -90,8 +100,8 @@ const UIPaste = (() => {
     const j = await res.json();
     const job = j.job;
     if (!job) throw new Error('Ошибка загрузки: ' + (j.error || res.status));
-    for (let i = 0; i < 90; i++) {
-      await sleep(4000);
+    for (let i = 0; i < 120; i++) {
+      await sleepOrVisible(3000);
       try {
         const r = await fetch('/api/parse-list-result?job=' + encodeURIComponent(job));
         const jr = await r.json();
