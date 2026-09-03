@@ -82,6 +82,16 @@ const UIPaste = (() => {
   }
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+  // пауза, прерываемая возвратом к экрану — чтобы опрос сработал сразу
+  function sleepOrVisible(ms) {
+    return new Promise((resolve) => {
+      let done = false;
+      const fin = () => { if (done) return; done = true; document.removeEventListener('visibilitychange', ov); resolve(); };
+      const ov = () => { if (!document.hidden) fin(); };
+      document.addEventListener('visibilitychange', ov);
+      setTimeout(fin, ms);
+    });
+  }
 
   // не давать экрану гаснуть во время распознавания (иначе браузер замораживает опрос)
   let wakeLock = null, ocrActive = false;
@@ -104,8 +114,8 @@ const UIPaste = (() => {
     const j = await res.json();
     const job = j.job;
     if (!job) throw new Error('Ошибка загрузки: ' + (j.error || res.status));
-    for (let i = 0; i < 90; i++) {
-      await sleep(4000);
+    for (let i = 0; i < 240; i++) {
+      await sleepOrVisible(1500);
       try {
         const r = await fetch('/api/parse-list-result?job=' + encodeURIComponent(job));
         const jr = await r.json();
