@@ -18,7 +18,11 @@ const UIHome = (() => {
     const myTourBtn = root.querySelector('#btn-my-tour');
     if (myTourBtn) {
       const t = App.tour;
-      if (t && t.points && t.points.length && t.stage === 'active') myTourBtn.style.display = '';
+      if (t && t.points && t.points.length && ['active', 'validate', 'build'].indexOf(t.stage) !== -1) {
+        myTourBtn.style.display = '';
+        const lbl = myTourBtn.querySelector('.tile-label');
+        if (lbl) lbl.textContent = t.stage === 'active' ? 'Мой тур' : t.stage === 'validate' ? 'Продолжить проверку' : 'Продолжить сборку';
+      }
     }
 
     // доступ к настройкам/самотесту и радару — только админ (Dima)
@@ -56,7 +60,8 @@ const UIHome = (() => {
       Router.show('radar2');
       return;
     } else if (action === 'open-tour') {
-      Router.show('active');
+      const st = App.tour && App.tour.stage;
+      Router.show(st === 'validate' ? 'validate' : st === 'build' ? 'build' : 'active');
       return;
     } else if (action === 'paste-text') {
       Router.show('paste');

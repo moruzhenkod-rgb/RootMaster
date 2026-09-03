@@ -134,8 +134,9 @@ const App = (() => {
       tour = saved;
       Storage.saveCurrent(tour); // закрепить id, чтобы писался GPS-трек
       try { enrichFromClients(); } catch (e) { console.warn('enrich failed', e); }
-      // тур загружен (в работе) → сразу список адресов; недозавершённый — в меню (данные не теряются)
-      Router.show(saved.stage === 'active' ? 'active' : 'home');
+      // возобновляем ровно на той стадии, где остановился (не теряем тур на validate/build)
+      const st = saved.stage;
+      Router.show(st === 'active' ? 'active' : st === 'validate' ? 'validate' : st === 'build' ? 'build' : 'home');
     } else {
       Router.show('home');
     }
