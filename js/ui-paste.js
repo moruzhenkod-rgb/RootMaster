@@ -83,6 +83,20 @@ const UIPaste = (() => {
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
+  // не давать экрану гаснуть во время распознавания (иначе браузер замораживает опрос)
+  let wakeLock = null, ocrActive = false;
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) {}
+  }
+  function releaseAwake() { try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {} }
+  // если экран всё же погас и вернулся — перезапросить блокировку
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ocrActive) keepAwake(); });
+
   // распознать ОДИН лист → массив строк (throw при ошибке)
   async function processOne(file) {
     const blob = await downscale(file);
@@ -159,6 +173,7 @@ const UIPaste = (() => {
     const n = edited.length;
     setStatus(n > 1 ? ('📸 Готовлю ' + n + ' листа…') : '📸 Готовлю фото…');
     startProgress();
+    ocrActive = true; keepAwake();
     const all = [];
     for (let i = 0; i < n; i++) {
       segment(i, n);
@@ -168,13 +183,16 @@ const UIPaste = (() => {
         all.push(...lines);
         segmentDone(i, n);
       } catch (e) {
+        ocrActive = false; releaseAwake();
         showProgress(false);
         setStatus('❌ Лист ' + (i + 1) + ': ' + (e.message || 'ошибка') + (all.length ? ' (что распозналось — вставил)' : ''));
         if (all.length) fillTextarea(all);
         return;
       }
     }
+    ocrActive = false; releaseAwake();
     if (!all.length) { showProgress(false); setStatus('Строк не найдено — сфоткай ровнее/светлее'); return; }
+    ocrActive = false; releaseAwake();
     fillTextarea(all);
     finishProgress();
     setStatus('✓ Распознано строк: ' + all.length + (n > 1 ? (' с ' + n + ' листов') : '') + ' — проверь и жми «Проверить»');
